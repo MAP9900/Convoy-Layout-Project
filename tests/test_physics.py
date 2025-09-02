@@ -1,6 +1,8 @@
 import math
 import numpy as np
 import pytest
+import sys, os
+sys.path.append(os.path.dirname(os.path.dirname(__file__))) #Enables Code Runner to work
 
 from convoy.physics import (
     ShipState,
