@@ -1,7 +1,15 @@
 {
-    "python.testing.pytestArgs": [
-        "tests"
-    ],
-    "python.testing.unittestEnabled": false,
-    "python.testing.pytestEnabled": true
+  // Use pytest in the "Testing" view
+  "python.testing.pytestEnabled": true,
+  "python.testing.unittestEnabled": false,
+  "python.testing.pytestArgs": ["tests"],
+
+  // Load env vars (incl. PYTHONPATH) from .env
+  "python.envFile": "${workspaceFolder}/.env",
+
+  // IMPORTANT: run Python in the workspace root, not the file's folder
+  "python.terminal.executeInFileDir": false,
+
+  // Make sure your conda env is activated in terminals VS Code creates
+  "python.terminal.activateEnvironment": true
 }
