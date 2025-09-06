@@ -10,7 +10,7 @@
 
 # ---
 
-# ## ✅ Phase 1 — Minimal Simulation (MVP)
+# ##  Phase 1 — Minimal Simulation (MVP)
 
 # - [ ] **Scaffold repo**
 #   - Create folders: `convoy/`, `notebooks/`, `scripts/`, `tests/`
@@ -46,7 +46,7 @@
 
 # ---
 
-# ## ✅ Phase 2 — Calibration & Realism
+# ##  Phase 2 — Calibration & Realism
 
 # - [ ] **Add distributions**
 #   - Attack params: torpedo speed (Normal), aim error, salvo size (categorical)
@@ -87,7 +87,7 @@
 
 # ---
 
-# ## ✅ Shared Architecture (for ML later)
+# ##  Shared Architecture (for ML later)
 
 # - [ ] **Dataclasses/configs**
 #   - `ConvoyLayout`, `ShipParams`, `AttackPlan`, `WorldConfig`, `EpisodeConfig`, `SimResult`
@@ -106,7 +106,7 @@
 
 # ---
 
-# ## ✅ Exit Criteria (Phase 2)
+# ##  Exit Criteria (Phase 2)
 
 # - Deterministic Scenario A produces plausible hits & plan-view plot
 # - Monte Carlo Scenario A stable mean ± CI across seeds
