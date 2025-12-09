@@ -1,10 +1,11 @@
 """Simulation scaffolding smoke tests."""
 
+import math
+
 import pytest
 
 import convoy_sim
-from convoy_sim import Convoy, Ship, Torpedo, run_monte_carlo_attack, simulate_attack
-from convoy_sim.geometry import Point2D
+from convoy_sim import Convoy, Ship, Torpedo, as_vec, run_monte_carlo_attack, simulate_attack
 
 
 def test_convoy_sim_imports() -> None:
@@ -13,22 +14,23 @@ def test_convoy_sim_imports() -> None:
 
 def _example_convoy() -> Convoy:
     ship = Ship(
-        name="Test Vessel",
-        position=Point2D(0.0, 0.0),
-        heading_deg=90.0,
-        speed_mps=5.0,
-        length_m=150.0,
-        beam_m=20.0,
+        id="Test Vessel",
+        position=as_vec(0.0, 0.0),
+        heading_rad=math.radians(90.0),
+        speed=5.0,
+        length=150.0,
+        beam=20.0,
     )
     return Convoy(ships=[ship], layout_name="rectangular", spacing_m=400.0)
 
 
 def _example_torpedo() -> Torpedo:
     return Torpedo(
-        origin=Point2D(-1000.0, 0.0),
-        heading_deg=0.0,
-        speed_mps=12.0,
-        warhead_radius_m=50.0,
+        id="Test Torpedo",
+        launch_position=as_vec(-1000.0, 0.0),
+        heading_rad=0.0,
+        speed=12.0,
+        max_run_time=1200.0,
     )
 
 

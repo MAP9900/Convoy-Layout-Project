@@ -3,51 +3,115 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Iterable, Sequence
+import math
+from typing import Sequence
 
-from .geometry import Point2D
+import numpy as np
+
+from .geometry import (
+    Vec2,
+    as_vec,
+    closest_approach_time,
+    min_distance_over_interval,
+    step_position,
+)
+
+
+def _vec(value: Vec2 | Sequence[float]) -> Vec2:
+    arr = np.asarray(value, dtype=float)
+    if arr.shape != (2,):
+        raise ValueError("Expected a 2D vector with shape (2,)")
+    return arr
 
 
 @dataclass
 class Ship:
     """Simple surface vessel model with straight-line kinematics."""
 
-    name: str
-    position: Point2D
-    heading_deg: float
-    speed_mps: float
-    length_m: float
-    beam_m: float
+    id: str
+    position: Vec2
+    speed: float
+    heading_rad: float
+    length: float
+    beam: float
 
-    def advance(self, delta_t: float) -> Point2D:
+    def __post_init__(self) -> None:
+        self.position = _vec(self.position)
+
+    def velocity_vec(self) -> Vec2:
+        """Return the instantaneous velocity vector in meters per second."""
+
+        vx = math.cos(self.heading_rad) * self.speed
+        vy = math.sin(self.heading_rad) * self.speed
+        return as_vec(vx, vy)
+
+    def position_at(self, t: float) -> Vec2:
+        """Return the ship position after ``t`` seconds of straight-line motion."""
+
+        return step_position(self.position, self.velocity_vec(), t)
+
+    def advance(self, delta_t: float) -> Vec2:
         """Project the ship forward by ``delta_t`` seconds at constant speed."""
 
-        raise NotImplementedError
+        self.position = self.position_at(delta_t)
+        return self.position
 
-    def outline(self) -> Sequence[Point2D]:
+    def outline(self) -> Sequence[Vec2]:
         """Return representative hull vertices for coarse collision checks."""
 
-        raise NotImplementedError
+        half_length = self.length / 2.0
+        half_beam = self.beam / 2.0
+        corners = np.array(
+            [
+                (-half_length, -half_beam),
+                (-half_length, half_beam),
+                (half_length, half_beam),
+                (half_length, -half_beam),
+            ],
+            dtype=float,
+        )
+        cos_a = math.cos(self.heading_rad)
+        sin_a = math.sin(self.heading_rad)
+        rotation = np.array([[cos_a, -sin_a], [sin_a, cos_a]], dtype=float)
+        return [self.position + rotation @ corner for corner in corners]
 
 
 @dataclass
 class Torpedo:
     """Straight-running torpedo simplified to a 2D kinematic track."""
 
-    origin: Point2D
-    heading_deg: float
-    speed_mps: float
-    warhead_radius_m: float
+    id: str
+    launch_position: Vec2
+    speed: float
+    heading_rad: float
+    max_run_time: float
 
-    def position_at(self, time_s: float) -> Point2D:
+    def __post_init__(self) -> None:
+        self.launch_position = _vec(self.launch_position)
+
+    def velocity_vec(self) -> Vec2:
+        """Return the constant torpedo velocity vector."""
+
+        vx = math.cos(self.heading_rad) * self.speed
+        vy = math.sin(self.heading_rad) * self.speed
+        return as_vec(vx, vy)
+
+    def position_at(self, time_s: float) -> Vec2:
         """Return the torpedo position after ``time_s`` seconds."""
 
-        raise NotImplementedError
+        clamped_t = max(0.0, min(time_s, self.max_run_time))
+        return step_position(self.launch_position, self.velocity_vec(), clamped_t)
 
     def time_to_intercept(self, ship: Ship) -> float:
         """Return time-to-intercept with ``ship`` if on a collision course."""
 
-        raise NotImplementedError
+        t = closest_approach_time(
+            self.launch_position,
+            self.velocity_vec(),
+            ship.position,
+            ship.velocity_vec(),
+        )
+        return min(t, self.max_run_time)
 
 
 @dataclass
@@ -58,17 +122,57 @@ class Convoy:
     layout_name: str | None = None
     spacing_m: float | None = None
 
-    def assign_layout(self, anchor_points: Sequence[Point2D]) -> None:
+    def assign_layout(self, anchor_points: Sequence[Vec2]) -> None:
         """Attach ships to layout anchor positions in order."""
 
-        raise NotImplementedError
+        if len(anchor_points) < len(self.ships):
+            raise ValueError("Not enough anchor points for convoy ships")
+        for ship, anchor in zip(self.ships, anchor_points):
+            ship.position = _vec(anchor)
 
     def advance(self, delta_t: float) -> None:
         """Advance every ship by ``delta_t`` seconds."""
 
-        raise NotImplementedError
+        for ship in self.ships:
+            ship.advance(delta_t)
 
     def as_dict(self) -> dict:
         """Return a JSON-serializable snapshot for downstream analytics."""
 
-        raise NotImplementedError
+        return {
+            "layout_name": self.layout_name,
+            "spacing_m": self.spacing_m,
+            "ships": [
+                {
+                    "id": ship.id,
+                    "position": ship.position.tolist(),
+                    "speed": ship.speed,
+                    "heading_rad": ship.heading_rad,
+                    "length": ship.length,
+                    "beam": ship.beam,
+                }
+                for ship in self.ships
+            ],
+        }
+
+
+def torpedo_hits_ship(ship: Ship, torpedo: Torpedo, t_max: float, safety_margin: float = 0.0) -> bool:
+    """Return True if the torpedo track intersects the ship footprint within ``t_max`` seconds.
+
+    The ship is approximated as a circle whose radius equals half the greater
+    of ``length`` and ``beam`` plus an optional ``safety_margin`` in meters.
+    """
+
+    if t_max <= 0:
+        return False
+    window = min(float(t_max), float(torpedo.max_run_time))
+    ship_radius = max(ship.length, ship.beam) * 0.5 + float(safety_margin)
+    min_dist = min_distance_over_interval(
+        ship.position,
+        ship.velocity_vec(),
+        torpedo.launch_position,
+        torpedo.velocity_vec(),
+        0.0,
+        window,
+    )
+    return min_dist <= ship_radius

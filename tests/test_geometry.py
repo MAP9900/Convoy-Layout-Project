@@ -1,31 +1,37 @@
 """Smoke tests for geometry scaffolding."""
 
-import pytest
+import math
 
-from convoy_sim import (
+import numpy as np
+
+from convoy_sim.geometry import (
     Point2D,
-    Vector2D,
-    bearing_between,
-    rotate_point,
-    translate_point,
+    Vec2,
+    as_vec,
+    closest_approach_time,
+    distance,
+    step_position,
 )
 
 
-def test_geometry_imports() -> None:
-    point = Point2D(0.0, 0.0)
-    vector = Vector2D(1.0, 1.0)
-    assert point.x == 0.0
-    assert vector.dy == 1.0
+def test_distance_three_four_five() -> None:
+    origin = as_vec(0.0, 0.0)
+    target = as_vec(3.0, 4.0)
+    assert distance(origin, target) == 5.0
+    assert Point2D(0.0, 0.0).distance_to(Point2D(3.0, 4.0)) == 5.0
 
 
-def test_geometry_methods_raise_not_implemented() -> None:
-    start = Point2D(0.0, 0.0)
-    end = Point2D(10.0, 0.0)
-    with pytest.raises(NotImplementedError):
-        start.distance_to(end)
-    with pytest.raises(NotImplementedError):
-        translate_point(start, Vector2D(1.0, 2.0))
-    with pytest.raises(NotImplementedError):
-        rotate_point(start, angle_deg=45.0)
-    with pytest.raises(NotImplementedError):
-        bearing_between(start, end)
+def test_step_position_linear_motion() -> None:
+    p0: Vec2 = as_vec(0.0, 0.0)
+    v: Vec2 = as_vec(2.0, -1.0)
+    result = step_position(p0, v, 3.0)
+    assert np.allclose(result, np.array([6.0, -3.0]))
+
+
+def test_closest_approach_time_for_crossing_tracks() -> None:
+    ship_a_pos = as_vec(0.0, 0.0)
+    ship_a_vel = as_vec(10.0, 0.0)
+    ship_b_pos = as_vec(100.0, 100.0)
+    ship_b_vel = as_vec(0.0, -10.0)
+    t_ca = closest_approach_time(ship_a_pos, ship_a_vel, ship_b_pos, ship_b_vel)
+    assert math.isclose(t_ca, 10.0)
