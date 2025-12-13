@@ -68,8 +68,7 @@ class Ship:
                 (half_length, half_beam),
                 (half_length, -half_beam),
             ],
-            dtype=float,
-        )
+            dtype=float,)
         cos_a = math.cos(self.heading_rad)
         sin_a = math.sin(self.heading_rad)
         rotation = np.array([[cos_a, -sin_a], [sin_a, cos_a]], dtype=float)
@@ -109,8 +108,7 @@ class Torpedo:
             self.launch_position,
             self.velocity_vec(),
             ship.position,
-            ship.velocity_vec(),
-        )
+            ship.velocity_vec(),)
         return min(t, self.max_run_time)
 
 

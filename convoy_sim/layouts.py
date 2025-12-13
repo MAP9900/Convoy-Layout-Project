@@ -37,8 +37,7 @@ def _make_ships_from_local_positions(
     heading_rad: float,
     speed: float,
     length: float,
-    beam: float,
-) -> list[Ship]:
+    beam: float,) -> list[Ship]:
     rotation = _rotation_matrix(heading_rad)
     ships = []
     for idx, local in enumerate(local_positions, start=1):
