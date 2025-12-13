@@ -19,10 +19,10 @@ from .geometry import (
 )
 from .entities import Convoy, Ship, Torpedo, torpedo_hits_ship
 from .layouts import (
-    hexagonal_layout,
-    jittered_layout,
-    rectangular_layout,
-    staggered_layout,
+    apply_jitter,
+    make_hexagonal_convoy,
+    make_rectangular_convoy,
+    make_staggered_convoy,
 )
 from .simulation import MonteCarloResult, simulate_attack, run_monte_carlo_attack
 
@@ -42,10 +42,10 @@ __all__ = [
     "Torpedo",
     "Convoy",
     "torpedo_hits_ship",
-    "rectangular_layout",
-    "staggered_layout",
-    "hexagonal_layout",
-    "jittered_layout",
+    "make_rectangular_convoy",
+    "make_staggered_convoy",
+    "make_hexagonal_convoy",
+    "apply_jitter",
     "simulate_attack",
     "run_monte_carlo_attack",
     "MonteCarloResult",
