@@ -24,7 +24,13 @@ from .layouts import (
     make_rectangular_convoy,
     make_staggered_convoy,
 )
-from .simulation import MonteCarloResult, simulate_attack, run_monte_carlo_attack
+from .simulation import (
+    run_monte_carlo_attack,
+    sample_parallel_torpedoes,
+    sample_torpedo_spread_fixed_origin,
+    simulate_attack,
+    simulate_attack_once,
+)
 
 __all__ = [
     "Vec2",
@@ -46,7 +52,9 @@ __all__ = [
     "make_staggered_convoy",
     "make_hexagonal_convoy",
     "apply_jitter",
+    "simulate_attack_once",
     "simulate_attack",
     "run_monte_carlo_attack",
-    "MonteCarloResult",
+    "sample_torpedo_spread_fixed_origin",
+    "sample_parallel_torpedoes",
 ]
