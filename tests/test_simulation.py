@@ -1,7 +1,7 @@
 """Simulation scaffolding smoke tests."""
 
 import math
-from functools import partial
+from typing import Callable
 
 import numpy as np
 import pytest
@@ -11,7 +11,8 @@ from convoy_sim import (
     as_vec,
     make_rectangular_convoy,
     run_monte_carlo_attack,
-    sample_torpedo_spread_fixed_origin,
+    sample_fan_spread,
+    sample_parallel_spread,
     simulate_attack,
     simulate_attack_once,
 )
@@ -35,34 +36,30 @@ def _single_ship_layout_kwargs(speed: float = 0.0) -> dict:
     }
 
 
+def _fan_sampler(origin: np.ndarray) -> Callable[[np.random.Generator], list]:
+    def sampler(_: np.random.Generator):
+        return sample_fan_spread(
+            u_pos=origin,
+            base_bearing_rad=0.0,
+            n=1,
+            spread_rad=0.0,
+            speed=20.0,
+            max_run_time=500.0,
+        )
+
+    return sampler
+
+
 def test_simulate_attack_once_direct_hit() -> None:
     ships = make_rectangular_convoy(**_single_ship_layout_kwargs())
-    sampler = partial(
-        sample_torpedo_spread_fixed_origin,
-        origin=as_vec(-1000.0, 0.0),
-        speed=20.0,
-        heading_center_rad=0.0,
-        spread_deg=0.0,
-        count=1,
-        max_run_time=500.0,
-    )
-    torpedoes = sampler(np.random.default_rng(0))
+    torpedoes = _fan_sampler(as_vec(-1000.0, 0.0))(np.random.default_rng(0))
     hits = simulate_attack_once(ships, torpedoes, t_max=120.0)
     assert hits == 1
-    # Legacy alias
     assert simulate_attack(ships, torpedoes, t_max=120.0) == 1
 
 
 def test_monte_carlo_all_hits() -> None:
-    sampler = partial(
-        sample_torpedo_spread_fixed_origin,
-        origin=as_vec(-1000.0, 0.0),
-        speed=20.0,
-        heading_center_rad=0.0,
-        spread_deg=0.0,
-        count=1,
-        max_run_time=500.0,
-    )
+    sampler = _fan_sampler(as_vec(-1000.0, 0.0))
     result = run_monte_carlo_attack(
         layout_fn=make_rectangular_convoy,
         layout_kwargs=_single_ship_layout_kwargs(),
@@ -78,15 +75,7 @@ def test_monte_carlo_all_hits() -> None:
 
 
 def test_monte_carlo_all_misses() -> None:
-    sampler = partial(
-        sample_torpedo_spread_fixed_origin,
-        origin=as_vec(-1000.0, 500.0),
-        speed=20.0,
-        heading_center_rad=0.0,
-        spread_deg=0.0,
-        count=1,
-        max_run_time=500.0,
-    )
+    sampler = _fan_sampler(as_vec(-1000.0, 500.0))
     result = run_monte_carlo_attack(
         layout_fn=make_rectangular_convoy,
         layout_kwargs=_single_ship_layout_kwargs(),
@@ -98,3 +87,33 @@ def test_monte_carlo_all_misses() -> None:
     assert np.all(result["hits_per_trial"] == 0)
     assert result["expected_hits"] == pytest.approx(0.0)
     assert result["hit_prob_at_least_one"] == pytest.approx(0.0)
+
+
+def test_sample_fan_spread_headings() -> None:
+    torpedoes = sample_fan_spread(
+        u_pos=as_vec(0.0, 0.0),
+        base_bearing_rad=0.0,
+        n=3,
+        spread_rad=math.radians(30.0),
+        speed=20.0,
+        max_run_time=200.0,
+    )
+    headings = [torpedo.heading_rad for torpedo in torpedoes]
+    assert math.isclose(headings[0], math.radians(-15.0), abs_tol=1e-9)
+    assert math.isclose(headings[1], 0.0, abs_tol=1e-9)
+    assert math.isclose(headings[2], math.radians(15.0), abs_tol=1e-9)
+    assert np.allclose(torpedoes[0].launch_position, as_vec(0.0, 0.0))
+
+
+def test_sample_parallel_spread_positions() -> None:
+    torpedoes = sample_parallel_spread(
+        u_pos=as_vec(0.0, 0.0),
+        bearing_rad=0.0,
+        n=3,
+        lateral_spacing=100.0,
+        speed=15.0,
+        max_run_time=300.0,
+    )
+    positions = np.array([t.launch_position for t in torpedoes])
+    assert np.allclose(positions[:, 0], 0.0)
+    assert np.allclose(positions[:, 1], [-100.0, 0.0, 100.0])

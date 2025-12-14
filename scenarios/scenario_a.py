@@ -2,9 +2,11 @@
 
 from __future__ import annotations
 
+import math
 import numpy as np
 
-from convoy_sim import as_vec, make_rectangular_convoy, sample_torpedo_spread_fixed_origin
+from convoy_sim import as_vec, make_rectangular_convoy
+from convoy_sim.simulation import sample_fan_spread
 from .scenario_base import Scenario
 
 
@@ -21,14 +23,13 @@ def build_scenario_a(n_trials: int = 200, rng_seed: int | None = 1234) -> Scenar
         origin=as_vec(0.0, 0.0),
     )
 
-    def sampler(rng: np.random.Generator):
-        return sample_torpedo_spread_fixed_origin(
-            rng,
-            origin=as_vec(-2000.0, 0.0),
+    def sampler(_: np.random.Generator):
+        return sample_fan_spread(
+            u_pos=as_vec(-2000.0, 0.0),
+            base_bearing_rad=0.0,
+            n=4,
+            spread_rad=math.radians(15.0),
             speed=25.0,
-            heading_center_rad=0.0,
-            spread_deg=15.0,
-            count=4,
             max_run_time=800.0,
         )
 
@@ -40,5 +41,5 @@ def build_scenario_a(n_trials: int = 200, rng_seed: int | None = 1234) -> Scenar
         n_trials=n_trials,
         t_max=400.0,
         rng_seed=rng_seed,
-        metadata={"description": "Baseline rectangular convoy vs straight torpedo spread"},
+        metadata={"description": "Baseline rectangular convoy vs straight torpedo fan spread"},
     )

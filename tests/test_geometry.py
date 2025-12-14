@@ -10,6 +10,7 @@ from convoy_sim.geometry import (
     as_vec,
     closest_approach_time,
     distance,
+    min_distance_over_interval,
     step_position,
 )
 
@@ -35,3 +36,19 @@ def test_closest_approach_time_for_crossing_tracks() -> None:
     ship_b_vel = as_vec(0.0, -10.0)
     t_ca = closest_approach_time(ship_a_pos, ship_a_vel, ship_b_pos, ship_b_vel)
     assert math.isclose(t_ca, 10.0)
+
+
+def test_min_distance_over_interval_crossing_tracks() -> None:
+    ship_a_pos = as_vec(-50.0, 0.0)
+    ship_a_vel = as_vec(10.0, 0.0)
+    ship_b_pos = as_vec(0.0, -50.0)
+    ship_b_vel = as_vec(0.0, 10.0)
+    d_min = min_distance_over_interval(
+        ship_a_pos,
+        ship_a_vel,
+        ship_b_pos,
+        ship_b_vel,
+        t_min=0.0,
+        t_max=10.0,
+    )
+    assert math.isclose(d_min, 0.0, abs_tol=1e-6)

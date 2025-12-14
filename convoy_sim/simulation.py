@@ -68,6 +68,70 @@ def run_monte_carlo_attack(
     }
 
 
+def sample_fan_spread(
+    u_pos: Vec2 | Sequence[float],
+    base_bearing_rad: float,
+    n: int,
+    spread_rad: float,
+    speed: float,
+    max_run_time: float,
+) -> list[Torpedo]:
+    """Fire ``n`` torpedoes from ``u_pos`` spread evenly across ``spread_rad``."""
+
+    if n <= 0:
+        return []
+    origin_vec = _vec(u_pos)
+    if n == 1 or spread_rad == 0.0:
+        headings = [base_bearing_rad]
+    else:
+        half_spread = spread_rad / 2.0
+        headings = [
+            base_bearing_rad - half_spread + (spread_rad * i / (n - 1))
+            for i in range(n)
+        ]
+    return [
+        Torpedo(
+            id=f"F{i+1:02d}",
+            launch_position=origin_vec,
+            speed=speed,
+            heading_rad=heading,
+            max_run_time=max_run_time,
+        )
+        for i, heading in enumerate(headings)
+    ]
+
+
+def sample_parallel_spread(
+    u_pos: Vec2 | Sequence[float],
+    bearing_rad: float,
+    n: int,
+    lateral_spacing: float,
+    speed: float,
+    max_run_time: float,
+) -> list[Torpedo]:
+    """Fire ``n`` torpedoes from parallel launchers offset laterally."""
+
+    if n <= 0:
+        return []
+    origin_vec = _vec(u_pos)
+    perp = as_vec(-math.sin(bearing_rad), math.cos(bearing_rad))
+    center = (n - 1) / 2.0
+    launches = [
+        origin_vec + perp * ((i - center) * lateral_spacing)
+        for i in range(n)
+    ]
+    return [
+        Torpedo(
+            id=f"P{i+1:02d}",
+            launch_position=launch_pos,
+            speed=speed,
+            heading_rad=bearing_rad,
+            max_run_time=max_run_time,
+        )
+        for i, launch_pos in enumerate(launches)
+    ]
+
+
 def sample_torpedo_spread_fixed_origin(
     rng: np.random.Generator,
     *,
@@ -78,31 +142,16 @@ def sample_torpedo_spread_fixed_origin(
     count: int,
     max_run_time: float,
 ) -> list[Torpedo]:
-    """Return a deterministic fan of torpedoes from a single launch point."""
+    """Deprecated helper retained for backwards compatibility."""
 
-    if count <= 0:
-        return []
-    origin_vec = _vec(origin)
-    if count == 1 or spread_deg == 0.0:
-        headings = [heading_center_rad]
-    else:
-        half_spread = math.radians(spread_deg) / 2.0
-        headings = []
-        for i in range(count):
-            fraction = 0.0 if count == 1 else i / (count - 1)
-            angle_offset = -half_spread + 2 * half_spread * fraction
-            headings.append(heading_center_rad + angle_offset)
-    torpedoes = [
-        Torpedo(
-            id=f"T{i+1:02d}",
-            launch_position=origin_vec,
-            speed=speed,
-            heading_rad=heading,
-            max_run_time=max_run_time,
-        )
-        for i, heading in enumerate(headings)
-    ]
-    return torpedoes
+    return sample_fan_spread(
+        origin,
+        base_bearing_rad=heading_center_rad,
+        n=count,
+        spread_rad=math.radians(spread_deg),
+        speed=speed,
+        max_run_time=max_run_time,
+    )
 
 
 def sample_parallel_torpedoes(
@@ -115,25 +164,16 @@ def sample_parallel_torpedoes(
     heading_rad: float,
     max_run_time: float,
 ) -> list[Torpedo]:
-    """Return torpedoes fired from evenly spaced positions along a line."""
+    """Deprecated helper retained for backwards compatibility."""
 
-    if count <= 0:
-        return []
-    first_vec = _vec(first_origin)
-    offsets = [spacing * i for i in range(count)]
-    torpedoes = []
-    for idx, offset in enumerate(offsets):
-        launch_pos = first_vec + as_vec(0.0, offset)
-        torpedoes.append(
-            Torpedo(
-                id=f"P{idx+1:02d}",
-                launch_position=launch_pos,
-                speed=speed,
-                heading_rad=heading_rad,
-                max_run_time=max_run_time,
-            )
-        )
-    return torpedoes
+    return sample_parallel_spread(
+        u_pos=first_origin,
+        bearing_rad=heading_rad,
+        n=count,
+        lateral_spacing=spacing,
+        speed=speed,
+        max_run_time=max_run_time,
+    )
 
 # Backwards-compatible alias (legacy entry point)
 simulate_attack = simulate_attack_once

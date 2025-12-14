@@ -5,12 +5,13 @@ from __future__ import annotations
 import argparse
 import json
 from pathlib import Path
-
+import numpy as np
 from scenarios.scenario_a import build_scenario_a
 
 SCENARIOS = {
     "scenario_a": build_scenario_a,
 }
+
 
 
 def parse_args() -> argparse.Namespace:
@@ -36,7 +37,15 @@ def main() -> None:
     result = scenario.run()
     out_path = output_dir / f"{args.scenario}.json"
     out_path.write_text(json.dumps(result, indent=2))
+    summary = result["result"]
     print(f"Wrote results to {out_path}")
+    print(
+        "Summary: E[hits]={:.2f}, Var={:.3f}, P(hit>=1)={:.2f}".format(
+            summary["expected_hits"],
+            summary["var_hits"],
+            summary["hit_prob_at_least_one"],
+        )
+    )
 
 
 if __name__ == "__main__":

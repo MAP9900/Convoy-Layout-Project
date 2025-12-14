@@ -26,6 +26,8 @@ from .layouts import (
 )
 from .simulation import (
     run_monte_carlo_attack,
+    sample_fan_spread,
+    sample_parallel_spread,
     sample_parallel_torpedoes,
     sample_torpedo_spread_fixed_origin,
     simulate_attack,
@@ -55,6 +57,8 @@ __all__ = [
     "simulate_attack_once",
     "simulate_attack",
     "run_monte_carlo_attack",
+    "sample_fan_spread",
+    "sample_parallel_spread",
     "sample_torpedo_spread_fixed_origin",
     "sample_parallel_torpedoes",
 ]
