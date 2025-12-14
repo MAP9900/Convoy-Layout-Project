@@ -24,6 +24,7 @@ from .layouts import (
     make_rectangular_convoy,
     make_staggered_convoy,
 )
+from .noise import NoiseModel
 from .simulation import (
     run_monte_carlo_attack,
     sample_fan_spread,
@@ -54,6 +55,7 @@ __all__ = [
     "make_staggered_convoy",
     "make_hexagonal_convoy",
     "apply_jitter",
+    "NoiseModel",
     "simulate_attack_once",
     "simulate_attack",
     "run_monte_carlo_attack",

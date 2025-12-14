@@ -84,9 +84,12 @@ class Torpedo:
     speed: float
     heading_rad: float
     max_run_time: float
+    launch_delay: float = 0.0
+    is_dud: bool = False
 
     def __post_init__(self) -> None:
         self.launch_position = _vec(self.launch_position)
+        self.launch_delay = max(0.0, float(self.launch_delay))
 
     def velocity_vec(self) -> Vec2:
         """Return the constant torpedo velocity vector."""
@@ -98,8 +101,10 @@ class Torpedo:
     def position_at(self, time_s: float) -> Vec2:
         """Return the torpedo position after ``time_s`` seconds."""
 
-        clamped_t = max(0.0, min(time_s, self.max_run_time))
-        return step_position(self.launch_position, self.velocity_vec(), clamped_t)
+        if time_s <= self.launch_delay:
+            return self.launch_position
+        effective_t = min(time_s - self.launch_delay, max(0.0, self.max_run_time - self.launch_delay))
+        return step_position(self.launch_position, self.velocity_vec(), effective_t)
 
     def time_to_intercept(self, ship: Ship) -> float:
         """Return time-to-intercept with ``ship`` if on a collision course."""
@@ -109,6 +114,7 @@ class Torpedo:
             self.velocity_vec(),
             ship.position,
             ship.velocity_vec(),)
+        t += self.launch_delay
         return min(t, self.max_run_time)
 
 
@@ -161,16 +167,38 @@ def torpedo_hits_ship(ship: Ship, torpedo: Torpedo, t_max: float, safety_margin:
     of ``length`` and ``beam`` plus an optional ``safety_margin`` in meters.
     """
 
-    if t_max <= 0:
+    if t_max <= 0 or torpedo.is_dud:
         return False
     window = min(float(t_max), float(torpedo.max_run_time))
     ship_radius = max(ship.length, ship.beam) * 0.5 + float(safety_margin)
-    min_dist = min_distance_over_interval(
-        ship.position,
-        ship.velocity_vec(),
-        torpedo.launch_position,
-        torpedo.velocity_vec(),
-        0.0,
-        window,
-    )
+    segments = []
+    delay = min(torpedo.launch_delay, window)
+    if delay > 0.0:
+        segments.append(
+            min_distance_over_interval(
+                ship.position,
+                ship.velocity_vec(),
+                torpedo.launch_position,
+                as_vec(0.0, 0.0),
+                0.0,
+                delay,
+            )
+        )
+    remaining = max(0.0, window - torpedo.launch_delay)
+    if remaining > 0.0:
+        ship_start = ship.position_at(torpedo.launch_delay)
+        torp_start = torpedo.position_at(torpedo.launch_delay)
+        segments.append(
+            min_distance_over_interval(
+                ship_start,
+                ship.velocity_vec(),
+                torp_start,
+                torpedo.velocity_vec(),
+                0.0,
+                remaining,
+            )
+        )
+    if not segments:
+        return False
+    min_dist = min(segments)
     return min_dist <= ship_radius

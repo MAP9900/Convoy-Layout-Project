@@ -8,6 +8,7 @@ import pytest
 
 import convoy_sim
 from convoy_sim import (
+    NoiseModel,
     as_vec,
     make_rectangular_convoy,
     run_monte_carlo_attack,
@@ -117,3 +118,43 @@ def test_sample_parallel_spread_positions() -> None:
     positions = np.array([t.launch_position for t in torpedoes])
     assert np.allclose(positions[:, 0], 0.0)
     assert np.allclose(positions[:, 1], [-100.0, 0.0, 100.0])
+
+
+def test_noise_duds_zero_hits() -> None:
+    sampler = _fan_sampler(as_vec(-1000.0, 0.0))
+    noise = NoiseModel(p_dud=1.0)
+    result = run_monte_carlo_attack(
+        layout_fn=make_rectangular_convoy,
+        layout_kwargs=_single_ship_layout_kwargs(),
+        torpedo_sampler=sampler,
+        n_trials=10,
+        t_max=150.0,
+        rng=np.random.default_rng(5),
+        noise_model=noise,
+    )
+    assert np.all(result["hits_per_trial"] == 0)
+    assert result["expected_hits"] == pytest.approx(0.0)
+
+
+def test_zero_noise_matches_baseline() -> None:
+    sampler = _fan_sampler(as_vec(-1000.0, 0.0))
+    base_rng = np.random.default_rng(10)
+    baseline = run_monte_carlo_attack(
+        layout_fn=make_rectangular_convoy,
+        layout_kwargs=_single_ship_layout_kwargs(),
+        torpedo_sampler=sampler,
+        n_trials=20,
+        t_max=150.0,
+        rng=base_rng,
+    )
+    zero_noise_rng = np.random.default_rng(10)
+    zero_noise = run_monte_carlo_attack(
+        layout_fn=make_rectangular_convoy,
+        layout_kwargs=_single_ship_layout_kwargs(),
+        torpedo_sampler=sampler,
+        n_trials=20,
+        t_max=150.0,
+        rng=zero_noise_rng,
+        noise_model=NoiseModel(),
+    )
+    assert np.array_equal(baseline["hits_per_trial"], zero_noise["hits_per_trial"])

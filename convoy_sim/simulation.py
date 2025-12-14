@@ -3,12 +3,14 @@
 from __future__ import annotations
 
 import math
+from dataclasses import replace
 from typing import Any, Callable, Sequence
 
 import numpy as np
 
 from .entities import Ship, Torpedo, torpedo_hits_ship
 from .geometry import Vec2, as_vec
+from .noise import NoiseModel
 
 LayoutFn = Callable[..., list[Ship]]
 TorpedoSampler = Callable[[np.random.Generator], Sequence[Torpedo]]
@@ -45,6 +47,7 @@ def run_monte_carlo_attack(
     n_trials: int,
     t_max: float,
     rng: np.random.Generator | None = None,
+    noise_model: NoiseModel | None = None,
 ) -> dict[str, Any]:
     """Run a Monte Carlo study of a torpedo attack scenario."""
 
@@ -55,6 +58,8 @@ def run_monte_carlo_attack(
     for idx in range(n_trials):
         ships = layout_fn(**layout_kwargs)
         torpedoes = list(torpedo_sampler(generator))
+        if noise_model and not noise_model.is_inactive():
+            torpedoes = _apply_noise(torpedoes, noise_model, generator)
         hits[idx] = simulate_attack_once(ships=ships, torpedoes=torpedoes, t_max=t_max)
     expected_hits = float(np.mean(hits))
     variance = float(np.var(hits))
@@ -130,6 +135,33 @@ def sample_parallel_spread(
         )
         for i, launch_pos in enumerate(launches)
     ]
+
+
+def _apply_noise(
+    torpedoes: Sequence[Torpedo],
+    noise_model: NoiseModel,
+    rng: np.random.Generator,
+) -> list[Torpedo]:
+    adjusted: list[Torpedo] = []
+    for torpedo in torpedoes:
+        heading = torpedo.heading_rad
+        if noise_model.sigma_heading_rad > 0.0:
+            heading += rng.normal(0.0, noise_model.sigma_heading_rad)
+        delay = torpedo.launch_delay
+        if noise_model.sigma_launch_delay > 0.0:
+            delay = max(0.0, delay + rng.normal(0.0, noise_model.sigma_launch_delay))
+        is_dud = torpedo.is_dud
+        if noise_model.p_dud > 0.0:
+            is_dud = is_dud or (rng.uniform(0.0, 1.0) < noise_model.p_dud)
+        adjusted.append(
+            replace(
+                torpedo,
+                heading_rad=heading,
+                launch_delay=delay,
+                is_dud=is_dud,
+            )
+        )
+    return adjusted
 
 
 def sample_torpedo_spread_fixed_origin(

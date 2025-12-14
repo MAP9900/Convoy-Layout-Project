@@ -8,6 +8,7 @@ from typing import Any, Callable
 import numpy as np
 
 from convoy_sim import Ship, run_monte_carlo_attack
+from convoy_sim.noise import NoiseModel
 
 
 LayoutFn = Callable[..., list[Ship]]
@@ -26,6 +27,7 @@ class Scenario:
     t_max: float
     rng_seed: int | None = None
     metadata: dict[str, Any] = field(default_factory=dict)
+    noise_model: NoiseModel | None = None
 
     def run(self) -> dict[str, Any]:
         """Execute the configured Monte Carlo experiment."""
@@ -38,6 +40,7 @@ class Scenario:
             n_trials=self.n_trials,
             t_max=self.t_max,
             rng=rng,
+            noise_model=self.noise_model,
         )
         return {
             "scenario": self.name,

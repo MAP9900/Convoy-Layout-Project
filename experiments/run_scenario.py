@@ -12,7 +12,16 @@ SCENARIOS = {
     "scenario_a": build_scenario_a,
 }
 
+import numpy as np
 
+def _json_default(o):
+    if isinstance(o, np.ndarray):
+        return o.tolist()
+    if isinstance(o, (np.integer,)):
+        return int(o)
+    if isinstance(o, (np.floating,)):
+        return float(o)
+    return o
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Run convoy attack scenario experiments")
@@ -36,7 +45,7 @@ def main() -> None:
     output_dir.mkdir(parents=True, exist_ok=True)
     result = scenario.run()
     out_path = output_dir / f"{args.scenario}.json"
-    out_path.write_text(json.dumps(result, indent=2))
+    out_path.write_text(json.dumps(result, indent=2, default=_json_default))
     summary = result["result"]
     print(f"Wrote results to {out_path}")
     print(
