@@ -34,6 +34,7 @@ from .simulation import (
     simulate_attack,
     simulate_attack_once,
 )
+from .minmax_loop import run_minmax_loop
 
 __all__ = [
     "Vec2",
@@ -63,4 +64,5 @@ __all__ = [
     "sample_parallel_spread",
     "sample_torpedo_spread_fixed_origin",
     "sample_parallel_torpedoes",
+    "run_minmax_loop",
 ]
