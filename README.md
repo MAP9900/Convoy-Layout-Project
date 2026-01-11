@@ -1,23 +1,67 @@
 # Optimal Convoy Layout Project
 
-Research-focused simulator for WWII-style convoys and straight-running torpedoes.
+A research‑focused simulator for WWII‑style convoys and straight‑running torpedoes on a 2D plane (meters). The current phases emphasize fast, interpretable geometry, baseline Monte Carlo evaluation, and coarse optimization loops for defender/attacker layouts.
 
-## Surrogate Training (Phase 7)
+## What It Does
 
-Install extra dependencies:
+- **Geometry + kinematics**: straight‑line ship and torpedo motion with analytical closest‑approach checks.
+- **Convoy layouts**: rectangular, staggered, hex/triangular, and jittered formations.
+- **Monte Carlo**: estimate expected hits, variance, and tail‑risk metrics (VaR/CVaR).
+- **Optimization**: brute‑force defender/attacker search and alternating best‑response loop.
+- **Scenarios & experiments**: scripted runs that save JSON/CSV results under `results/`.
+
+## Quick Start
+
+Run a baseline scenario:
 
 ```bash
-pip install scikit-learn joblib
+python -m experiments.run_scenario scenario_a --n_trials 1000 --seed 123
 ```
 
-Train baseline surrogates from a generated dataset:
+Run defender and attacker searches:
+
+```bash
+python -m experiments.optimize_defender --trials 200 --seed 0
+python -m experiments.optimize_attacker --defense-json results/defender_best.json --trials 200 --seed 0 --mode fan
+```
+
+Run the min‑max loop:
+
+```bash
+python -m experiments.run_minmax --rounds 5 --trials 100 --seed 0
+```
+
+## Surrogate Dataset + Training (Phase 7)
+
+Generate a dataset:
 
 ```bash
 python experiments/make_dataset.py --samples 200 --trials 50 --seed 0
+```
+
+Train baseline surrogates:
+
+```bash
+pip install scikit-learn joblib
 python experiments/train_surrogate.py --data results/datasets/dataset.csv --target expected_hits
 ```
 
-Outputs:
-- `results/surrogate_report_expected_hits.json`
-- `results/randomforestregressor_expected_hits.joblib`
-- `results/gradientboostingregressor_expected_hits.joblib`
+## Project Structure (High Level)
+
+- `convoy_sim/`: core simulation, geometry, layout generation, and optimization utilities.
+- `scenarios/`: scenario definitions (inputs only).
+- `experiments/`: executable scripts that run scenarios and save results.
+- `results/`: output data (gitignored).
+- `tests/`: pytest suite.
+- `docs/`: high‑level script and workflow reference.
+
+## Testing
+
+```bash
+python -m pytest
+```
+
+## Notes
+
+- All units are **meters** and **seconds**.
+- The simulation is deterministic unless optional noise is enabled.
