@@ -25,6 +25,7 @@ from .layouts import (
     make_staggered_convoy,
 )
 from .noise import NoiseModel
+from .risk import empirical_cvar, empirical_var
 from .simulation import (
     run_monte_carlo_attack,
     sample_fan_spread,
@@ -57,6 +58,8 @@ __all__ = [
     "make_hexagonal_convoy",
     "apply_jitter",
     "NoiseModel",
+    "empirical_var",
+    "empirical_cvar",
     "simulate_attack_once",
     "simulate_attack",
     "run_monte_carlo_attack",

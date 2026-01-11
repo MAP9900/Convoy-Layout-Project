@@ -11,6 +11,7 @@ import numpy as np
 from .entities import Ship, Torpedo, torpedo_hits_ship
 from .geometry import Vec2, as_vec
 from .noise import NoiseModel
+from .risk import empirical_cvar, empirical_var
 
 LayoutFn = Callable[..., list[Ship]]
 TorpedoSampler = Callable[[np.random.Generator], Sequence[Torpedo]]
@@ -48,6 +49,7 @@ def run_monte_carlo_attack(
     t_max: float,
     rng: np.random.Generator | None = None,
     noise_model: NoiseModel | None = None,
+    risk_alpha: float | None = None,
 ) -> dict[str, Any]:
     """Run a Monte Carlo study of a torpedo attack scenario."""
 
@@ -64,13 +66,18 @@ def run_monte_carlo_attack(
     expected_hits = float(np.mean(hits))
     variance = float(np.var(hits))
     hit_prob_at_least_one = float(np.mean(hits > 0))
-    return {
+    payload = {
         "hits_per_trial": hits,
         "expected_hits": expected_hits,
         "var_hits": variance,
         "hit_prob_at_least_one": hit_prob_at_least_one,
         "n_trials": n_trials,
     }
+    if risk_alpha is not None:
+        alpha_label = int(round(risk_alpha * 100))
+        payload[f"VaR_{alpha_label}"] = empirical_var(hits, risk_alpha)
+        payload[f"CVaR_{alpha_label}"] = empirical_cvar(hits, risk_alpha)
+    return payload
 
 
 def sample_fan_spread(
