@@ -34,8 +34,48 @@ def load_csv(path: Path) -> tuple[np.ndarray, list[str]]:
     with path.open("r", newline="") as handle:
         reader = csv.reader(handle)
         header = next(reader)
-        rows = [[float(value) for value in row] for row in reader]
-    return np.array(rows, dtype=float), header
+        rows = [row for row in reader]
+    return np.array(rows, dtype=object), header
+
+
+def _encode_features(data: np.ndarray, header: list[str], target: str) -> tuple[np.ndarray, np.ndarray, list[str]]:
+    target_idx = header.index(target)
+    feature_indices = [idx for idx, name in enumerate(header) if name != target]
+    feature_names = [header[idx] for idx in feature_indices]
+
+    X_raw = data[:, feature_indices]
+    y = data[:, target_idx].astype(float)
+
+    numeric_mask = []
+    for col in range(X_raw.shape[1]):
+        try:
+            X_raw[:, col].astype(float)
+            numeric_mask.append(True)
+        except ValueError:
+            numeric_mask.append(False)
+
+    numeric_cols = [i for i, is_num in enumerate(numeric_mask) if is_num]
+    cat_cols = [i for i, is_num in enumerate(numeric_mask) if not is_num]
+
+    X_parts = []
+    final_feature_names: list[str] = []
+
+    if numeric_cols:
+        numeric_data = X_raw[:, numeric_cols].astype(float)
+        X_parts.append(numeric_data)
+        final_feature_names.extend([feature_names[i] for i in numeric_cols])
+
+    for col in cat_cols:
+        categories = sorted(set(X_raw[:, col]))
+        mapping = {cat: idx for idx, cat in enumerate(categories)}
+        one_hot = np.zeros((X_raw.shape[0], len(categories)), dtype=float)
+        for row_idx, cat in enumerate(X_raw[:, col]):
+            one_hot[row_idx, mapping[cat]] = 1.0
+        X_parts.append(one_hot)
+        final_feature_names.extend([f"{feature_names[col]}={cat}" for cat in categories])
+
+    X = np.hstack(X_parts) if X_parts else np.empty((X_raw.shape[0], 0))
+    return X, y, final_feature_names
 
 
 def main() -> None:
@@ -44,12 +84,7 @@ def main() -> None:
     if args.target not in header:
         raise ValueError(f"Target '{args.target}' not found in dataset")
 
-    target_idx = header.index(args.target)
-    feature_indices = [idx for idx, name in enumerate(header) if name != args.target]
-    feature_names = [header[idx] for idx in feature_indices]
-
-    X = data[:, feature_indices]
-    y = data[:, target_idx]
+    X, y, feature_names = _encode_features(data, header, args.target)
 
     X_train, X_test, y_train, y_test = train_test_split(
         X,
@@ -78,7 +113,8 @@ def main() -> None:
     for name, model in models.items():
         model.fit(X_train, y_train)
         preds = model.predict(X_test)
-        rmse = float(mean_squared_error(y_test, preds, squared=False))
+        mse = float(mean_squared_error(y_test, preds))
+        rmse = float(np.sqrt(mse))
         r2 = float(r2_score(y_test, preds))
         report["metrics"][name] = {"rmse": rmse, "r2": r2}
         model_path = output_dir / f"{name.lower()}_{args.target}.joblib"

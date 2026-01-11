@@ -1,0 +1,31 @@
+{
+  "target": "expected_hits",
+  "feature_names": [
+    "atk_base_bearing_rad",
+    "atk_launch_delay_mean",
+    "atk_n",
+    "atk_spread_rad",
+    "atk_torpedo_max_run_time",
+    "def_jitter_std",
+    "def_spacing_across",
+    "def_spacing_along",
+    "noise_p_dud",
+    "noise_sigma_heading_rad",
+    "noise_sigma_launch_delay",
+    "p_hit_ge_1",
+    "CVaR_90",
+    "atk_mode=fan",
+    "atk_torpedo_origin=(-2000.0",
+    "atk_torpedo_speed= 0.0)"
+  ],
+  "metrics": {
+    "RandomForestRegressor": {
+      "rmse": 0.6129954209779556,
+      "r2": -0.18909593590564566
+    },
+    "GradientBoostingRegressor": {
+      "rmse": 0.6154758523989396,
+      "r2": -0.19873854727483709
+    }
+  }
+}
