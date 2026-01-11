@@ -1,0 +1,65 @@
+{
+  "history": [
+    {
+      "round_index": 0,
+      "defense_params": {
+        "spacing_along": 400.0,
+        "spacing_across": 350.0,
+        "jitter_std": 0.0
+      },
+      "attack_params": {
+        "base_bearing_rad": 0.0,
+        "spread_rad": 0.4,
+        "n": 4,
+        "launch_delay_mean": 0.0
+      },
+      "expected_hits": 8.0,
+      "p_hit_ge_1": 1.0,
+      "var_hits": 0.0,
+      "footprint_area": 840000.0,
+      "max_extent_along": 800.0,
+      "max_extent_across": 1050.0
+    },
+    {
+      "round_index": 1,
+      "defense_params": {
+        "spacing_along": 400.0,
+        "spacing_across": 250.0,
+        "jitter_std": 0.0
+      },
+      "attack_params": {
+        "base_bearing_rad": 0.0,
+        "spread_rad": 0.2,
+        "n": 4,
+        "launch_delay_mean": 0.0
+      },
+      "expected_hits": 8.0,
+      "p_hit_ge_1": 1.0,
+      "var_hits": 0.0,
+      "footprint_area": 600000.0,
+      "max_extent_along": 800.0,
+      "max_extent_across": 750.0
+    },
+    {
+      "round_index": 2,
+      "defense_params": {
+        "spacing_along": 400.0,
+        "spacing_across": 350.0,
+        "jitter_std": 0.0
+      },
+      "attack_params": {
+        "base_bearing_rad": 0.0,
+        "spread_rad": 0.4,
+        "n": 4,
+        "launch_delay_mean": 0.0
+      },
+      "expected_hits": 8.0,
+      "p_hit_ge_1": 1.0,
+      "var_hits": 0.0,
+      "footprint_area": 840000.0,
+      "max_extent_along": 800.0,
+      "max_extent_across": 1050.0
+    }
+  ],
+  "rounds_completed": 3
+}
