@@ -12,11 +12,10 @@ from convoy_sim import (
     as_vec,
     make_rectangular_convoy,
     run_monte_carlo_attack,
-    sample_fan_spread,
-    sample_parallel_spread,
     simulate_attack,
     simulate_attack_once,
 )
+from convoy_sim.attackers import fan_spread, parallel_spread
 
 
 def test_convoy_sim_imports() -> None:
@@ -39,7 +38,7 @@ def _single_ship_layout_kwargs(speed: float = 0.0) -> dict:
 
 def _fan_sampler(origin: np.ndarray) -> Callable[[np.random.Generator], list]:
     def sampler(_: np.random.Generator):
-        return sample_fan_spread(
+        return fan_spread(
             u_pos=origin,
             base_bearing_rad=0.0,
             n=1,
@@ -91,7 +90,7 @@ def test_monte_carlo_all_misses() -> None:
 
 
 def test_sample_fan_spread_headings() -> None:
-    torpedoes = sample_fan_spread(
+    torpedoes = fan_spread(
         u_pos=as_vec(0.0, 0.0),
         base_bearing_rad=0.0,
         n=3,
@@ -107,7 +106,7 @@ def test_sample_fan_spread_headings() -> None:
 
 
 def test_sample_parallel_spread_positions() -> None:
-    torpedoes = sample_parallel_spread(
+    torpedoes = parallel_spread(
         u_pos=as_vec(0.0, 0.0),
         bearing_rad=0.0,
         n=3,

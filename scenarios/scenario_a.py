@@ -6,7 +6,7 @@ import math
 import numpy as np
 
 from convoy_sim import as_vec, make_rectangular_convoy
-from convoy_sim.simulation import sample_fan_spread
+from convoy_sim.attackers import fan_spread
 from .scenario_base import Scenario
 
 
@@ -24,7 +24,7 @@ def build_scenario_a(n_trials: int = 200, rng_seed: int | None = 1234) -> Scenar
     )
 
     def sampler(_: np.random.Generator):
-        return sample_fan_spread(
+        return fan_spread(
             u_pos=as_vec(-2000.0, 0.0),
             base_bearing_rad=0.0,
             n=4,

@@ -12,7 +12,7 @@ from convoy_sim.attacker_opt import search_attack_params
 from convoy_sim.defender_opt import LayoutCandidateResult, search_layout_params
 from convoy_sim.entities import Torpedo
 from convoy_sim.noise import NoiseModel
-from convoy_sim.simulation import sample_fan_spread, sample_parallel_spread
+from convoy_sim.attackers import fan_spread, parallel_spread
 from scenarios.scenario_base import Scenario
 
 
@@ -63,7 +63,7 @@ def _attack_sampler_factory(attack_state: dict[str, Any]):
 
     def sampler(_: np.random.Generator):
         if mode == "parallel":
-            torps = sample_parallel_spread(
+            torps = parallel_spread(
                 u_pos=origin,
                 bearing_rad=base_bearing,
                 n=n,
@@ -72,7 +72,7 @@ def _attack_sampler_factory(attack_state: dict[str, Any]):
                 max_run_time=max_run_time,
             )
         else:
-            torps = sample_fan_spread(
+            torps = fan_spread(
                 u_pos=origin,
                 base_bearing_rad=base_bearing,
                 n=n,

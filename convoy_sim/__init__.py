@@ -26,6 +26,7 @@ from .layouts import (
 )
 from .noise import NoiseModel
 from .risk import empirical_cvar, empirical_var
+from .attackers import fan_spread, parallel_spread
 from .simulation import (
     run_monte_carlo_attack,
     sample_fan_spread,
@@ -63,6 +64,8 @@ __all__ = [
     "simulate_attack_once",
     "simulate_attack",
     "run_monte_carlo_attack",
+    "fan_spread",
+    "parallel_spread",
     "sample_fan_spread",
     "sample_parallel_spread",
     "sample_torpedo_spread_fixed_origin",

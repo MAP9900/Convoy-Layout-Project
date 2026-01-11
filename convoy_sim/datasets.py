@@ -9,7 +9,8 @@ from typing import Any, Iterable
 import numpy as np
 
 from convoy_sim.noise import NoiseModel
-from convoy_sim.simulation import run_monte_carlo_attack, sample_fan_spread, sample_parallel_spread
+from convoy_sim.attackers import fan_spread, parallel_spread
+from convoy_sim.simulation import run_monte_carlo_attack
 from scenarios.scenario_base import Scenario
 
 
@@ -73,7 +74,7 @@ def generate_dataset(
 
         def sampler(_: np.random.Generator):
             if mode == "parallel":
-                torps = sample_parallel_spread(
+                torps = parallel_spread(
                     u_pos=torpedo_origin,
                     bearing_rad=base_bearing,
                     n=n,
@@ -82,7 +83,7 @@ def generate_dataset(
                     max_run_time=torpedo_max_run_time,
                 )
             else:
-                torps = sample_fan_spread(
+                torps = fan_spread(
                     u_pos=torpedo_origin,
                     base_bearing_rad=base_bearing,
                     n=n,

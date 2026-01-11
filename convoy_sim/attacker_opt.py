@@ -12,7 +12,8 @@ from typing import Any, Iterable, Sequence
 import numpy as np
 
 from convoy_sim.entities import Torpedo
-from convoy_sim.simulation import run_monte_carlo_attack, sample_fan_spread, sample_parallel_spread
+from convoy_sim.attackers import fan_spread, parallel_spread
+from convoy_sim.simulation import run_monte_carlo_attack
 
 
 @dataclass(frozen=True)
@@ -86,7 +87,7 @@ def search_attack_params(
 
         def sampler(_: np.random.Generator):
             if mode == "fan":
-                torps = sample_fan_spread(
+                torps = fan_spread(
                     u_pos=torpedo_origin,
                     base_bearing_rad=base_bearing,
                     n=n,
@@ -95,7 +96,7 @@ def search_attack_params(
                     max_run_time=torpedo_max_run_time,
                 )
             else:
-                torps = sample_parallel_spread(
+                torps = parallel_spread(
                     u_pos=torpedo_origin,
                     bearing_rad=base_bearing,
                     n=n,

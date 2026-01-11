@@ -2,12 +2,13 @@
 
 from __future__ import annotations
 
-import math
 from dataclasses import replace
+import math
 from typing import Any, Callable, Sequence
 
 import numpy as np
 
+from .attackers import fan_spread, parallel_spread
 from .entities import Ship, Torpedo, torpedo_hits_ship
 from .geometry import Vec2, as_vec
 from .noise import NoiseModel
@@ -90,27 +91,14 @@ def sample_fan_spread(
 ) -> list[Torpedo]:
     """Fire ``n`` torpedoes from ``u_pos`` spread evenly across ``spread_rad``."""
 
-    if n <= 0:
-        return []
-    origin_vec = _vec(u_pos)
-    if n == 1 or spread_rad == 0.0:
-        headings = [base_bearing_rad]
-    else:
-        half_spread = spread_rad / 2.0
-        headings = [
-            base_bearing_rad - half_spread + (spread_rad * i / (n - 1))
-            for i in range(n)
-        ]
-    return [
-        Torpedo(
-            id=f"F{i+1:02d}",
-            launch_position=origin_vec,
-            speed=speed,
-            heading_rad=heading,
-            max_run_time=max_run_time,
-        )
-        for i, heading in enumerate(headings)
-    ]
+    return fan_spread(
+        u_pos=u_pos,
+        base_bearing_rad=base_bearing_rad,
+        n=n,
+        spread_rad=spread_rad,
+        speed=speed,
+        max_run_time=max_run_time,
+    )
 
 
 def sample_parallel_spread(
@@ -123,25 +111,14 @@ def sample_parallel_spread(
 ) -> list[Torpedo]:
     """Fire ``n`` torpedoes from parallel launchers offset laterally."""
 
-    if n <= 0:
-        return []
-    origin_vec = _vec(u_pos)
-    perp = as_vec(-math.sin(bearing_rad), math.cos(bearing_rad))
-    center = (n - 1) / 2.0
-    launches = [
-        origin_vec + perp * ((i - center) * lateral_spacing)
-        for i in range(n)
-    ]
-    return [
-        Torpedo(
-            id=f"P{i+1:02d}",
-            launch_position=launch_pos,
-            speed=speed,
-            heading_rad=bearing_rad,
-            max_run_time=max_run_time,
-        )
-        for i, launch_pos in enumerate(launches)
-    ]
+    return parallel_spread(
+        u_pos=u_pos,
+        bearing_rad=bearing_rad,
+        n=n,
+        lateral_spacing=lateral_spacing,
+        speed=speed,
+        max_run_time=max_run_time,
+    )
 
 
 def _apply_noise(
