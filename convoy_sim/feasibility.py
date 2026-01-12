@@ -21,6 +21,10 @@ from convoy_sim.geometry import Vec2, as_vec, distance
 
 
 APPROACH_CONE_HALF_WIDTH_DEG = 30.0
+VIS_REF_M = 5000.0
+SEA_STATE_REF = 5.0
+SEA_STATE_FACTOR_SCALE = 0.05
+ESCORT_DECAY_LEN_M = 2000.0
 
 
 class ApproachMode(str, Enum):
@@ -187,16 +191,45 @@ def is_attack_feasible(
     reference = compute_convoy_reference(ships)
     failed_checks: list[str] = []
     range_m = distance(proposal.u_boat_pos, reference["centroid"])
+    risk_score = None
     if not attack_in_range(proposal, reference["centroid"], constraints):
         failed_checks.append("range")
     if violates_escort_exclusion(proposal, constraints.escort_zones):
         failed_checks.append("escort_exclusion")
     if not approach_mode_feasible(proposal, reference["heading_rad"], constraints):
         failed_checks.append("approach_mode")
+    if env is not None:
+        risk_score = detection_risk_score(proposal, constraints.escort_zones, env)
+        if constraints.enable_soft_risk and risk_score > constraints.max_allowed_risk:
+            failed_checks.append("risk")
     details = {
         "failed_checks": failed_checks,
         "range_m": range_m,
         "convoy_reference": reference,
+        "detection_risk": risk_score,
         "env": env,
     }
     return len(failed_checks) == 0, details
+
+
+def detection_risk_score(
+    proposal: AttackProposal,
+    escort_zones: list[EscortZone],
+    env: Environment,
+) -> float:
+    """Compute a simple detection risk score for an attack proposal.
+
+    Sea state adjustment assumes rougher seas reduce detection slightly.
+    """
+
+    base = float(env.detection_risk_scale)
+    visibility_factor = float(np.clip(env.visibility_m / VIS_REF_M, 0.25, 4.0))
+    time_of_day_factor = 1.5 if env.time_of_day == "day" else 0.8
+    sea_state_delta = SEA_STATE_FACTOR_SCALE * (env.sea_state - SEA_STATE_REF)
+    sea_state_factor = float(np.clip(1.0 + sea_state_delta, 0.5, 1.5))
+
+    escort_proximity = 0.0
+    for zone in escort_zones:
+        d = distance(proposal.u_boat_pos, zone.center)
+        escort_proximity += zone.risk_weight * float(np.exp(-d / ESCORT_DECAY_LEN_M))
+    return base * visibility_factor * time_of_day_factor * sea_state_factor * (1.0 + escort_proximity)
