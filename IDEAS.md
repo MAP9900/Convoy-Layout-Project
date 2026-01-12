@@ -10,14 +10,14 @@
 - Environment-dependent approach constraints (night vs day, visibility).
 
 ### Heterogeneous ships
-- Multiple ship classes (freighter, tanker, escort, decoy).
+- Multiple ship classes (freighter, tanker, escort, Liberty ships).
 - Different physical sizes (beam, hit radius).
 - Different values or loss weights.
 - Objectives based on value destroyed rather than raw hit count.
 
 ### Temporal realism
 - Convoy heading changes over time (legs).
-- Convoy-level zig-zag patterns (slow, coordinated).
+- Convoy-level zig-zag patterns (slow, coordinated, and historically accurate).
 - Time-dependent attack windows (attacks optimized for *when*, not just *where*).
 
 ---
@@ -51,6 +51,15 @@
 - Layouts that remain effective under uncertainty.
 - Attacks that dominate across parameter ranges.
 
+
+### Reinforcement learning
+- Wire ConvoyRLEnv to run_monte_carlo_attack for rewards.
+- Define concrete observation/action vectors (e.g., layout spacing + spread params).
+- Finish RL integration into the Simulation
+- Discrete action menus for stability.
+- Self-play attacker/defender learning.
+- Policies instead of fixed parameters.
+
 ### Surrogate modeling
 ML models approximating simulation outcomes.
 
@@ -58,11 +67,6 @@ ML models approximating simulation outcomes.
 - Fast optimization.
 - Sensitivity analysis.
 - Interpretability (feature importance).
-
-### Reinforcement learning (advanced)
-- Discrete action menus for stability.
-- Self-play attacker/defender learning.
-- Policies instead of fixed parameters.
 
 ---
 
