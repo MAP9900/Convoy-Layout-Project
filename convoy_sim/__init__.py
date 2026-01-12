@@ -17,7 +17,7 @@ from .geometry import (
     step_position,
     translate_point,
 )
-from .entities import Convoy, Ship, Torpedo, torpedo_hits_ship
+from .entities import Convoy, Ship, ShipClass, Torpedo, torpedo_hits_ship
 from .layouts import (
     apply_jitter,
     make_hexagonal_convoy,
@@ -37,6 +37,7 @@ from .simulation import (
     simulate_attack_once,
 )
 from .minmax_loop import run_minmax_loop
+from .ship_catalog import SHIP_CATALOG, make_ship
 
 __all__ = [
     "Vec2",
@@ -51,6 +52,7 @@ __all__ = [
     "rotate_point",
     "translate_point",
     "Ship",
+    "ShipClass",
     "Torpedo",
     "Convoy",
     "torpedo_hits_ship",
@@ -71,4 +73,6 @@ __all__ = [
     "sample_torpedo_spread_fixed_origin",
     "sample_parallel_torpedoes",
     "run_minmax_loop",
+    "SHIP_CATALOG",
+    "make_ship",
 ]

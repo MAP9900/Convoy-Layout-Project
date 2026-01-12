@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from enum import Enum
 import math
 from typing import Sequence
 
@@ -24,6 +25,15 @@ def _vec(value: Vec2 | Sequence[float]) -> Vec2:
     return arr
 
 
+class ShipClass(str, Enum):
+    """Basic ship taxonomy for heterogeneous convoy modeling."""
+
+    FREIGHTER = "freighter"
+    TANKER = "tanker"
+    ESCORT = "escort"
+    DECOY = "decoy"
+
+
 @dataclass
 class Ship:
     """Simple surface vessel model with straight-line kinematics."""
@@ -34,6 +44,9 @@ class Ship:
     heading_rad: float
     length: float
     beam: float
+    ship_class: ShipClass = field(default=ShipClass.FREIGHTER)
+    value_weight: float = 1.0
+    hit_radius: float | None = None
 
     def __post_init__(self) -> None:
         self.position = _vec(self.position)
@@ -73,6 +86,15 @@ class Ship:
         sin_a = math.sin(self.heading_rad)
         rotation = np.array([[cos_a, -sin_a], [sin_a, cos_a]], dtype=float)
         return [self.position + rotation @ corner for corner in corners]
+
+    def effective_hit_radius(self) -> float:
+        """Return the effective hit radius used for collision checks."""
+
+        if self.hit_radius is not None:
+            return float(self.hit_radius)
+        half_length = self.length / 2.0
+        half_beam = self.beam / 2.0
+        return float(np.hypot(half_length, half_beam))
 
 
 @dataclass
@@ -170,7 +192,7 @@ def torpedo_hits_ship(ship: Ship, torpedo: Torpedo, t_max: float, safety_margin:
     if t_max <= 0 or torpedo.is_dud:
         return False
     window = min(float(t_max), float(torpedo.max_run_time))
-    ship_radius = max(ship.length, ship.beam) * 0.5 + float(safety_margin)
+    ship_radius = ship.effective_hit_radius() + float(safety_margin)
     segments = []
     delay = min(torpedo.launch_delay, window)
     if delay > 0.0:
