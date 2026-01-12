@@ -7,9 +7,11 @@ import json
 from pathlib import Path
 import numpy as np
 from scenarios.scenario_a import build_scenario_a
+from scenarios.scenario_a1_constraints import build_scenario_a1
 
 SCENARIOS = {
     "scenario_a": build_scenario_a,
+    "scenario_a1": build_scenario_a,
 }
 
 import numpy as np
