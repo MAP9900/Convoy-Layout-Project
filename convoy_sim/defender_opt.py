@@ -13,7 +13,8 @@ from typing import Any, Iterable, Sequence
 import numpy as np
 
 from convoy_sim.geometry import Vec2, as_vec
-from convoy_sim.simulation import run_monte_carlo_attack
+from convoy_sim.objectives import ObjectiveSpec, aggregate_objective
+from convoy_sim.simulation import run_monte_carlo_attack, run_monte_carlo_attack_scored
 from scenarios.scenario_base import Scenario
 
 
@@ -58,6 +59,7 @@ def search_layout_params(
     constraints: dict[str, float] | None = None,
     output_csv: Path | None = None,
     output_json: Path | None = None,
+    objective: ObjectiveSpec | None = None,
 ) -> list[LayoutCandidateResult]:
     """Run a brute-force layout search and return ranked candidate metrics."""
 
@@ -86,21 +88,41 @@ def search_layout_params(
             continue
 
         rng = np.random.default_rng(None if seed is None else seed + idx)
-        result = run_monte_carlo_attack(
-            layout_fn=layout_fn,
-            layout_kwargs=candidate_kwargs,
-            torpedo_sampler=scenario.torpedo_sampler,
-            n_trials=n_trials,
-            t_max=scenario.t_max,
-            rng=rng,
-            noise_model=scenario.noise_model,
-        )
+        if objective is None:
+            result = run_monte_carlo_attack(
+                layout_fn=layout_fn,
+                layout_kwargs=candidate_kwargs,
+                torpedo_sampler=scenario.torpedo_sampler,
+                n_trials=n_trials,
+                t_max=scenario.t_max,
+                rng=rng,
+                noise_model=scenario.noise_model,
+            )
+            expected_hits = result["expected_hits"]
+            p_hit = result["hit_prob_at_least_one"]
+            var_hits = result["var_hits"]
+        else:
+            result = run_monte_carlo_attack_scored(
+                layout_fn=layout_fn,
+                layout_kwargs=candidate_kwargs,
+                torpedo_sampler=scenario.torpedo_sampler,
+                n_trials=n_trials,
+                t_max=scenario.t_max,
+                rng=rng,
+                noise_model=scenario.noise_model,
+                risk_alpha=objective.risk_alpha,
+            )
+            expected_hits = result["expected_hits"]
+            p_hit = result["hit_prob_at_least_one"]
+            var_hits = result["var_hits"]
+            objective_score = aggregate_objective(result, objective)
+            expected_hits = objective_score
         results.append(
             LayoutCandidateResult(
                 params=overrides,
-                expected_hits=result["expected_hits"],
-                p_hit_ge_1=result["hit_prob_at_least_one"],
-                var_hits=result["var_hits"],
+                expected_hits=expected_hits,
+                p_hit_ge_1=p_hit,
+                var_hits=var_hits,
                 footprint_area=area,
                 max_extent_along=ext_along,
                 max_extent_across=ext_across,

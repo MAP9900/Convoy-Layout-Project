@@ -13,7 +13,8 @@ import numpy as np
 
 from convoy_sim.entities import Torpedo
 from convoy_sim.attackers import fan_spread, parallel_spread
-from convoy_sim.simulation import run_monte_carlo_attack
+from convoy_sim.objectives import ObjectiveSpec, aggregate_objective
+from convoy_sim.simulation import run_monte_carlo_attack, run_monte_carlo_attack_scored
 
 
 @dataclass(frozen=True)
@@ -67,6 +68,7 @@ def search_attack_params(
     convoy_heading_rad: float | None = None,
     output_csv: Path | None = None,
     output_json: Path | None = None,
+    objective: ObjectiveSpec | None = None,
 ) -> list[AttackCandidateResult]:
     """Search attack parameters and return candidates ranked by expected hits."""
 
@@ -107,20 +109,39 @@ def search_attack_params(
             return _apply_launch_delay_mean(torps, delay_mean)
 
         rng = np.random.default_rng(None if rng_seed is None else rng_seed + idx)
-        result = run_monte_carlo_attack(
-            layout_fn=layout_fn,
-            layout_kwargs=layout_kwargs,
-            torpedo_sampler=sampler,
-            n_trials=n_trials,
-            t_max=t_max,
-            rng=rng,
-        )
+        if objective is None:
+            result = run_monte_carlo_attack(
+                layout_fn=layout_fn,
+                layout_kwargs=layout_kwargs,
+                torpedo_sampler=sampler,
+                n_trials=n_trials,
+                t_max=t_max,
+                rng=rng,
+            )
+            expected_hits = result["expected_hits"]
+            p_hit = result["hit_prob_at_least_one"]
+            var_hits = result["var_hits"]
+        else:
+            result = run_monte_carlo_attack_scored(
+                layout_fn=layout_fn,
+                layout_kwargs=layout_kwargs,
+                torpedo_sampler=sampler,
+                n_trials=n_trials,
+                t_max=t_max,
+                rng=rng,
+                risk_alpha=objective.risk_alpha,
+            )
+            expected_hits = result["expected_hits"]
+            p_hit = result["hit_prob_at_least_one"]
+            var_hits = result["var_hits"]
+            objective_score = aggregate_objective(result, objective)
+            expected_hits = objective_score
         results.append(
             AttackCandidateResult(
                 params=params,
-                expected_hits=result["expected_hits"],
-                p_hit_ge_1=result["hit_prob_at_least_one"],
-                var_hits=result["var_hits"],
+                expected_hits=expected_hits,
+                p_hit_ge_1=p_hit,
+                var_hits=var_hits,
             )
         )
 

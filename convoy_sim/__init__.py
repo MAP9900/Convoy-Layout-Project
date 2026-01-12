@@ -26,6 +26,7 @@ from .layouts import (
 )
 from .noise import NoiseModel
 from .risk import empirical_cvar, empirical_var
+from .objectives import ObjectiveSpec, aggregate_objective, score_trial_result
 from .attackers import fan_spread, parallel_spread
 from .simulation import (
     run_monte_carlo_attack,
@@ -65,6 +66,9 @@ __all__ = [
     "NoiseModel",
     "empirical_var",
     "empirical_cvar",
+    "ObjectiveSpec",
+    "score_trial_result",
+    "aggregate_objective",
     "simulate_attack_once",
     "simulate_attack_once_scored",
     "simulate_attack",
