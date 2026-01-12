@@ -76,5 +76,8 @@ def build_scenario_a1(n_trials: int = 200, rng_seed: int | None = 1234) -> Scena
         n_trials=n_trials,
         t_max=400.0,
         rng_seed=rng_seed,
-        metadata={"description": "Scenario A with feasibility constraints"},
+        metadata={
+            "description": "Scenario A with feasibility constraints",
+            "enable_value_scoring": True,
+        },
     )

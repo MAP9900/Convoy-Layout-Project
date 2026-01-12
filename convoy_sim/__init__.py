@@ -29,12 +29,14 @@ from .risk import empirical_cvar, empirical_var
 from .attackers import fan_spread, parallel_spread
 from .simulation import (
     run_monte_carlo_attack,
+    run_monte_carlo_attack_scored,
     sample_fan_spread,
     sample_parallel_spread,
     sample_parallel_torpedoes,
     sample_torpedo_spread_fixed_origin,
     simulate_attack,
     simulate_attack_once,
+    simulate_attack_once_scored,
 )
 from .minmax_loop import run_minmax_loop
 from .ship_catalog import SHIP_CATALOG, make_ship
@@ -64,8 +66,10 @@ __all__ = [
     "empirical_var",
     "empirical_cvar",
     "simulate_attack_once",
+    "simulate_attack_once_scored",
     "simulate_attack",
     "run_monte_carlo_attack",
+    "run_monte_carlo_attack_scored",
     "fan_spread",
     "parallel_spread",
     "sample_fan_spread",

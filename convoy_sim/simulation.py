@@ -9,7 +9,7 @@ from typing import Any, Callable, Sequence
 import numpy as np
 
 from .attackers import fan_spread, parallel_spread
-from .entities import Ship, Torpedo, torpedo_hits_ship
+from .entities import Ship, ShipClass, Torpedo, torpedo_hits_ship
 from .geometry import Vec2, as_vec, closest_approach_time, distance
 from .noise import NoiseModel
 from .risk import empirical_cvar, empirical_var
@@ -54,6 +54,45 @@ def simulate_attack_once(
     return total_hits
 
 
+def simulate_attack_once_scored(
+    ships: Sequence[Ship],
+    torpedoes: Sequence[Torpedo],
+    t_max: float,
+    max_hits_per_torpedo: int | None = None,
+) -> dict[str, Any]:
+    """Simulate one attack and return hit counts plus value-based metrics.
+
+    Ship value is counted once per ship if hit at least once, even if multiple
+    torpedoes hit the same ship.
+    """
+
+    hit_ship_ids: set[str] = set()
+    hits_by_class: dict[ShipClass, int] = {}
+    value_by_class: dict[ShipClass, float] = {}
+
+    n_hits = simulate_attack_once(
+        ships=ships,
+        torpedoes=torpedoes,
+        t_max=t_max,
+        max_hits_per_torpedo=max_hits_per_torpedo,
+    )
+
+    for ship in ships:
+        if any(torpedo_hits_ship(ship=ship, torpedo=torpedo, t_max=t_max) for torpedo in torpedoes):
+            hit_ship_ids.add(ship.id)
+            hits_by_class[ship.ship_class] = hits_by_class.get(ship.ship_class, 0) + 1
+            value_by_class[ship.ship_class] = value_by_class.get(ship.ship_class, 0.0) + ship.value_weight
+
+    total_value_destroyed = float(sum(value_by_class.values()))
+    return {
+        "hit_ship_ids": list(hit_ship_ids),
+        "n_hits": n_hits,
+        "total_value_destroyed": total_value_destroyed,
+        "value_destroyed_by_class": value_by_class,
+        "hits_by_class": hits_by_class,
+    }
+
+
 def run_monte_carlo_attack(
     layout_fn: LayoutFn,
     layout_kwargs: dict[str, Any],
@@ -96,6 +135,57 @@ def run_monte_carlo_attack(
         alpha_label = int(round(risk_alpha * 100))
         payload[f"VaR_{alpha_label}"] = empirical_var(hits, risk_alpha)
         payload[f"CVaR_{alpha_label}"] = empirical_cvar(hits, risk_alpha)
+    return payload
+
+
+def run_monte_carlo_attack_scored(
+    layout_fn: LayoutFn,
+    layout_kwargs: dict[str, Any],
+    torpedo_sampler: TorpedoSampler,
+    n_trials: int,
+    t_max: float,
+    rng: np.random.Generator | None = None,
+    noise_model: NoiseModel | None = None,
+    risk_alpha: float | None = None,
+    max_hits_per_torpedo: int | None = None,
+) -> dict[str, Any]:
+    """Run Monte Carlo and return hit/value metrics."""
+
+    if n_trials <= 0:
+        raise ValueError("n_trials must be positive")
+    generator = rng or np.random.default_rng()
+    hits = np.zeros(n_trials, dtype=float)
+    values = np.zeros(n_trials, dtype=float)
+    for idx in range(n_trials):
+        ships = layout_fn(**layout_kwargs)
+        torpedoes = list(torpedo_sampler(generator))
+        if noise_model and not noise_model.is_inactive():
+            torpedoes = _apply_noise(torpedoes, noise_model, generator)
+        scored = simulate_attack_once_scored(
+            ships=ships,
+            torpedoes=torpedoes,
+            t_max=t_max,
+            max_hits_per_torpedo=max_hits_per_torpedo,
+        )
+        hits[idx] = scored["n_hits"]
+        values[idx] = scored["total_value_destroyed"]
+    expected_hits = float(np.mean(hits))
+    expected_value = float(np.mean(values))
+    variance = float(np.var(hits))
+    hit_prob_at_least_one = float(np.mean(hits > 0))
+    payload = {
+        "hits_per_trial": hits,
+        "value_destroyed_per_trial": values,
+        "expected_hits": expected_hits,
+        "expected_value_destroyed": expected_value,
+        "var_hits": variance,
+        "hit_prob_at_least_one": hit_prob_at_least_one,
+        "n_trials": n_trials,
+    }
+    if risk_alpha is not None:
+        alpha_label = int(round(risk_alpha * 100))
+        payload[f"VaR_{alpha_label}"] = empirical_var(values, risk_alpha)
+        payload[f"CVaR_{alpha_label}"] = empirical_cvar(values, risk_alpha)
     return payload
 
 

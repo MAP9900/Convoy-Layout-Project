@@ -41,5 +41,8 @@ def build_scenario_a(n_trials: int = 200, rng_seed: int | None = 1234) -> Scenar
         n_trials=n_trials,
         t_max=400.0,
         rng_seed=rng_seed,
-        metadata={"description": "Baseline rectangular convoy vs straight torpedo fan spread"},
+        metadata={
+            "description": "Baseline rectangular convoy vs straight torpedo fan spread",
+            "enable_value_scoring": False,
+        },
     )
