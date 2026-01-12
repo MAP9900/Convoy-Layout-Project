@@ -16,6 +16,12 @@ from typing import Any, Literal
 
 import numpy as np
 
+from convoy_sim.entities import Ship
+from convoy_sim.geometry import Vec2, as_vec, distance
+
+
+APPROACH_CONE_HALF_WIDTH_DEG = 30.0
+
 
 class ApproachMode(str, Enum):
     """Relative geometry between attacker bearing and convoy heading."""
@@ -91,3 +97,106 @@ class AttackProposal:
             raise ValueError("u_boat_pos and target_point must be 2D vectors")
         object.__setattr__(self, "u_boat_pos", u_boat_pos)
         object.__setattr__(self, "target_point", target_point)
+
+
+def compute_convoy_reference(ships: list[Ship], t_ref: float = 0.0) -> dict[str, Any]:
+    """Return convoy centroid, mean heading/speed, and bounding box extents."""
+
+    if not ships:
+        raise ValueError("ships must be non-empty")
+    positions = np.array([ship.position_at(t_ref) for ship in ships], dtype=float)
+    centroid = np.mean(positions, axis=0)
+    mean_speed = float(np.mean([ship.speed for ship in ships]))
+    headings = np.array([ship.heading_rad for ship in ships], dtype=float)
+    mean_heading = float(np.arctan2(np.mean(np.sin(headings)), np.mean(np.cos(headings))))
+    cos_h = np.cos(-mean_heading)
+    sin_h = np.sin(-mean_heading)
+    rotation = np.array([[cos_h, -sin_h], [sin_h, cos_h]], dtype=float)
+    rotated = (rotation @ (positions - centroid).T).T
+    bbox_along = float(np.max(rotated[:, 0]) - np.min(rotated[:, 0]))
+    bbox_across = float(np.max(rotated[:, 1]) - np.min(rotated[:, 1]))
+    return {
+        "centroid": centroid,
+        "heading_rad": mean_heading,
+        "speed": mean_speed,
+        "bbox_along": bbox_along,
+        "bbox_across": bbox_across,
+    }
+
+
+def attack_in_range(
+    proposal: AttackProposal,
+    convoy_centroid: Vec2,
+    constraints: AttackConstraints,
+) -> bool:
+    """Check if the proposal launch point is within range of the convoy centroid."""
+
+    range_m = distance(proposal.u_boat_pos, convoy_centroid)
+    return constraints.min_range <= range_m <= constraints.max_range
+
+
+def violates_escort_exclusion(proposal: AttackProposal, zones: list[EscortZone]) -> bool:
+    """Return True if the proposal starts inside any hard exclusion zone."""
+
+    for zone in zones:
+        if zone.hard_exclusion:
+            if distance(proposal.u_boat_pos, zone.center) <= zone.radius:
+                return True
+    return False
+
+
+def _wrap_angle(angle_rad: float) -> float:
+    return float((angle_rad + np.pi) % (2 * np.pi) - np.pi)
+
+
+def _angle_close(angle_a: float, angle_b: float, tolerance_rad: float) -> bool:
+    return abs(_wrap_angle(angle_a - angle_b)) <= tolerance_rad
+
+
+def approach_mode_feasible(
+    proposal: AttackProposal,
+    convoy_heading_rad: float,
+    constraints: AttackConstraints,
+) -> bool:
+    """Check if the proposal bearing fits allowed approach cones."""
+
+    if proposal.approach_mode not in constraints.allowed_modes:
+        return False
+    tolerance = np.deg2rad(APPROACH_CONE_HALF_WIDTH_DEG)
+    bearing = proposal.bearing_rad
+    if proposal.approach_mode == ApproachMode.BOW_ON:
+        target = _wrap_angle(convoy_heading_rad + np.pi)
+        return _angle_close(bearing, target, tolerance)
+    if proposal.approach_mode == ApproachMode.STERN_CHASE:
+        return _angle_close(bearing, convoy_heading_rad, tolerance)
+    if proposal.approach_mode == ApproachMode.ABEAM:
+        starboard = _wrap_angle(convoy_heading_rad + np.pi / 2.0)
+        port = _wrap_angle(convoy_heading_rad - np.pi / 2.0)
+        return _angle_close(bearing, starboard, tolerance) or _angle_close(bearing, port, tolerance)
+    return False
+
+
+def is_attack_feasible(
+    ships: list[Ship],
+    proposal: AttackProposal,
+    constraints: AttackConstraints,
+    env: Environment | None = None,
+) -> tuple[bool, dict[str, Any]]:
+    """Evaluate proposal feasibility and return (feasible, details)."""
+
+    reference = compute_convoy_reference(ships)
+    failed_checks: list[str] = []
+    range_m = distance(proposal.u_boat_pos, reference["centroid"])
+    if not attack_in_range(proposal, reference["centroid"], constraints):
+        failed_checks.append("range")
+    if violates_escort_exclusion(proposal, constraints.escort_zones):
+        failed_checks.append("escort_exclusion")
+    if not approach_mode_feasible(proposal, reference["heading_rad"], constraints):
+        failed_checks.append("approach_mode")
+    details = {
+        "failed_checks": failed_checks,
+        "range_m": range_m,
+        "convoy_reference": reference,
+        "env": env,
+    }
+    return len(failed_checks) == 0, details
