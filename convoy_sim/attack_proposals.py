@@ -3,13 +3,15 @@
 from __future__ import annotations
 
 import math
-from typing import Any
+from typing import Any, Literal
 
 import numpy as np
 
 from convoy_sim.entities import Ship
 from convoy_sim.feasibility import AttackProposal, ApproachMode, compute_convoy_reference
 from convoy_sim.geometry import as_vec
+
+AimpointStrategy = Literal["centroid", "max_value", "value_weighted_centroid"]
 
 
 def _sample_u_boat_position(cfg: dict[str, Any], rng: np.random.Generator) -> np.ndarray:
@@ -24,10 +26,38 @@ def _sample_u_boat_position(cfg: dict[str, Any], rng: np.random.Generator) -> np
     raise ValueError("cfg must provide u_boat_pos or u_boat_box")
 
 
-def _resolve_target_point(cfg: dict[str, Any], centroid: np.ndarray) -> np.ndarray:
+def choose_aimpoint(
+    ships: list[Ship],
+    strategy: AimpointStrategy,
+    rng: np.random.Generator,
+) -> np.ndarray:
+    """Select an aimpoint based on ship values."""
+
+    if strategy == "centroid":
+        return compute_convoy_reference(ships)["centroid"]
+    if strategy == "max_value":
+        ship = max(ships, key=lambda s: s.value_weight)
+        return ship.position
+    if strategy == "value_weighted_centroid":
+        weights = np.array([ship.value_weight for ship in ships], dtype=float)
+        positions = np.array([ship.position for ship in ships], dtype=float)
+        total = float(np.sum(weights))
+        if total <= 0.0:
+            return compute_convoy_reference(ships)["centroid"]
+        return np.average(positions, axis=0, weights=weights)
+    raise ValueError(f"Unknown aimpoint strategy: {strategy}")
+
+
+def _resolve_target_point(
+    cfg: dict[str, Any],
+    ships: list[Ship],
+    centroid: np.ndarray,
+    rng: np.random.Generator,
+) -> np.ndarray:
     target = cfg.get("target_point", "centroid")
     if isinstance(target, str) and target == "centroid":
-        return centroid
+        strategy = cfg.get("aimpoint_strategy", "centroid")
+        return choose_aimpoint(ships, strategy, rng)
     return np.asarray(target, dtype=float)
 
 
@@ -69,7 +99,7 @@ def propose_attack_from_config(
     convoy_heading = reference["heading_rad"]
 
     u_boat_pos = _sample_u_boat_position(cfg, rng)
-    target_point = _resolve_target_point(cfg, centroid)
+    target_point = _resolve_target_point(cfg, ships, centroid, rng)
     approach_mode = _sample_approach_mode(cfg, rng)
     bearing_rad = _resolve_bearing(cfg, u_boat_pos, target_point, convoy_heading)
     salvo_size = _sample_salvo_size(cfg, rng)
