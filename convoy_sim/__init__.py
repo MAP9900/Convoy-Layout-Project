@@ -28,6 +28,15 @@ from .noise import NoiseModel
 from .risk import empirical_cvar, empirical_var
 from .objectives import ObjectiveSpec, aggregate_objective, score_trial_result
 from .attackers import fan_spread, parallel_spread
+from .defender_policy import (
+    DefenderPolicy,
+    LayoutAction,
+    ThreatPrior,
+    ThreatType,
+    evaluate_defender_policy,
+    make_deterministic_policy,
+    make_uniform_policy,
+)
 from .simulation import (
     run_monte_carlo_attack,
     run_monte_carlo_attack_dynamic,
@@ -80,6 +89,13 @@ __all__ = [
     "torpedo_hits_ship_dynamic",
     "fan_spread",
     "parallel_spread",
+    "ThreatType",
+    "ThreatPrior",
+    "LayoutAction",
+    "DefenderPolicy",
+    "make_uniform_policy",
+    "make_deterministic_policy",
+    "evaluate_defender_policy",
     "sample_fan_spread",
     "sample_parallel_spread",
     "sample_torpedo_spread_fixed_origin",

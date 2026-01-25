@@ -10,6 +10,8 @@ High‑level overview of runnable scripts and scenario definitions. All scripts 
   - Baseline Scenario A (rectangular layout + fan spread).
 - `scenarios/scenario_a1_constraints.py`
   - Scenario A1 with feasibility constraints and optional value scoring.
+- `scenarios/scenario_b1_policy_demo.py`
+  - Scenario B1 policy demo with threat priors and randomized layout selection.
 
 ## Experiment Scripts
 
@@ -69,6 +71,28 @@ High‑level overview of runnable scripts and scenario definitions. All scripts 
   - `--output`: output JSON path
 - Outputs: `results/minmax_history.json`
 
+### `experiments/run_policy.py`
+- Purpose: Evaluate defender policy over threat priors (B1).
+- Usage:
+  - `python -m experiments.run_policy scenario_b1 --trials 200 --seed 0`
+- Key args:
+  - `scenario`: scenario name (e.g., `scenario_b1`)
+  - `--trials`: number of trials
+  - `--seed`: RNG seed
+  - `--output`: output directory
+- Outputs: `results/scenario_b1.json`
+
+### `experiments/optimize_policy.py`
+- Purpose: Optimize policy tables with deterministic and pairwise-mixture search.
+- Usage:
+  - `python -m experiments.optimize_policy --trials 200 --seed 0`
+- Key args:
+  - `--trials`: trials per evaluation
+  - `--seed`: RNG seed
+  - `--output`: output directory
+  - `--w-loss`, `--w-footprint`, `--w-complexity`: tradeoff weights
+  - `--footprint-budget`, `--complexity-budget`: hard constraints
+- Outputs: `results/policy_opt.json`
 ### `experiments/robustness_report.py`
 - Purpose: Compare baseline vs optimized defense across noise settings.
 - Usage:
@@ -118,3 +142,5 @@ High‑level overview of runnable scripts and scenario definitions. All scripts 
 - `convoy_sim/feasibility.py`: Attack feasibility checks and detection risk scoring.
 - `convoy_sim/dynamics.py`: Convoy-level route legs, zig-zag plans, and formation-preserving kinematics.
 - `convoy_sim/simulation.py`: Includes `run_monte_carlo_attack_dynamic` and time-aware hit checks (opt-in).
+- `convoy_sim/defender_policy.py`: Threat priors, layout actions, and policy evaluation utilities.
+- `convoy_sim/defender_policy_opt.py`: Policy objective and coarse deterministic/mixture optimizers.

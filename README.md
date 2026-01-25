@@ -11,6 +11,8 @@ A research‑focused simulator for WWII‑style convoys and straight‑running t
 - **Value-based scoring**: optional value-destroyed metrics for heterogeneous ship classes.
 - **Optimization**: brute‑force defender/attacker search and alternating best‑response loop.
 - **Feasibility constraints**: optional range, escort zones, approach cones, and detection risk.
+- **Defender policies (B1)**: randomized layout choice conditioned on threat priors.
+- **Policy optimization**: coarse deterministic/mixture search over policy tables.
 - **Scenarios & experiments**: scripted runs that save JSON/CSV results under `results/`.
 
 ## Quick Start
@@ -38,6 +40,18 @@ Run the min‑max loop:
 
 ```bash
 python -m experiments.run_minmax --rounds 5 --trials 100 --seed 0
+```
+
+Run the defender policy demo (B1):
+
+```bash
+python -m experiments.run_policy scenario_b1 --trials 200 --seed 0
+```
+
+Optimize a policy table (deterministic + mixture):
+
+```bash
+python -m experiments.optimize_policy --trials 200 --seed 0
 ```
 
 ## Surrogate Dataset + Training (Phase 7)
