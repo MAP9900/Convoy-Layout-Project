@@ -14,6 +14,9 @@ A research‑focused simulator for WWII‑style convoys and straight‑running t
 - **Defender policies (B1)**: randomized layout choice conditioned on threat priors.
 - **Policy optimization**: coarse deterministic/mixture search over policy tables.
 - **Attacker tactics (B2)**: multi-pass plans with delay/abort/commit and shaped salvos.
+- **Attacker tactics search**: coarse grid search over multi-pass plan templates.
+- **Game layer (B3)**: payoff matrix estimation, best responses, and exploitability.
+- **Approximate Nash (B4)**: fictitious play/replicator solvers and double-oracle loop hooks.
 - **Scenarios & experiments**: scripted runs that save JSON/CSV results under `results/`.
 
 ## Quick Start
@@ -59,6 +62,24 @@ Run the multi-pass attacker plan demo (B2):
 
 ```bash
 python -m experiments.run_attacker_plan scenario_b2 --trials 50 --seed 0
+```
+
+Optimize attacker tactics plans (grid search):
+
+```bash
+python -m experiments.optimize_attacker_tactics --trials 50 --seed 0 --top-k 10
+```
+
+Estimate a game payoff matrix (B3):
+
+```bash
+python -m experiments.estimate_game --trials 50 --seed 0
+```
+
+Solve approximate Nash from a saved matrix (B4):
+
+```bash
+python -m experiments.solve_nash_from_matrix results/game_matrix.json --iters 500 --seed 0
 ```
 
 ## Surrogate Dataset + Training (Phase 7)

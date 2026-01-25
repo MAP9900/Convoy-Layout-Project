@@ -106,6 +106,38 @@ High‑level overview of runnable scripts and scenario definitions. All scripts 
   - `--seed`: RNG seed
   - `--output`: output directory
 - Outputs: `results/scenario_b2.json`
+
+### `experiments/optimize_attacker_tactics.py`
+- Purpose: Coarse grid search over attacker multi-pass plan templates.
+- Usage:
+  - `python -m experiments.optimize_attacker_tactics --trials 50 --seed 0 --top-k 10`
+- Key args:
+  - `--trials`: trials per plan
+  - `--seed`: RNG seed
+  - `--top-k`: number of top plans to return
+  - `--output`: output directory
+- Outputs: `results/attacker_tactics_opt.json`
+
+### `experiments/estimate_game.py`
+- Purpose: Estimate payoff matrices and exploitability for small strategy sets (B3).
+- Usage:
+  - `python -m experiments.estimate_game --trials 50 --seed 0`
+- Key args:
+  - `--trials`: trials per payoff entry
+  - `--seed`: RNG seed
+  - `--output`: output directory
+- Outputs: `results/game_matrix.json`
+
+### `experiments/solve_nash_from_matrix.py`
+- Purpose: Compute approximate Nash mixed strategies via fictitious play (B4).
+- Usage:
+  - `python -m experiments.solve_nash_from_matrix results/game_matrix.json --iters 500 --seed 0`
+- Key args:
+  - `matrix_json`: path to payoff matrix JSON
+  - `--iters`: number of fictitious play iterations
+  - `--seed`: RNG seed
+  - `--output`: output JSON path
+- Outputs: `results/nash_solution.json`
 ### `experiments/robustness_report.py`
 - Purpose: Compare baseline vs optimized defense across noise settings.
 - Usage:
@@ -158,3 +190,7 @@ High‑level overview of runnable scripts and scenario definitions. All scripts 
 - `convoy_sim/defender_policy.py`: Threat priors, layout actions, and policy evaluation utilities.
 - `convoy_sim/defender_policy_opt.py`: Policy objective and coarse deterministic/mixture optimizers.
 - `convoy_sim/attacker_tactics.py`: Multi-pass attacker plans, salvo shaping, and execution helpers.
+- `convoy_sim/attacker_tactics_opt.py`: Coarse grid search over attacker plan templates.
+- `convoy_sim/game.py`: Strategy wrappers, payoff matrix estimation, and exploitability.
+- `convoy_sim/nash.py`: Fictitious play and replicator dynamics solvers.
+- `convoy_sim/double_oracle.py`: Double-oracle style loop hook for strategy expansion.
