@@ -18,6 +18,7 @@ import numpy as np
 
 from convoy_sim.entities import Ship
 from convoy_sim.geometry import Vec2, as_vec, distance
+from convoy_sim.dynamics import ConvoyFormation, ConvoyKinematics, convoy_pose_at
 
 
 APPROACH_CONE_HALF_WIDTH_DEG = 30.0
@@ -92,6 +93,7 @@ class AttackProposal:
     bearing_rad: float
     approach_mode: ApproachMode
     salvo_size: int
+    launch_time: float = 0.0
     metadata: dict[str, Any] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
@@ -101,6 +103,7 @@ class AttackProposal:
             raise ValueError("u_boat_pos and target_point must be 2D vectors")
         object.__setattr__(self, "u_boat_pos", u_boat_pos)
         object.__setattr__(self, "target_point", target_point)
+        object.__setattr__(self, "launch_time", float(self.launch_time))
 
 
 def compute_convoy_reference(ships: list[Ship], t_ref: float = 0.0) -> dict[str, Any]:
@@ -125,6 +128,30 @@ def compute_convoy_reference(ships: list[Ship], t_ref: float = 0.0) -> dict[str,
         "speed": mean_speed,
         "bbox_along": bbox_along,
         "bbox_across": bbox_across,
+    }
+
+
+def compute_convoy_reference_at_time(
+    formation: ConvoyFormation,
+    kin: ConvoyKinematics,
+    t: float,
+    dt: float = 1.0,
+) -> dict[str, Any]:
+    """Return convoy centroid, mean heading, and speed at time ``t``."""
+
+    base_speed = float(np.mean([ship.speed for ship in formation.ships0])) if formation.ships0 else 0.0
+    origin_t, heading_t, speed_t = convoy_pose_at(
+        t,
+        formation.convoy_origin0,
+        formation.convoy_heading0,
+        base_speed,
+        kin,
+        dt=dt,
+    )
+    return {
+        "centroid": origin_t,
+        "heading_rad": heading_t,
+        "speed": speed_t,
     }
 
 
@@ -185,10 +212,17 @@ def is_attack_feasible(
     proposal: AttackProposal,
     constraints: AttackConstraints,
     env: Environment | None = None,
+    *,
+    formation: ConvoyFormation | None = None,
+    kin: ConvoyKinematics | None = None,
+    dt: float = 1.0,
 ) -> tuple[bool, dict[str, Any]]:
     """Evaluate proposal feasibility and return (feasible, details)."""
 
-    reference = compute_convoy_reference(ships)
+    if formation is not None and kin is not None:
+        reference = compute_convoy_reference_at_time(formation, kin, proposal.launch_time, dt=dt)
+    else:
+        reference = compute_convoy_reference(ships)
     failed_checks: list[str] = []
     range_m = distance(proposal.u_boat_pos, reference["centroid"])
     risk_score = None

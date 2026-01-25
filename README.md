@@ -5,6 +5,7 @@ A research‑focused simulator for WWII‑style convoys and straight‑running t
 ## What It Does
 
 - **Geometry + kinematics**: straight‑line ship and torpedo motion with analytical closest‑approach checks.
+- **Temporal dynamics (opt‑in)**: convoy‑level route legs + zig‑zag plans with time‑aware attack windows.
 - **Convoy layouts**: rectangular, staggered, hex/triangular, and jittered formations.
 - **Monte Carlo**: estimate expected hits, variance, and tail‑risk metrics (VaR/CVaR).
 - **Value-based scoring**: optional value-destroyed metrics for heterogeneous ship classes.
@@ -73,3 +74,4 @@ python -m pytest
 
 - All units are **meters** and **seconds**.
 - The simulation is deterministic unless optional noise is enabled.
+- Time‑aware motion and launch windows are opt‑in via `convoy_sim.dynamics` and `run_monte_carlo_attack_dynamic`.

@@ -9,13 +9,16 @@ from typing import Any, Callable, Sequence
 import numpy as np
 
 from .attackers import fan_spread, parallel_spread
+from .dynamics import ConvoyFormation, ConvoyKinematics, ship_positions_at
 from .entities import Ship, ShipClass, Torpedo, torpedo_hits_ship
+from .feasibility import AttackProposal
 from .geometry import Vec2, as_vec, closest_approach_time, distance
 from .noise import NoiseModel
 from .risk import empirical_cvar, empirical_var
 
 LayoutFn = Callable[..., list[Ship]]
 TorpedoSampler = Callable[[np.random.Generator], Sequence[Torpedo]]
+ProposalSampler = Callable[[np.random.Generator, list[Ship]], AttackProposal]
 
 
 def _vec(value: Vec2 | Sequence[float]) -> Vec2:
@@ -23,6 +26,17 @@ def _vec(value: Vec2 | Sequence[float]) -> Vec2:
     if arr.shape != (2,):
         raise ValueError("Expected a 2D vector")
     return arr
+
+
+def _convoy_reference_from_ships(ships: Sequence[Ship]) -> tuple[Vec2, float, float]:
+    if not ships:
+        raise ValueError("ships must be non-empty")
+    positions = np.array([ship.position for ship in ships], dtype=float)
+    centroid = np.mean(positions, axis=0)
+    mean_speed = float(np.mean([ship.speed for ship in ships]))
+    headings = np.array([ship.heading_rad for ship in ships], dtype=float)
+    mean_heading = float(np.arctan2(np.mean(np.sin(headings)), np.mean(np.cos(headings))))
+    return centroid, mean_heading, mean_speed
 
 
 def simulate_attack_once(
@@ -52,6 +66,78 @@ def simulate_attack_once(
                 if torpedo_hits_ship(ship=ship, torpedo=torpedo, t_max=t_max):
                     total_hits += 1
     return total_hits
+
+
+def torpedo_hits_ship_dynamic(
+    formation: ConvoyFormation,
+    kin: ConvoyKinematics,
+    proposal: AttackProposal,
+    *,
+    torpedo_speed: float,
+    torpedo_max_run_time: float,
+    salvo_size: int | None = None,
+    spread_rad: float = 0.0,
+    t_max_global: float,
+    dt: float = 1.0,
+    safety_margin: float = 0.0,
+    max_hits_per_torpedo: int | None = None,
+    noise_model: NoiseModel | None = None,
+    rng: np.random.Generator | None = None,
+) -> int:
+    """Return total hits for a salvo against a moving convoy using discrete stepping.
+
+    Discrete stepping trades accuracy for simplicity; smaller ``dt`` yields more
+    precise hit timing at higher computational cost.
+    """
+
+    if t_max_global <= 0.0 or torpedo_max_run_time <= 0.0:
+        return 0
+    if dt <= 0.0:
+        raise ValueError("dt must be > 0")
+    salvo = proposal.salvo_size if salvo_size is None else int(salvo_size)
+    if salvo <= 0:
+        return 0
+
+    torpedoes = fan_spread(
+        u_pos=proposal.u_boat_pos,
+        base_bearing_rad=proposal.bearing_rad,
+        n=salvo,
+        spread_rad=spread_rad,
+        speed=torpedo_speed,
+        max_run_time=torpedo_max_run_time,
+    )
+    torpedoes = [replace(t, launch_delay=proposal.launch_time) for t in torpedoes]
+    if noise_model and not noise_model.is_inactive():
+        torpedoes = _apply_noise(torpedoes, noise_model, rng or np.random.default_rng())
+
+    window_end = min(float(t_max_global), float(proposal.launch_time + torpedo_max_run_time))
+    if window_end <= proposal.launch_time:
+        return 0
+
+    hits = 0
+    hit_pairs: set[tuple[int, int]] = set()
+    torpedo_done: set[int] = set()
+    time = float(proposal.launch_time)
+    while time <= window_end + 1e-9:
+        ship_positions = ship_positions_at(time, formation, kin, dt=dt)
+        for torp_idx, torpedo in enumerate(torpedoes):
+            if torp_idx in torpedo_done or torpedo.is_dud:
+                continue
+            torp_pos = torpedo.position_at(time)
+            for ship_idx, ship in enumerate(formation.ships0):
+                key = (torp_idx, ship_idx)
+                if key in hit_pairs:
+                    continue
+                ship_pos = ship_positions[ship_idx]
+                radius = ship.effective_hit_radius() + float(safety_margin)
+                if distance(ship_pos, torp_pos) <= radius:
+                    hit_pairs.add(key)
+                    hits += 1
+                    if max_hits_per_torpedo == 1:
+                        torpedo_done.add(torp_idx)
+                        break
+        time += dt
+    return hits
 
 
 def simulate_attack_once_scored(
@@ -119,6 +205,70 @@ def run_monte_carlo_attack(
             ships=ships,
             torpedoes=torpedoes,
             t_max=t_max,
+            max_hits_per_torpedo=max_hits_per_torpedo,
+        )
+    expected_hits = float(np.mean(hits))
+    variance = float(np.var(hits))
+    hit_prob_at_least_one = float(np.mean(hits > 0))
+    payload = {
+        "hits_per_trial": hits,
+        "expected_hits": expected_hits,
+        "var_hits": variance,
+        "hit_prob_at_least_one": hit_prob_at_least_one,
+        "n_trials": n_trials,
+    }
+    if risk_alpha is not None:
+        alpha_label = int(round(risk_alpha * 100))
+        payload[f"VaR_{alpha_label}"] = empirical_var(hits, risk_alpha)
+        payload[f"CVaR_{alpha_label}"] = empirical_cvar(hits, risk_alpha)
+    return payload
+
+
+def run_monte_carlo_attack_dynamic(
+    layout_fn: LayoutFn,
+    layout_kwargs: dict[str, Any],
+    proposal_sampler: ProposalSampler,
+    n_trials: int,
+    t_max_global: float,
+    *,
+    kin: ConvoyKinematics,
+    torpedo_speed: float,
+    torpedo_max_run_time: float,
+    spread_rad: float = 0.0,
+    salvo_size: int | None = None,
+    dt: float = 1.0,
+    rng: np.random.Generator | None = None,
+    noise_model: NoiseModel | None = None,
+    risk_alpha: float | None = None,
+    max_hits_per_torpedo: int | None = None,
+) -> dict[str, Any]:
+    """Run Monte Carlo with convoy-level motion and time-aware attack windows."""
+
+    if n_trials <= 0:
+        raise ValueError("n_trials must be positive")
+    generator = rng or np.random.default_rng()
+    hits = np.zeros(n_trials, dtype=float)
+    for idx in range(n_trials):
+        ships = layout_fn(**layout_kwargs)
+        centroid, mean_heading, _mean_speed = _convoy_reference_from_ships(ships)
+        formation = ConvoyFormation(
+            ships0=list(ships),
+            convoy_origin0=centroid,
+            convoy_heading0=mean_heading,
+        )
+        proposal = proposal_sampler(generator, list(ships))
+        hits[idx] = torpedo_hits_ship_dynamic(
+            formation=formation,
+            kin=kin,
+            proposal=proposal,
+            torpedo_speed=torpedo_speed,
+            torpedo_max_run_time=torpedo_max_run_time,
+            salvo_size=salvo_size,
+            spread_rad=spread_rad,
+            t_max_global=t_max_global,
+            dt=dt,
+            noise_model=noise_model,
+            rng=generator,
             max_hits_per_torpedo=max_hits_per_torpedo,
         )
     expected_hits = float(np.mean(hits))

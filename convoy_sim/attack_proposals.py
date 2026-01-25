@@ -103,6 +103,7 @@ def propose_attack_from_config(
     approach_mode = _sample_approach_mode(cfg, rng)
     bearing_rad = _resolve_bearing(cfg, u_boat_pos, target_point, convoy_heading)
     salvo_size = _sample_salvo_size(cfg, rng)
+    launch_time = float(cfg.get("launch_time", 0.0))
 
     return AttackProposal(
         u_boat_pos=u_boat_pos,
@@ -110,5 +111,6 @@ def propose_attack_from_config(
         bearing_rad=bearing_rad,
         approach_mode=approach_mode,
         salvo_size=salvo_size,
+        launch_time=launch_time,
         metadata=cfg.get("metadata", {}),
     )

@@ -116,3 +116,5 @@ High‑level overview of runnable scripts and scenario definitions. All scripts 
 - `convoy_sim/risk.py`: VaR/CVaR metrics for Monte Carlo outputs.
 - `convoy_sim/noise.py`: Noise toggles for heading/timing/duds.
 - `convoy_sim/feasibility.py`: Attack feasibility checks and detection risk scoring.
+- `convoy_sim/dynamics.py`: Convoy-level route legs, zig-zag plans, and formation-preserving kinematics.
+- `convoy_sim/simulation.py`: Includes `run_monte_carlo_attack_dynamic` and time-aware hit checks (opt-in).
