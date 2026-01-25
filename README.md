@@ -7,7 +7,9 @@ A research‑focused simulator for WWII‑style convoys and straight‑running t
 - **Geometry + kinematics**: straight‑line ship and torpedo motion with analytical closest‑approach checks.
 - **Convoy layouts**: rectangular, staggered, hex/triangular, and jittered formations.
 - **Monte Carlo**: estimate expected hits, variance, and tail‑risk metrics (VaR/CVaR).
+- **Value-based scoring**: optional value-destroyed metrics for heterogeneous ship classes.
 - **Optimization**: brute‑force defender/attacker search and alternating best‑response loop.
+- **Feasibility constraints**: optional range, escort zones, approach cones, and detection risk.
 - **Scenarios & experiments**: scripted runs that save JSON/CSV results under `results/`.
 
 ## Quick Start
@@ -16,6 +18,12 @@ Run a baseline scenario:
 
 ```bash
 python -m experiments.run_scenario scenario_a --n_trials 1000 --seed 123
+```
+
+Run a constrained scenario (A1):
+
+```bash
+python -m experiments.run_scenario scenario_a1 --n_trials 1000 --seed 123
 ```
 
 Run defender and attacker searches:

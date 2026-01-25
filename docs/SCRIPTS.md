@@ -8,6 +8,8 @@ High‑level overview of runnable scripts and scenario definitions. All scripts 
   - Scenario dataclass and `run()` helper that executes Monte Carlo with a fixed layout and torpedo sampler.
 - `scenarios/scenario_a.py`
   - Baseline Scenario A (rectangular layout + fan spread).
+- `scenarios/scenario_a1_constraints.py`
+  - Scenario A1 with feasibility constraints and optional value scoring.
 
 ## Experiment Scripts
 
@@ -21,6 +23,7 @@ High‑level overview of runnable scripts and scenario definitions. All scripts 
   - `--seed`: RNG seed
   - `--output`: output directory
 - Outputs: `results/scenario_a.json`
+  - Scenario A1 writes `results/scenario_a1.json`
 
 ### `experiments/sensitivity_oat.py`
 - Purpose: One‑at‑a‑time sensitivity sweep over layout/attack/noise parameters.
@@ -105,9 +108,11 @@ High‑level overview of runnable scripts and scenario definitions. All scripts 
 ## Utilities (Non‑Executable)
 
 - `convoy_sim/attackers.py`: Deterministic fan/parallel torpedo spread samplers.
+- `convoy_sim/attack_proposals.py`: Attack proposal generation and value-biased aimpoints.
 - `convoy_sim/defender_opt.py`: Defender layout search utilities.
 - `convoy_sim/attacker_opt.py`: Attacker parameter search utilities.
 - `convoy_sim/minmax_loop.py`: Min‑max loop coordinator.
 - `convoy_sim/datasets.py`: Dataset generator for surrogate modeling.
 - `convoy_sim/risk.py`: VaR/CVaR metrics for Monte Carlo outputs.
 - `convoy_sim/noise.py`: Noise toggles for heading/timing/duds.
+- `convoy_sim/feasibility.py`: Attack feasibility checks and detection risk scoring.
