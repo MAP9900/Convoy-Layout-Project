@@ -12,6 +12,8 @@ High‑level overview of runnable scripts and scenario definitions. All scripts 
   - Scenario A1 with feasibility constraints and optional value scoring.
 - `scenarios/scenario_b1_policy_demo.py`
   - Scenario B1 policy demo with threat priors and randomized layout selection.
+- `scenarios/scenario_b2_multisalvo_demo.py`
+  - Scenario B2 multi-pass attacker plan demo with abort logic.
 
 ## Experiment Scripts
 
@@ -93,6 +95,17 @@ High‑level overview of runnable scripts and scenario definitions. All scripts 
   - `--w-loss`, `--w-footprint`, `--w-complexity`: tradeoff weights
   - `--footprint-budget`, `--complexity-budget`: hard constraints
 - Outputs: `results/policy_opt.json`
+
+### `experiments/run_attacker_plan.py`
+- Purpose: Execute multi-pass attacker plans (B2) and summarize outcomes.
+- Usage:
+  - `python -m experiments.run_attacker_plan scenario_b2 --trials 50 --seed 0`
+- Key args:
+  - `scenario`: scenario name (e.g., `scenario_b2`)
+  - `--trials`: number of plan executions
+  - `--seed`: RNG seed
+  - `--output`: output directory
+- Outputs: `results/scenario_b2.json`
 ### `experiments/robustness_report.py`
 - Purpose: Compare baseline vs optimized defense across noise settings.
 - Usage:
@@ -144,3 +157,4 @@ High‑level overview of runnable scripts and scenario definitions. All scripts 
 - `convoy_sim/simulation.py`: Includes `run_monte_carlo_attack_dynamic` and time-aware hit checks (opt-in).
 - `convoy_sim/defender_policy.py`: Threat priors, layout actions, and policy evaluation utilities.
 - `convoy_sim/defender_policy_opt.py`: Policy objective and coarse deterministic/mixture optimizers.
+- `convoy_sim/attacker_tactics.py`: Multi-pass attacker plans, salvo shaping, and execution helpers.
