@@ -17,6 +17,15 @@ from .entities import Ship
 from .geometry import Vec2, as_vec
 
 
+def validate_dt(dt: float) -> float:
+    """Return ``dt`` as float, raising if non-positive."""
+
+    value = float(dt)
+    if value <= 0.0:
+        raise ValueError("dt must be > 0")
+    return value
+
+
 def _vec(value: Vec2) -> Vec2:
     arr = np.asarray(value, dtype=float)
     if arr.shape != (2,):
@@ -159,8 +168,7 @@ def convoy_pose_at(
 ) -> tuple[Vec2, float, float]:
     """Integrate convoy translation to time ``t`` using piecewise-constant heading."""
 
-    if dt <= 0.0:
-        raise ValueError("dt must be > 0")
+    dt = validate_dt(dt)
     origin = _vec(origin0).copy()
     if t <= 0.0:
         heading_t = kin.convoy_heading_at(0.0, heading0)
@@ -187,6 +195,7 @@ def ship_positions_at(
 ) -> list[Vec2]:
     """Return ship positions at time ``t`` using convoy-level kinematics."""
 
+    dt = validate_dt(dt)
     if formation.ships0:
         base_speed = float(sum(ship.speed for ship in formation.ships0) / len(formation.ships0))
     else:

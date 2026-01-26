@@ -28,6 +28,7 @@ from .noise import NoiseModel
 from .risk import empirical_cvar, empirical_var
 from .objectives import ObjectiveSpec, aggregate_objective, score_trial_result
 from .attackers import fan_spread, parallel_spread
+from .rl_wrapper import ActionSpaceMap, OBS_SCHEMA_VERSION, RLEpisode, build_observation
 from .defender_policy import (
     DefenderPolicy,
     LayoutAction,
@@ -46,7 +47,9 @@ from .simulation import (
     sample_parallel_torpedoes,
     sample_torpedo_spread_fixed_origin,
     simulate_attack,
+    simulate_attack_dynamic_once,
     simulate_attack_once,
+    simulate_attack_static,
     simulate_attack_once_scored,
     torpedo_hits_ship_dynamic,
 )
@@ -83,12 +86,18 @@ __all__ = [
     "simulate_attack_once",
     "simulate_attack_once_scored",
     "simulate_attack",
+    "simulate_attack_static",
+    "simulate_attack_dynamic_once",
     "run_monte_carlo_attack",
     "run_monte_carlo_attack_dynamic",
     "run_monte_carlo_attack_scored",
     "torpedo_hits_ship_dynamic",
     "fan_spread",
     "parallel_spread",
+    "ActionSpaceMap",
+    "OBS_SCHEMA_VERSION",
+    "RLEpisode",
+    "build_observation",
     "ThreatType",
     "ThreatPrior",
     "LayoutAction",

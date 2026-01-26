@@ -38,6 +38,26 @@ def score_trial_result(trial: dict[str, Any], obj: ObjectiveSpec) -> float:
     return loss
 
 
+def defender_loss_from_outcome(trial: dict[str, Any], obj: ObjectiveSpec | None) -> float:
+    """Return defender loss (higher is worse); flips sign if obj is attacker-maximized."""
+
+    if obj is None:
+        return float(trial.get("total_value_destroyed", 0.0))
+    loss = float(score_trial_result(trial, obj))
+    if obj.mode == "attacker_maximize":
+        return -loss
+    return loss
+
+
+def attacker_utility_from_outcome(trial: dict[str, Any], obj: ObjectiveSpec | None) -> float:
+    """Return attacker utility (higher is better) using the same scalar convention."""
+
+    if obj is None:
+        return float(trial.get("total_value_destroyed", 0.0))
+    score = float(score_trial_result(trial, obj))
+    return score
+
+
 def aggregate_objective(monte_carlo_result: dict[str, Any], obj: ObjectiveSpec) -> float:
     """Aggregate Monte Carlo outputs into a single scalar objective."""
 

@@ -11,6 +11,7 @@ import numpy as np
 from .entities import Ship, ShipClass, Torpedo
 from .feasibility import compute_convoy_reference
 from .objectives import ObjectiveSpec, score_trial_result
+from .trial_records import make_trial_record
 from .simulation import simulate_attack_once_scored
 
 
@@ -195,17 +196,24 @@ def evaluate_defender_policy(
         if objective is not None:
             losses[idx] = score_trial_result(scored, objective)
 
-        trial_record = {
-            "trial": idx,
-            "threat": threat.value,
-            "action": action.name,
-            "layout_metrics": metrics,
+        outcome = {
             "n_hits": scored["n_hits"],
             "total_value_destroyed": scored["total_value_destroyed"],
         }
         if objective is not None:
-            trial_record["loss"] = losses[idx]
-        trials.append(trial_record)
+            outcome["loss"] = losses[idx]
+        trials.append(
+            make_trial_record(
+                trial_id=idx,
+                seed=None,
+                scenario=None,
+                threat=threat.value,
+                defender={"action": action.name, "complexity_cost": action.complexity_cost},
+                attacker=None,
+                layout_metrics=metrics,
+                outcome=outcome,
+            )
+        )
 
     expected_hits = float(np.mean(hits))
     expected_value = float(np.mean(values))

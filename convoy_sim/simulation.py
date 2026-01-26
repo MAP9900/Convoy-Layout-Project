@@ -9,7 +9,7 @@ from typing import Any, Callable, Sequence
 import numpy as np
 
 from .attackers import fan_spread, parallel_spread
-from .dynamics import ConvoyFormation, ConvoyKinematics, ship_positions_at
+from .dynamics import ConvoyFormation, ConvoyKinematics, ship_positions_at, validate_dt
 from .entities import Ship, ShipClass, Torpedo, torpedo_hits_ship
 from .feasibility import AttackProposal
 from .geometry import Vec2, as_vec, closest_approach_time, distance
@@ -68,6 +68,57 @@ def simulate_attack_once(
     return total_hits
 
 
+def simulate_attack_static(
+    ships: Sequence[Ship],
+    torpedoes: Sequence[Torpedo],
+    t_max: float,
+    max_hits_per_torpedo: int | None = None,
+) -> int:
+    """Explicit static-path wrapper for straight-line kinematics."""
+
+    return simulate_attack_once(
+        ships=ships,
+        torpedoes=torpedoes,
+        t_max=t_max,
+        max_hits_per_torpedo=max_hits_per_torpedo,
+    )
+
+
+def simulate_attack_dynamic_once(
+    formation: ConvoyFormation,
+    kin: ConvoyKinematics,
+    proposal: AttackProposal,
+    *,
+    torpedo_speed: float,
+    torpedo_max_run_time: float,
+    t_max_global: float,
+    salvo_size: int | None = None,
+    spread_rad: float = 0.0,
+    dt: float = 1.0,
+    safety_margin: float = 0.0,
+    max_hits_per_torpedo: int | None = None,
+    noise_model: NoiseModel | None = None,
+    rng: np.random.Generator | None = None,
+) -> int:
+    """Explicit dynamic-path wrapper for convoy-level kinematics."""
+
+    return torpedo_hits_ship_dynamic(
+        formation=formation,
+        kin=kin,
+        proposal=proposal,
+        torpedo_speed=torpedo_speed,
+        torpedo_max_run_time=torpedo_max_run_time,
+        salvo_size=salvo_size,
+        spread_rad=spread_rad,
+        t_max_global=t_max_global,
+        dt=dt,
+        safety_margin=safety_margin,
+        max_hits_per_torpedo=max_hits_per_torpedo,
+        noise_model=noise_model,
+        rng=rng,
+    )
+
+
 def torpedo_hits_ship_dynamic(
     formation: ConvoyFormation,
     kin: ConvoyKinematics,
@@ -92,8 +143,7 @@ def torpedo_hits_ship_dynamic(
 
     if t_max_global <= 0.0 or torpedo_max_run_time <= 0.0:
         return 0
-    if dt <= 0.0:
-        raise ValueError("dt must be > 0")
+    dt = validate_dt(dt)
     salvo = proposal.salvo_size if salvo_size is None else int(salvo_size)
     if salvo <= 0:
         return 0
@@ -108,7 +158,7 @@ def torpedo_hits_ship_dynamic(
     )
     torpedoes = [replace(t, launch_delay=proposal.launch_time) for t in torpedoes]
     if noise_model and not noise_model.is_inactive():
-        torpedoes = _apply_noise(torpedoes, noise_model, rng or np.random.default_rng())
+        torpedoes = apply_noise_to_torpedoes(torpedoes, noise_model, rng or np.random.default_rng())
 
     window_end = min(float(t_max_global), float(proposal.launch_time + torpedo_max_run_time))
     if window_end <= proposal.launch_time:
@@ -379,11 +429,13 @@ def sample_parallel_spread(
     )
 
 
-def _apply_noise(
+def apply_noise_to_torpedoes(
     torpedoes: Sequence[Torpedo],
     noise_model: NoiseModel,
     rng: np.random.Generator,
 ) -> list[Torpedo]:
+    """Return torpedoes with optional heading/delay/dud noise applied."""
+
     adjusted: list[Torpedo] = []
     for torpedo in torpedoes:
         heading = torpedo.heading_rad
@@ -404,6 +456,14 @@ def _apply_noise(
             )
         )
     return adjusted
+
+
+def _apply_noise(
+    torpedoes: Sequence[Torpedo],
+    noise_model: NoiseModel,
+    rng: np.random.Generator,
+) -> list[Torpedo]:
+    return apply_noise_to_torpedoes(torpedoes, noise_model, rng)
 
 
 def _earliest_hit_time(ship: Ship, torpedo: Torpedo, t_max: float) -> float | None:

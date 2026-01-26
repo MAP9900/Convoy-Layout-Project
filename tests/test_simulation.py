@@ -157,3 +157,29 @@ def test_zero_noise_matches_baseline() -> None:
         noise_model=NoiseModel(),
     )
     assert np.array_equal(baseline["hits_per_trial"], zero_noise["hits_per_trial"])
+
+
+def test_monte_carlo_deterministic_with_noise() -> None:
+    sampler = _fan_sampler(as_vec(-1000.0, 0.0))
+    noise = NoiseModel(sigma_heading_rad=0.05, sigma_launch_delay=0.2)
+    rng_a = np.random.default_rng(99)
+    rng_b = np.random.default_rng(99)
+    result_a = run_monte_carlo_attack(
+        layout_fn=make_rectangular_convoy,
+        layout_kwargs=_single_ship_layout_kwargs(),
+        torpedo_sampler=sampler,
+        n_trials=30,
+        t_max=150.0,
+        rng=rng_a,
+        noise_model=noise,
+    )
+    result_b = run_monte_carlo_attack(
+        layout_fn=make_rectangular_convoy,
+        layout_kwargs=_single_ship_layout_kwargs(),
+        torpedo_sampler=sampler,
+        n_trials=30,
+        t_max=150.0,
+        rng=rng_b,
+        noise_model=noise,
+    )
+    assert np.array_equal(result_a["hits_per_trial"], result_b["hits_per_trial"])

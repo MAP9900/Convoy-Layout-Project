@@ -1,37 +1,30 @@
 Block C Readiness Checklist (ML/RL)
 
-Core Sim Correctness
-- Determinism: all stochastic paths use explicit RNGs and propagate seeds.
-- Time stepping: consistent dt usage across dynamics, tactics, and feasibility.
-- API clarity: static vs dynamic simulation paths are cleanly separated.
-- Outcome invariants: hit/value metrics match across static/dynamic when equivalent.
+Codex Checkable Items 
+- [DONE] Determinism: audit RNG propagation and add repeatability tests.
+- [DONE] Time stepping: add a single dt helper or guardrails for dynamics/tactics.
+- [DONE] API clarity: clean static vs dynamic simulation entry points.
+- [DONE] Outcome invariants: add regression tests for static vs dynamic equivalence.
+- [DONE] Trial schema: implement a standard JSON record and helper.
+- [DONE] Scenario serialization: add to_dict/from_dict hooks where feasible.
+- [DONE] Feature snapshot logging: record layout metrics + threat/plan params per trial.
+- [DONE] Reward sign conventions: codify in helpers and add doc comments.
+- [DONE] Batch evaluation hooks: reusable batch runner utilities.
+- [DONE] Early-stop/budget controls: optional caps in optimizer loops.
+- [DONE] Noise model consistency: ensure all sim paths use same noise hooks.
+- [DONE] Episode-style step API: minimal wrapper for RL compatibility.
+- [DONE] Action space mapping: discrete indexing for layouts/plans.
+- [DONE] Observation schema: stable, versioned dict schema.
 
-Data & Logging for ML/RL
-- Trial schema: standardized JSON record (seed, config, policy/plan, outcomes).
-- Scenario serialization: config can be fully reproduced from a JSON blob.
-- Feature snapshot: layout metrics + threat/plan parameters are recorded per trial.
+Manual Checkable Items
+- [TODO] Canonical trial JSON schema fields/size limits.
+- [TODO] Which environment variables are stochastic vs fixed.
+- [TODO] Preferred objective weights for defender vs attacker.
+- [TODO] Fidelity vs speed tradeoffs for ML training.
+- [TODO] RL framing: single-agent vs two-agent/self-play.
+- [TODO] Dataset sizes and compute budgets.
 
-Objectives & Rewards
-- Unified loss/utility functions for defender and attacker.
-- Optional tail-risk terms (VaR/CVaR) can be toggled and logged.
-- Reward sign conventions are documented and consistent.
-
-Performance & Scaling
-- Batch evaluation hooks for dataset generation.
-- Early-stop or confidence bounds available for search loops.
-- Runtime caps or budget controls in optimizers.
-
-Robustness & Uncertainty
-- Noise models apply consistently to static, dynamic, and plan-based sims.
-- Environment variability has a standard sampler/conditioning interface.
-- Sensitivity toggles are centralized and logged per run.
-
-RL Integration Hooks
-- Episode-style step API (even minimal) exists for each side.
-- Action spaces are explicit and mappable to discrete indices.
-- Observation schema is stable and documented.
-
-Suggested Next Steps
+Suggested Next Steps (proposed batch)
 - Decide a canonical trial JSON schema.
-- Add a minimal episode wrapper for defender and attacker.
-- Add a dataset export helper used by all runners.
+- Pick one sim pathway (static or dynamic) as the ML default.
+- Approve a minimal episode wrapper for both sides.

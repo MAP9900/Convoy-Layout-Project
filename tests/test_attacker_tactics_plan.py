@@ -3,6 +3,7 @@
 import math
 
 import numpy as np
+import pytest
 
 from convoy_sim.attacker_tactics import (
     AttackerPlan,
@@ -15,6 +16,7 @@ from convoy_sim.attacker_tactics import (
 from convoy_sim.entities import Ship, ShipClass
 from convoy_sim.feasibility import ApproachMode, AttackConstraints, EscortZone
 from convoy_sim.geometry import as_vec
+from convoy_sim.noise import NoiseModel
 
 
 def _make_ships() -> list[Ship]:
@@ -103,3 +105,67 @@ def test_asymmetry_shifts_headings_and_offsets() -> None:
     parallel = SalvoSpec(n_torpedoes=5, pattern="parallel", lateral_spacing=10.0, asymmetry=0.5)
     offsets = parallel_offsets_from_salvo(parallel)
     assert np.mean(offsets) > 0.0
+
+
+def test_execute_plan_deterministic_with_noise() -> None:
+    plan = AttackerPlan(
+        passes=[
+            PassSpec(
+                launch_time=0.0,
+                u_boat_pos=as_vec(-200.0, 0.0),
+                bearing_rad=0.0,
+                approach_mode=ApproachMode.STERN_CHASE,
+                salvo=SalvoSpec(n_torpedoes=1, pattern="fan", spread_rad=0.0),
+            )
+        ]
+    )
+    noise = NoiseModel(p_dud=0.5)
+    rng_a = np.random.default_rng(42)
+    rng_b = np.random.default_rng(42)
+    result_a = execute_attacker_plan(
+        ships_t0=_make_ships(),
+        plan=plan,
+        constraints=None,
+        env=None,
+        dynamics=None,
+        torpedo_params={"speed": 20.0, "max_run_time": 100.0, "dt": 1.0},
+        t_max_global=200.0,
+        rng=rng_a,
+        noise_model=noise,
+    )
+    result_b = execute_attacker_plan(
+        ships_t0=_make_ships(),
+        plan=plan,
+        constraints=None,
+        env=None,
+        dynamics=None,
+        torpedo_params={"speed": 20.0, "max_run_time": 100.0, "dt": 1.0},
+        t_max_global=200.0,
+        rng=rng_b,
+        noise_model=noise,
+    )
+    assert result_a["totals"] == result_b["totals"]
+
+
+def test_execute_plan_rejects_non_positive_dt() -> None:
+    plan = AttackerPlan(
+        passes=[
+            PassSpec(
+                launch_time=0.0,
+                u_boat_pos=as_vec(-200.0, 0.0),
+                bearing_rad=0.0,
+                approach_mode=ApproachMode.STERN_CHASE,
+                salvo=SalvoSpec(n_torpedoes=1, pattern="fan", spread_rad=0.0),
+            )
+        ]
+    )
+    with pytest.raises(ValueError):
+        execute_attacker_plan(
+            ships_t0=_make_ships(),
+            plan=plan,
+            constraints=None,
+            env=None,
+            dynamics=None,
+            torpedo_params={"speed": 20.0, "max_run_time": 100.0, "dt": 0.0},
+            t_max_global=200.0,
+        )

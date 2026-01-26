@@ -65,8 +65,9 @@ def test_search_returns_ranked_results() -> None:
         objective=None,
         rng_seed=0,
         top_k=3,
+        max_evals=2,
     )
-    assert len(results) == 3
+    assert len(results) == 2
     assert "plan" in results[0]
     assert "metrics" in results[0]
     assert "utility" in results[0]

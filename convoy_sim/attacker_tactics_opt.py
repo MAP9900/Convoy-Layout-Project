@@ -221,12 +221,14 @@ def search_attacker_plans(
     objective: ObjectiveSpec | None,
     rng_seed: int = 0,
     top_k: int = 10,
+    max_evals: int | None = None,
 ) -> list[dict[str, Any]]:
     """Generate candidate plans, evaluate each, and return top results."""
 
     plans = instantiate_plans(template)
     results: list[dict[str, Any]] = []
-    for idx, plan in enumerate(plans):
+    eval_limit = len(plans) if max_evals is None else max(0, min(len(plans), int(max_evals)))
+    for idx, plan in enumerate(plans[:eval_limit]):
         eval_result = evaluate_plan_monte_carlo(
             ships_t0=ships_t0,
             plan=plan,

@@ -12,8 +12,8 @@ from .defender_policy import DefenderPolicy, LayoutAction, ThreatPrior, ThreatTy
 from .dynamics import ConvoyFormation, ConvoyKinematics
 from .entities import Ship, Torpedo
 from .feasibility import AttackConstraints, Environment
-from .objectives import ObjectiveSpec, score_trial_result
-from .simulation import simulate_attack_once_scored
+from .objectives import ObjectiveSpec, defender_loss_from_outcome
+from .simulation import apply_noise_to_torpedoes, simulate_attack_once_scored
 
 
 @dataclass(frozen=True)
@@ -67,6 +67,9 @@ class AttackerStrategy:
         if self.kind == "torpedo_sampler":
             sampler: Callable[[np.random.Generator], list[Torpedo]] = self.payload
             torpedoes = sampler(rng)
+            noise_model = sim_params.get("noise_model")
+            if noise_model and not noise_model.is_inactive():
+                torpedoes = apply_noise_to_torpedoes(torpedoes, noise_model, rng)
             scored = simulate_attack_once_scored(
                 ships=ships_t0,
                 torpedoes=torpedoes,
@@ -99,9 +102,7 @@ class AttackerStrategy:
 def trial_loss_from_outcome(outcome: dict[str, Any], objective: ObjectiveSpec | None) -> float:
     """Return defender loss for a single trial outcome."""
 
-    if objective is not None:
-        return float(score_trial_result(outcome, objective))
-    return float(outcome.get("total_value_destroyed", 0.0))
+    return defender_loss_from_outcome(outcome, objective)
 
 
 def estimate_payoff_matrix(

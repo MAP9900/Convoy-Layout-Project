@@ -84,17 +84,22 @@ def optimize_policy_deterministic(
     objective_spec: ObjectiveSpec | None,
     policy_obj: PolicyObjective,
     rng_seed: int = 0,
+    max_evals: int | None = None,
 ) -> tuple[DefenderPolicy, dict[str, Any]]:
     """Select the best deterministic action per threat under tradeoffs."""
 
     policy_table: dict[ThreatType, dict[str, float]] = {}
     per_threat: dict[str, Any] = {}
 
+    eval_budget = None if max_evals is None else int(max_evals)
+    eval_count = 0
     for threat_idx, threat in enumerate(threats):
         best_score = math.inf
         best_action = actions[0]
         best_eval: dict[str, Any] | None = None
         for action_idx, action in enumerate(actions):
+            if eval_budget is not None and eval_count >= eval_budget:
+                break
             policy = DefenderPolicy(
                 actions=actions,
                 policy_table={threat: {action.name: 1.0}},
@@ -113,6 +118,7 @@ def optimize_policy_deterministic(
                 best_score = score
                 best_action = action
                 best_eval = eval_result
+            eval_count += 1
         policy_table[threat] = {best_action.name: 1.0}
         per_threat[threat.value] = {
             "best_action": best_action.name,
@@ -144,6 +150,7 @@ def optimize_policy_mixture_pairwise(
     policy_obj: PolicyObjective,
     rng_seed: int = 0,
     mix_grid: list[float] | None = None,
+    max_evals: int | None = None,
 ) -> tuple[DefenderPolicy, dict[str, Any]]:
     """Select up to two-action mixtures per threat over a coarse grid."""
 
@@ -151,6 +158,8 @@ def optimize_policy_mixture_pairwise(
     policy_table: dict[ThreatType, dict[str, float]] = {}
     per_threat: dict[str, Any] = {}
 
+    eval_budget = None if max_evals is None else int(max_evals)
+    eval_count = 0
     for threat_idx, threat in enumerate(threats):
         best_score = math.inf
         best_mix: dict[str, float] = {actions[0].name: 1.0}
@@ -158,6 +167,8 @@ def optimize_policy_mixture_pairwise(
         for i, action_a in enumerate(actions):
             for j, action_b in enumerate(actions[i:], start=i):
                 for mix_idx, p in enumerate(mix_grid):
+                    if eval_budget is not None and eval_count >= eval_budget:
+                        break
                     weights = {
                         action_a.name: float(p),
                         action_b.name: float(1.0 - p),
@@ -179,6 +190,11 @@ def optimize_policy_mixture_pairwise(
                         best_score = score
                         best_mix = weights
                         best_eval = eval_result
+                    eval_count += 1
+                if eval_budget is not None and eval_count >= eval_budget:
+                    break
+            if eval_budget is not None and eval_count >= eval_budget:
+                break
         policy_table[threat] = best_mix
         per_threat[threat.value] = {
             "best_mix": dict(best_mix),

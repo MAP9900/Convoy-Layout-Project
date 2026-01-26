@@ -28,6 +28,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--trials", type=int, default=50, help="Trials per plan")
     parser.add_argument("--seed", type=int, default=0, help="RNG seed")
     parser.add_argument("--top-k", type=int, default=10, help="Number of plans to keep")
+    parser.add_argument("--max-evals", type=int, default=None, help="Cap number of plan evaluations")
     parser.add_argument(
         "--output",
         type=Path,
@@ -75,6 +76,7 @@ def main() -> None:
         objective=None,
         rng_seed=args.seed,
         top_k=args.top_k,
+        max_evals=args.max_evals,
     )
 
     output_dir = args.output

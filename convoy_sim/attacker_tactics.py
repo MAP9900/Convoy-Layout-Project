@@ -8,7 +8,7 @@ from typing import Any, Literal
 
 import numpy as np
 
-from .dynamics import ConvoyFormation, ConvoyKinematics, ship_positions_at
+from .dynamics import ConvoyFormation, ConvoyKinematics, ship_positions_at, validate_dt
 from .entities import Ship, Torpedo
 from .feasibility import (
     ApproachMode,
@@ -19,8 +19,9 @@ from .feasibility import (
     is_attack_feasible,
 )
 from .geometry import Vec2, as_vec, distance
+from .noise import NoiseModel
 from .objectives import ObjectiveSpec, score_trial_result
-from .simulation import simulate_attack_once_scored
+from .simulation import apply_noise_to_torpedoes, simulate_attack_once_scored
 
 
 class TacticAction(str, Enum):
@@ -233,6 +234,7 @@ def execute_attacker_plan(
     t_max_global: float,
     rng: np.random.Generator | None = None,
     objective: ObjectiveSpec | None = None,
+    noise_model: NoiseModel | None = None,
 ) -> dict[str, Any]:
     """Execute an attacker plan and return per-pass outcomes and totals."""
 
@@ -245,7 +247,7 @@ def execute_attacker_plan(
         raise ValueError("torpedo_params must include 'speed' and 'max_run_time'")
     speed = float(torpedo_params.get("speed"))
     max_run_time = float(torpedo_params.get("max_run_time"))
-    dt = float(torpedo_params.get("dt", 1.0))
+    dt = validate_dt(torpedo_params.get("dt", 1.0))
     safety_margin = float(torpedo_params.get("safety_margin", 0.0))
     max_hits_per_torpedo = torpedo_params.get("max_hits_per_torpedo")
     if dt <= 0.0:
@@ -324,6 +326,8 @@ def execute_attacker_plan(
             continue
 
         torpedoes = _build_torpedoes_for_pass(pass_spec, speed, max_run_time)
+        if noise_model and not noise_model.is_inactive():
+            torpedoes = apply_noise_to_torpedoes(torpedoes, noise_model, generator)
         pass_record["n_torpedoes_fired"] = len(torpedoes)
 
         if not torpedoes:
