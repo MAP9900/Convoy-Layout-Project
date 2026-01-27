@@ -90,6 +90,12 @@ Render example plan-view layout PNGs (E1):
 python -m experiments.plot_layout
 ```
 
+Plot historical vs optimized overlay/comparison (E1):
+
+```bash
+python -m experiments.plot_historical_vs_optimized
+```
+
 ## Surrogate Dataset + Training (Phase 7)
 
 Generate a dataset:

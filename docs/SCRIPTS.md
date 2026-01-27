@@ -144,6 +144,12 @@ High‑level overview of runnable scripts and scenario definitions. All scripts 
 - Usage:
   - `python -m experiments.plot_layout`
 - Outputs: `results/figures/*.png`
+
+### `experiments/plot_historical_vs_optimized.py`
+- Purpose: Overlay historical vs optimized layouts and save comparison grids.
+- Usage:
+  - `python -m experiments.plot_historical_vs_optimized`
+- Outputs: `results/figures/historical_vs_optimized_*.png`
 ### `experiments/robustness_report.py`
 - Purpose: Compare baseline vs optimized defense across noise settings.
 - Usage:
