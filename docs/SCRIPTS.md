@@ -201,3 +201,6 @@ High‑level overview of runnable scripts and scenario definitions. All scripts 
 - `convoy_sim/nash.py`: Fictitious play and replicator dynamics solvers.
 - `convoy_sim/double_oracle.py`: Double-oracle style loop hook for strategy expansion.
 - `convoy_sim/viz.py`: Optional matplotlib-based plan-view plotting helpers.
+- `convoy_sim/trial_records.py`: Standardized trial record helper/schema.
+- `convoy_sim/batch_eval.py`: Reusable batch evaluation utility.
+- `convoy_sim/rl_wrapper.py`: Minimal RL episode wrapper, action mapping, observation schema.

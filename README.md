@@ -18,6 +18,7 @@ A research‑focused simulator for WWII‑style convoys and straight‑running t
 - **Game layer (B3)**: payoff matrix estimation, best responses, and exploitability.
 - **Approximate Nash (B4)**: fictitious play/replicator solvers and double-oracle loop hooks.
 - **Visualization (E1)**: optional matplotlib plan-view layout plots.
+- **RL wrapper**: minimal episode-style interface + observation schema for ML experiments.
 - **Scenarios & experiments**: scripted runs that save JSON/CSV results under `results/`.
 
 ## Quick Start
