@@ -159,6 +159,13 @@ High‑level overview of runnable scripts and scenario definitions. All scripts 
   - `results/figures/attack_once.png`
   - `results/debug/attack_once.json`
 
+### `experiments/plot_coverage.py`
+- Purpose: Plot torpedo coverage heatmap from sampled attacks.
+- Usage:
+  - `python -m experiments.plot_coverage`
+- Outputs:
+  - `results/figures/coverage_heatmap.png`
+
 ### `experiments/render_attack_animation.py`
 - Purpose: Render time-series attack frames and optional MP4 (E2).
 - Usage:
@@ -224,6 +231,8 @@ High‑level overview of runnable scripts and scenario definitions. All scripts 
 - `convoy_sim/double_oracle.py`: Double-oracle style loop hook for strategy expansion.
 - `convoy_sim/viz.py`: Optional matplotlib-based plan-view plotting helpers.
 - `convoy_sim/viz_attack.py`: Optional static + temporal attack visualization helpers.
+- `convoy_sim/coverage.py`: Pure-numpy torpedo coverage accumulation utilities.
+- `convoy_sim/viz_coverage.py`: Optional matplotlib coverage heatmap plotting.
 - `convoy_sim/trial_records.py`: Standardized trial record helper/schema.
 - `convoy_sim/batch_eval.py`: Reusable batch evaluation utility.
 - `convoy_sim/rl_wrapper.py`: Minimal RL episode wrapper, action mapping, observation schema.

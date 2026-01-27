@@ -108,6 +108,12 @@ Render temporal attack frames (E2):
 python -m experiments.render_attack_animation
 ```
 
+Plot torpedo coverage heatmap (E3):
+
+```bash
+python -m experiments.plot_coverage
+```
+
 ## Surrogate Dataset + Training (Phase 7)
 
 Generate a dataset:
