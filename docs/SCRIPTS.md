@@ -166,6 +166,16 @@ High‑level overview of runnable scripts and scenario definitions. All scripts 
 - Outputs:
   - `results/figures/coverage_heatmap.png`
 
+### `experiments/run_diagnostics_before_after.py`
+- Purpose: Generate before/after diagnostics figures and JSON summary.
+- Usage:
+  - `python -m experiments.run_diagnostics_before_after`
+- Outputs:
+  - `results/figures/diag_layout_before_after.png`
+  - `results/figures/diag_attack_overlay.png`
+  - `results/figures/diag_coverage_compare.png`
+  - `results/diag/diagnostics_summary.json`
+
 ### `experiments/render_attack_animation.py`
 - Purpose: Render time-series attack frames and optional MP4 (E2).
 - Usage:
@@ -233,6 +243,7 @@ High‑level overview of runnable scripts and scenario definitions. All scripts 
 - `convoy_sim/viz_attack.py`: Optional static + temporal attack visualization helpers.
 - `convoy_sim/coverage.py`: Pure-numpy torpedo coverage accumulation utilities.
 - `convoy_sim/viz_coverage.py`: Optional matplotlib coverage heatmap plotting.
+- `convoy_sim/diagnostics.py`: Comparative diagnostics helpers and plots.
 - `convoy_sim/trial_records.py`: Standardized trial record helper/schema.
 - `convoy_sim/batch_eval.py`: Reusable batch evaluation utility.
 - `convoy_sim/rl_wrapper.py`: Minimal RL episode wrapper, action mapping, observation schema.

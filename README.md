@@ -114,6 +114,12 @@ Plot torpedo coverage heatmap (E3):
 python -m experiments.plot_coverage
 ```
 
+Run before/after diagnostics report (E3):
+
+```bash
+python -m experiments.run_diagnostics_before_after
+```
+
 ## Surrogate Dataset + Training (Phase 7)
 
 Generate a dataset:
