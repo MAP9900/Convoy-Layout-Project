@@ -138,6 +138,12 @@ High‑level overview of runnable scripts and scenario definitions. All scripts 
   - `--seed`: RNG seed
   - `--output`: output JSON path
 - Outputs: `results/nash_solution.json`
+
+### `experiments/plot_layout.py`
+- Purpose: Render plan-view layout PNGs (optional matplotlib).
+- Usage:
+  - `python -m experiments.plot_layout`
+- Outputs: `results/figures/*.png`
 ### `experiments/robustness_report.py`
 - Purpose: Compare baseline vs optimized defense across noise settings.
 - Usage:
@@ -194,3 +200,4 @@ High‑level overview of runnable scripts and scenario definitions. All scripts 
 - `convoy_sim/game.py`: Strategy wrappers, payoff matrix estimation, and exploitability.
 - `convoy_sim/nash.py`: Fictitious play and replicator dynamics solvers.
 - `convoy_sim/double_oracle.py`: Double-oracle style loop hook for strategy expansion.
+- `convoy_sim/viz.py`: Optional matplotlib-based plan-view plotting helpers.

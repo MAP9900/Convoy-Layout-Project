@@ -17,6 +17,7 @@ A research‑focused simulator for WWII‑style convoys and straight‑running t
 - **Attacker tactics search**: coarse grid search over multi-pass plan templates.
 - **Game layer (B3)**: payoff matrix estimation, best responses, and exploitability.
 - **Approximate Nash (B4)**: fictitious play/replicator solvers and double-oracle loop hooks.
+- **Visualization (E1)**: optional matplotlib plan-view layout plots.
 - **Scenarios & experiments**: scripted runs that save JSON/CSV results under `results/`.
 
 ## Quick Start
@@ -80,6 +81,12 @@ Solve approximate Nash from a saved matrix (B4):
 
 ```bash
 python -m experiments.solve_nash_from_matrix results/game_matrix.json --iters 500 --seed 0
+```
+
+Render example plan-view layout PNGs (E1):
+
+```bash
+python -m experiments.plot_layout
 ```
 
 ## Surrogate Dataset + Training (Phase 7)
