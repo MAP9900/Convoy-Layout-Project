@@ -102,6 +102,12 @@ Plot a single attack with torpedo rays (E2):
 python -m experiments.plot_attack_once
 ```
 
+Render temporal attack frames (E2):
+
+```bash
+python -m experiments.render_attack_animation
+```
+
 ## Surrogate Dataset + Training (Phase 7)
 
 Generate a dataset:

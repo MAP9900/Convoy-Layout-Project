@@ -158,6 +158,14 @@ High‑level overview of runnable scripts and scenario definitions. All scripts 
 - Outputs:
   - `results/figures/attack_once.png`
   - `results/debug/attack_once.json`
+
+### `experiments/render_attack_animation.py`
+- Purpose: Render time-series attack frames and optional MP4 (E2).
+- Usage:
+  - `python -m experiments.render_attack_animation`
+- Outputs:
+  - `results/frames/demo_attack/frame_*.png`
+  - `results/frames/demo_attack.mp4` (optional)
 ### `experiments/robustness_report.py`
 - Purpose: Compare baseline vs optimized defense across noise settings.
 - Usage:
@@ -215,6 +223,7 @@ High‑level overview of runnable scripts and scenario definitions. All scripts 
 - `convoy_sim/nash.py`: Fictitious play and replicator dynamics solvers.
 - `convoy_sim/double_oracle.py`: Double-oracle style loop hook for strategy expansion.
 - `convoy_sim/viz.py`: Optional matplotlib-based plan-view plotting helpers.
+- `convoy_sim/viz_attack.py`: Optional static + temporal attack visualization helpers.
 - `convoy_sim/trial_records.py`: Standardized trial record helper/schema.
 - `convoy_sim/batch_eval.py`: Reusable batch evaluation utility.
 - `convoy_sim/rl_wrapper.py`: Minimal RL episode wrapper, action mapping, observation schema.
