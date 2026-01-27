@@ -96,6 +96,12 @@ Plot historical vs optimized overlay/comparison (E1):
 python -m experiments.plot_historical_vs_optimized
 ```
 
+Plot a single attack with torpedo rays (E2):
+
+```bash
+python -m experiments.plot_attack_once
+```
+
 ## Surrogate Dataset + Training (Phase 7)
 
 Generate a dataset:

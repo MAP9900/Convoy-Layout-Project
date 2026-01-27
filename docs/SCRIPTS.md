@@ -150,6 +150,14 @@ High‑level overview of runnable scripts and scenario definitions. All scripts 
 - Usage:
   - `python -m experiments.plot_historical_vs_optimized`
 - Outputs: `results/figures/historical_vs_optimized_*.png`
+
+### `experiments/plot_attack_once.py`
+- Purpose: Plot a single static attack with torpedo rays and debug JSON.
+- Usage:
+  - `python -m experiments.plot_attack_once`
+- Outputs:
+  - `results/figures/attack_once.png`
+  - `results/debug/attack_once.json`
 ### `experiments/robustness_report.py`
 - Purpose: Compare baseline vs optimized defense across noise settings.
 - Usage:
