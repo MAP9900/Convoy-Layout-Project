@@ -1,0 +1,182 @@
+{
+  "layout_comparison": {
+    "before": {
+      "summary": {
+        "counts_by_class": {
+          "freighter": 12,
+          "tanker": 0,
+          "escort": 0,
+          "decoy": 0
+        },
+        "total_value": 12.0,
+        "bbox": {
+          "xmin": -600.0,
+          "xmax": 600.0,
+          "ymin": -525.0,
+          "ymax": 525.0
+        },
+        "bbox_along": 1200.0,
+        "bbox_across": 1050.0
+      },
+      "counts_by_class": {
+        "freighter": 12,
+        "tanker": 0,
+        "escort": 0,
+        "decoy": 0
+      },
+      "value_by_class": {
+        "freighter": 12.0,
+        "tanker": 0.0,
+        "escort": 0.0,
+        "decoy": 0.0
+      },
+      "nn_distance": {
+        "min": 350.0,
+        "mean": 350.0
+      }
+    },
+    "after": {
+      "summary": {
+        "counts_by_class": {
+          "freighter": 12,
+          "tanker": 0,
+          "escort": 0,
+          "decoy": 0
+        },
+        "total_value": 12.0,
+        "bbox": {
+          "xmin": -400.0,
+          "xmax": 400.0,
+          "ymin": -675.0,
+          "ymax": 675.0
+        },
+        "bbox_along": 800.0,
+        "bbox_across": 1350.0
+      },
+      "counts_by_class": {
+        "freighter": 12,
+        "tanker": 0,
+        "escort": 0,
+        "decoy": 0
+      },
+      "value_by_class": {
+        "freighter": 12.0,
+        "tanker": 0.0,
+        "escort": 0.0,
+        "decoy": 0.0
+      },
+      "nn_distance": {
+        "min": 400.0,
+        "mean": 400.0
+      }
+    },
+    "delta": {
+      "bbox_area": -180000.0,
+      "nn_min": 50.0,
+      "nn_mean": 50.0,
+      "total_value": 0.0
+    }
+  },
+  "attack_comparison": {
+    "delta_expected_hits": -4.0,
+    "delta_expected_value": 0.0,
+    "delta_p_hit_ge_1": 0.0,
+    "delta_VaR_90": 0.0,
+    "delta_CVaR_90": 0.0
+  },
+  "lane_before": {
+    "headings": [
+      -3.141592653589793,
+      -2.356194490192345,
+      -1.5707963267948966,
+      -0.7853981633974483,
+      0.0,
+      0.7853981633974483,
+      1.5707963267948966,
+      2.356194490192345,
+      3.141592653589793
+    ],
+    "max_hits": [
+      3.0,
+      2.0,
+      4.0,
+      2.0,
+      3.0,
+      2.0,
+      4.0,
+      2.0,
+      3.0
+    ],
+    "mean_hits": [
+      1.32,
+      1.04,
+      1.28,
+      1.04,
+      1.32,
+      1.04,
+      1.28,
+      1.04,
+      1.32
+    ],
+    "lane_score": [
+      1.68,
+      0.96,
+      2.7199999999999998,
+      0.96,
+      1.68,
+      0.96,
+      2.7199999999999998,
+      0.96,
+      1.68
+    ]
+  },
+  "lane_after": {
+    "headings": [
+      -3.141592653589793,
+      -2.356194490192345,
+      -1.5707963267948966,
+      -0.7853981633974483,
+      0.0,
+      0.7853981633974483,
+      1.5707963267948966,
+      2.356194490192345,
+      3.141592653589793
+    ],
+    "max_hits": [
+      3.0,
+      3.0,
+      4.0,
+      3.0,
+      3.0,
+      3.0,
+      4.0,
+      3.0,
+      3.0
+    ],
+    "mean_hits": [
+      1.08,
+      1.08,
+      0.96,
+      1.08,
+      1.08,
+      1.08,
+      0.96,
+      1.08,
+      1.08
+    ],
+    "lane_score": [
+      1.92,
+      1.92,
+      3.04,
+      1.92,
+      1.92,
+      1.92,
+      3.04,
+      1.92,
+      1.92
+    ]
+  },
+  "explanations": [
+    "Increased minimum ship spacing reduces clustering."
+  ]
+}
