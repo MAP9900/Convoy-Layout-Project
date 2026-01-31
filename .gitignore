@@ -1,9 +1,11 @@
 #Project Specifics:
 
-#Frames
+#Frames 
 frames/
 .frame*
 
+
+# gitignore
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
