@@ -143,6 +143,7 @@ python experiments/train_surrogate.py --data results/datasets/dataset.csv --targ
 - `results/`: output data (gitignored).
 - `tests/`: pytest suite.
 - `docs/`: high‑level script and workflow reference.
+- `docs/Visuals.md`: visualization guide (what can be rendered and how).
 
 ## Testing
 

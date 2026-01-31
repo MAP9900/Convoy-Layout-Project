@@ -28,3 +28,11 @@ Suggested Next Steps (proposed batch)
 - Decide a canonical trial JSON schema.
 - Pick one sim pathway (static or dynamic) as the ML default.
 - Approve a minimal episode wrapper for both sides.
+
+Additional Tests Before ML/RL
+- [TODO] Determinism parity across static/dynamic runs for matched setups.
+- [TODO] Noise regression: zero-noise matches baseline across multiple scenarios.
+- [TODO] Coverage heatmap sanity: peak aligns with expected torpedo lane.
+- [TODO] Attack visualization math: hit markers appear only after launch delay.
+- [TODO] RL wrapper step: stable observation schema + reward sign consistency.
+- [TODO] Serialization round-trip: scenarios + noise + policy/plan configs.
