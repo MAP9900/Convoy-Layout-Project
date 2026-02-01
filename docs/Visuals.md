@@ -3,7 +3,7 @@ Visuals Guide
 Overview
 This guide lists the available visualization scripts and what they render. All outputs are saved under `results/` and are optional; matplotlib must be installed for plotting functions. ffmpeg needed for MP4 Visuals. 
 
-Plan-View Layouts (E1)
+Plan-View Layouts (E1) 
 - Script: `python -m experiments.plot_layout`
 - Output: `results/figures/*.png`
 - What it shows: plan-view ship centers colored by class or value, with footprint outlines.

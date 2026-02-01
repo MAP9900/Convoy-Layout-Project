@@ -25,10 +25,10 @@ def ship_color(
 
     if color_by == "class":
         class_colors = {
-            ShipClass.FREIGHTER: "#1f77b4",
-            ShipClass.TANKER: "#ff7f0e",
-            ShipClass.ESCORT: "#2ca02c",
-            ShipClass.DECOY: "#d62728",
+            ShipClass.FREIGHTER: "#0a0a0a",
+            ShipClass.TANKER: "#38160d",
+            ShipClass.ESCORT: "#001845",
+            ShipClass.DECOY: "#ffc600",
         }
         return class_colors.get(ship.ship_class, "#7f7f7f")
     plt = _require_matplotlib()
@@ -155,9 +155,10 @@ def plot_convoy_planview(
     show_footprint: bool = True,
     footprint_padding: float = 0.0,
     ship_marker_size: float = 40.0,
-    alpha: float = 0.9,
+    alpha: float = 1.0,
     axes_facecolor: str = "#06768d",
     value_cmap: str = "YlGnBu",
+    grid_color: str = "lightgrey",
 ) -> Any:
     """Plot convoy ship centers in plan view."""
 
@@ -206,15 +207,17 @@ def plot_convoy_planview(
     ax.set_xlabel("x (m)")
     ax.set_ylabel("y (m)")
     ax.set_aspect("equal", adjustable="box")
+    ax.set_anchor("C")
+    ax.grid(True, color=grid_color, linewidth=0.5, alpha=0.75, linestyle='--')
 
     if color_by == "class":
         handles = []
         labels = []
         for ship_class, color in {
-            ShipClass.FREIGHTER: "#1f77b4",
-            ShipClass.TANKER: "#ff7f0e",
-            ShipClass.ESCORT: "#2ca02c",
-            ShipClass.DECOY: "#d62728",
+            ShipClass.FREIGHTER: "#0a0a0a",
+            ShipClass.TANKER: "#38160d",
+            ShipClass.ESCORT: "#001845",
+            ShipClass.DECOY: "#ffc600",
         }.items():
             handles.append(ax.scatter([], [], c=color, s=ship_marker_size))
             labels.append(ship_class.value)
@@ -223,7 +226,7 @@ def plot_convoy_planview(
             labels,
             title="Ship class",
             loc="lower center",
-            bbox_to_anchor=(0.5, -0.18),
+            bbox_to_anchor=(0.5, -0.26),
             ncol=len(labels),
             frameon=False,
         )
@@ -240,8 +243,8 @@ def plot_layout_overlay(
     color_by: Literal["class", "value"] = "class",
     show_footprints: bool = True,
     footprint_padding: float = 0.0,
-    alpha_a: float = 0.6,
-    alpha_b: float = 0.6,
+    alpha_a: float = 1.0,
+    alpha_b: float = 1.0,
 ) -> Any:
     """Overlay two layouts with distinct markers and optional footprints."""
 
@@ -275,6 +278,7 @@ def plot_layout_overlay(
     ax.set_xlabel("x (m)")
     ax.set_ylabel("y (m)")
     ax.set_aspect("equal", adjustable="box")
+    ax.set_anchor("C")
     ax.legend(title="Layout")
     return ax
 
@@ -315,8 +319,8 @@ def save_planview_png(ships: list[Ship], path: str, **plot_kwargs) -> str:
     plot_convoy_planview(ships, ax=ax, **plot_kwargs)
     for spine in plt.gca().spines.values():
         spine.set_visible(False)
-    fig.subplots_adjust(bottom=0.22)
-    fig.tight_layout()
+    fig.tight_layout(rect=(0.0, 0.08, 1.0, 0.92))
+    fig.subplots_adjust(left=0.12, right=0.95, top=0.9, bottom=0.32)
     fig.savefig(path, dpi=150)
     plt.close(fig)
     return path

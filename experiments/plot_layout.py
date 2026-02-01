@@ -27,6 +27,7 @@ def main() -> None:
         str(out_dir / "rect_class.png"),
         title="Rectangular (class)",
         color_by="class",
+        show_footprint=False,
         show_labels=False,
     )
     save_planview_png(
@@ -34,6 +35,7 @@ def main() -> None:
         str(out_dir / "rect_value.png"),
         title="Rectangular (value)",
         color_by="value",
+        show_footprint=False,
         show_labels=False,
     )
 
@@ -53,6 +55,7 @@ def main() -> None:
         str(out_dir / "staggered_class.png"),
         title="Staggered (class)",
         color_by="class",
+        show_footprint=False,
         show_labels=False,
     )
     save_planview_png(
@@ -60,6 +63,7 @@ def main() -> None:
         str(out_dir / "staggered_value.png"),
         title="Staggered (value)",
         color_by="value",
+        show_footprint=False,
         show_labels=False,
     )
 
