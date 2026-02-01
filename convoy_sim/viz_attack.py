@@ -325,6 +325,8 @@ def save_attack_animation_mp4(
         from matplotlib import animation  # type: ignore
     except ImportError as exc:  # pragma: no cover - depends on environment
         raise ImportError("matplotlib animation support is required for MP4 output") from exc
+    if not animation.writers.is_available("ffmpeg"):
+        raise ImportError("ffmpeg is required for MP4 output; use save_attack_frames instead")
 
     if fps <= 0:
         raise ValueError("fps must be positive")
@@ -347,7 +349,8 @@ def save_attack_animation_mp4(
         return ax
 
     anim = animation.FuncAnimation(fig, _update, frames=len(times), interval=1000 / fps)
-    anim.save(out_path, fps=fps)
+    writer = animation.FFMpegWriter(fps=fps)
+    anim.save(out_path, writer=writer)
     plt.close(fig)
     return out_path
 

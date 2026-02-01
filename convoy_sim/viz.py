@@ -1,11 +1,8 @@
 """Matplotlib-based plan-view visualization helpers (optional dependency)."""
 
 from __future__ import annotations
-
 from typing import Any, Literal
-
 import numpy as np
-
 from .entities import Ship, ShipClass
 
 
@@ -20,7 +17,7 @@ def _require_matplotlib() -> Any:
 def ship_color(
     ship: Ship,
     color_by: Literal["class", "value"] = "class",
-    cmap: str = "viridis",
+    cmap: str = "YlGnBu",
     *,
     value_range: tuple[float, float] | None = None,
 ) -> Any:
@@ -159,35 +156,42 @@ def plot_convoy_planview(
     footprint_padding: float = 0.0,
     ship_marker_size: float = 40.0,
     alpha: float = 0.9,
+    axes_facecolor: str = "#06768d",
+    value_cmap: str = "YlGnBu",
 ) -> Any:
     """Plot convoy ship centers in plan view."""
 
     plt = _require_matplotlib()
     if ax is None:
         _, ax = plt.subplots(figsize=(6, 6))
-
+    ax.set_facecolor(axes_facecolor)
     positions = np.array([ship.position for ship in ships], dtype=float)
-    colors = []
+    colors: list[Any] = []
     if color_by == "value":
         values = np.array([ship.value_weight for ship in ships], dtype=float)
         vmin = float(np.min(values)) if len(values) else 0.0
         vmax = float(np.max(values)) if len(values) else 1.0
         if vmax <= vmin:
             vmax = vmin + 1.0
-        colors = [
-            ship_color(ship, color_by="value", cmap="viridis", value_range=(vmin, vmax))
-            for ship in ships
-        ]
+        scatter = ax.scatter(
+            positions[:, 0],
+            positions[:, 1],
+            c=values,
+            cmap=value_cmap,
+            vmin=vmin,
+            vmax=vmax,
+            s=float(ship_marker_size),
+            alpha=float(alpha),
+        )
     else:
         colors = [ship_color(ship, color_by=color_by) for ship in ships]
-
-    scatter = ax.scatter(
-        positions[:, 0],
-        positions[:, 1],
-        c=colors,
-        s=float(ship_marker_size),
-        alpha=float(alpha),
-    )
+        scatter = ax.scatter(
+            positions[:, 0],
+            positions[:, 1],
+            c=colors,
+            s=float(ship_marker_size),
+            alpha=float(alpha),
+        )
 
     if show_labels:
         for ship in ships:
@@ -214,7 +218,15 @@ def plot_convoy_planview(
         }.items():
             handles.append(ax.scatter([], [], c=color, s=ship_marker_size))
             labels.append(ship_class.value)
-        ax.legend(handles, labels, title="Ship class")
+        ax.legend(
+            handles,
+            labels,
+            title="Ship class",
+            loc="lower center",
+            bbox_to_anchor=(0.5, -0.18),
+            ncol=len(labels),
+            frameon=False,
+        )
     else:
         plt.colorbar(scatter, ax=ax, label="Value weight")
     return ax
@@ -299,8 +311,11 @@ def save_planview_png(ships: list[Ship], path: str, **plot_kwargs) -> str:
     """Save a plan-view figure to disk and return the path."""
 
     plt = _require_matplotlib()
-    fig, ax = plt.subplots(figsize=(6, 6))
+    fig, ax = plt.subplots(figsize=(6, 6), facecolor="lightgrey")
     plot_convoy_planview(ships, ax=ax, **plot_kwargs)
+    for spine in plt.gca().spines.values():
+        spine.set_visible(False)
+    fig.subplots_adjust(bottom=0.22)
     fig.tight_layout()
     fig.savefig(path, dpi=150)
     plt.close(fig)

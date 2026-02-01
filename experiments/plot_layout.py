@@ -1,11 +1,8 @@
 """Render basic convoy layout plan views to PNG."""
 
 from __future__ import annotations
-
 from pathlib import Path
-
 import numpy as np
-
 from convoy_sim.layouts import make_rectangular_convoy, make_staggered_convoy
 from convoy_sim.viz import save_planview_png
 
