@@ -43,6 +43,27 @@ class SalvoSpec:
     asymmetry: float = 0.0
     edge_bias: float = 0.0
 
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "n_torpedoes": int(self.n_torpedoes),
+            "pattern": self.pattern,
+            "spread_rad": self.spread_rad,
+            "lateral_spacing": self.lateral_spacing,
+            "asymmetry": float(self.asymmetry),
+            "edge_bias": float(self.edge_bias),
+        }
+
+    @classmethod
+    def from_dict(cls, payload: dict[str, Any]) -> "SalvoSpec":
+        return cls(
+            n_torpedoes=int(payload["n_torpedoes"]),
+            pattern=payload["pattern"],
+            spread_rad=payload.get("spread_rad"),
+            lateral_spacing=payload.get("lateral_spacing"),
+            asymmetry=float(payload.get("asymmetry", 0.0)),
+            edge_bias=float(payload.get("edge_bias", 0.0)),
+        )
+
 
 @dataclass(frozen=True)
 class PassSpec:
@@ -56,6 +77,31 @@ class PassSpec:
     allow_abort: bool = True
     abort_if_risk_above: float | None = None
     abort_if_infeasible: bool = True
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "launch_time": float(self.launch_time),
+            "u_boat_pos": np.asarray(self.u_boat_pos, dtype=float).tolist(),
+            "bearing_rad": float(self.bearing_rad),
+            "approach_mode": self.approach_mode.value,
+            "salvo": self.salvo.to_dict(),
+            "allow_abort": bool(self.allow_abort),
+            "abort_if_risk_above": self.abort_if_risk_above,
+            "abort_if_infeasible": bool(self.abort_if_infeasible),
+        }
+
+    @classmethod
+    def from_dict(cls, payload: dict[str, Any]) -> "PassSpec":
+        return cls(
+            launch_time=float(payload["launch_time"]),
+            u_boat_pos=np.asarray(payload["u_boat_pos"], dtype=float),
+            bearing_rad=float(payload["bearing_rad"]),
+            approach_mode=ApproachMode(payload["approach_mode"]),
+            salvo=SalvoSpec.from_dict(payload["salvo"]),
+            allow_abort=bool(payload.get("allow_abort", True)),
+            abort_if_risk_above=payload.get("abort_if_risk_above"),
+            abort_if_infeasible=bool(payload.get("abort_if_infeasible", True)),
+        )
 
 
 @dataclass(frozen=True)
@@ -72,6 +118,19 @@ class AttackerPlan:
             return 0.0
         latest = max(pass_spec.launch_time for pass_spec in self.passes)
         return float(latest) + float(run_time_buffer)
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "name": self.name,
+            "passes": [pass_spec.to_dict() for pass_spec in self.passes],
+        }
+
+    @classmethod
+    def from_dict(cls, payload: dict[str, Any]) -> "AttackerPlan":
+        return cls(
+            passes=[PassSpec.from_dict(item) for item in payload.get("passes", [])],
+            name=payload.get("name", ""),
+        )
 
 
 def fan_headings_from_salvo(

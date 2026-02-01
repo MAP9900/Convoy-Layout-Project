@@ -192,6 +192,7 @@ def render_attack_frame(
     color_by: Literal["class", "value"] = "class",
     show_trails: bool = True,
     trail_length_s: float = 60.0,
+    show_footprint: bool = True,
 ) -> Any:
     """Render a single time frame of a static/dynamic attack."""
 
@@ -222,7 +223,7 @@ def render_attack_frame(
         ax=ax,
         title=f"t={t_global:.1f}s",
         color_by=color_by,
-        show_footprint=True,
+        show_footprint=show_footprint,
     )
 
     for torpedo in torpedoes:
@@ -244,7 +245,11 @@ def render_attack_frame(
         for torpedo in torpedoes:
             if t_global < torpedo.launch_delay:
                 continue
-            d_min = min_miss_distance_ship_torpedo(ship, torpedo, t_global)
+            d_min = min_miss_distance_ship_torpedo(
+                ship,
+                torpedo,
+                max(0.0, t_global - torpedo.launch_delay),
+            )
             if d_min <= ship.effective_hit_radius():
                 ax.scatter(
                     ship.position[0],

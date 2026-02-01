@@ -57,6 +57,26 @@ class LayoutAction:
     complexity_cost: float
     footprint_limit: dict[str, float] | None = None
 
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "name": self.name,
+            "layout_fn": getattr(self.layout_fn, "__name__", str(self.layout_fn)),
+            "layout_fn_module": getattr(self.layout_fn, "__module__", ""),
+            "layout_kwargs": self.layout_kwargs,
+            "complexity_cost": float(self.complexity_cost),
+            "footprint_limit": self.footprint_limit,
+        }
+
+    @classmethod
+    def from_dict(cls, payload: dict[str, Any], *, layout_fn: Callable[..., list[Ship]]) -> "LayoutAction":
+        return cls(
+            name=payload["name"],
+            layout_fn=layout_fn,
+            layout_kwargs=payload.get("layout_kwargs", {}),
+            complexity_cost=float(payload.get("complexity_cost", 0.0)),
+            footprint_limit=payload.get("footprint_limit"),
+        )
+
 
 def compute_layout_metrics(ships: list[Ship]) -> dict[str, float]:
     """Compute simple geometric and composition metrics for a layout."""
@@ -120,6 +140,34 @@ class DefenderPolicy:
 
     def expected_action(self, threat: ThreatType) -> dict[str, float]:
         return self.action_distribution(threat)
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "actions": [action.to_dict() for action in self.actions],
+            "policy_table": {
+                threat.value: dict(dist) for threat, dist in self.policy_table.items()
+            },
+        }
+
+    @classmethod
+    def from_dict(
+        cls,
+        payload: dict[str, Any],
+        *,
+        layout_fn_map: dict[str, Callable[..., list[Ship]]],
+    ) -> "DefenderPolicy":
+        actions = []
+        for item in payload.get("actions", []):
+            name = item.get("name", "")
+            layout_fn_name = item.get("layout_fn")
+            if layout_fn_name not in layout_fn_map:
+                raise ValueError(f"Missing layout_fn mapping for {layout_fn_name}")
+            actions.append(LayoutAction.from_dict(item, layout_fn=layout_fn_map[layout_fn_name]))
+        policy_table = {
+            ThreatType(key): dict(value)
+            for key, value in payload.get("policy_table", {}).items()
+        }
+        return cls(actions=actions, policy_table=policy_table)
 
 
 def make_uniform_policy(actions: list[LayoutAction], threats: list[ThreatType]) -> DefenderPolicy:

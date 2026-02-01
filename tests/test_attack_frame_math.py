@@ -5,7 +5,7 @@ import numpy as np
 from convoy_sim.dynamics import ConvoyFormation, ConvoyKinematics, RouteLeg, RoutePlan
 from convoy_sim.entities import Ship, ShipClass, Torpedo
 from convoy_sim.geometry import as_vec
-from convoy_sim.viz_attack import get_ship_positions_dynamic, torpedo_position_at_global_time
+from convoy_sim.viz_attack import get_ship_positions_dynamic, render_attack_frame, torpedo_position_at_global_time
 
 
 def _ship_at(pos: np.ndarray) -> Ship:
@@ -47,3 +47,30 @@ def test_torpedo_position_respects_launch_delay() -> None:
     pos_after = torpedo_position_at_global_time(torpedo, 7.0)
     assert np.allclose(pos_before, as_vec(0.0, 0.0))
     assert pos_after[0] > 0.0
+
+
+def test_hit_marker_after_launch_delay() -> None:
+    ship = _ship_at(as_vec(0.0, 0.0))
+    torpedo = Torpedo(
+        id="T1",
+        launch_position=as_vec(-10.0, 0.0),
+        speed=10.0,
+        heading_rad=0.0,
+        max_run_time=20.0,
+        launch_delay=5.0,
+    )
+    try:
+        import matplotlib.pyplot as plt  # type: ignore
+    except ImportError:
+        return
+    fig, ax = plt.subplots()
+    render_attack_frame([ship], [torpedo], t_global=2.0, t_max=20.0, ax=ax, show_footprint=False)
+    before_count = len(ax.collections)
+    before_offsets = sum(col.get_offsets().shape[0] for col in ax.collections if hasattr(col, "get_offsets"))
+    ax.clear()
+    render_attack_frame([ship], [torpedo], t_global=6.0, t_max=20.0, ax=ax, show_footprint=False)
+    after_count = len(ax.collections)
+    after_offsets = sum(col.get_offsets().shape[0] for col in ax.collections if hasattr(col, "get_offsets"))
+    plt.close(fig)
+    assert after_count >= before_count
+    assert after_offsets > before_offsets

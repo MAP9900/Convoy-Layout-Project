@@ -26,7 +26,9 @@ def test_coverage_line_peak_near_track() -> None:
     assert counts.shape == (50, 50)
     max_idx = np.unravel_index(np.argmax(counts), counts.shape)
     y_center = (data["y_edges"][max_idx[0]] + data["y_edges"][max_idx[0] + 1]) / 2.0
+    x_center = (data["x_edges"][max_idx[1]] + data["x_edges"][max_idx[1] + 1]) / 2.0
     assert abs(y_center) < 10.0
+    assert -120.0 <= x_center <= 120.0
 
 
 def test_coverage_bounds_match_edges() -> None:
