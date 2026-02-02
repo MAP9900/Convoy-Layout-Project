@@ -14,6 +14,74 @@ def _require_matplotlib() -> Any:
     return plt
 
 
+def _ship_marker_polygon(length: float, beam: float) -> np.ndarray:
+    """Return a simple ship-like polygon centered at the origin pointing +y."""
+
+    length = float(length)
+    beam = float(beam)
+    if length <= 0.0 or beam <= 0.0:
+        return np.zeros((0, 2), dtype=float)
+    bow_len = 0.3 * length
+    bow_base = 0.5 * length - bow_len
+    stern = -0.5 * length
+    half_beam = 0.5 * beam
+    return np.array(
+        [
+            [-half_beam, stern],
+            [-half_beam, bow_base],
+            [0.0, 0.5 * length],
+            [half_beam, bow_base],
+            [half_beam, stern],
+            [-half_beam, stern],
+        ],
+        dtype=float,
+    )
+
+
+def _add_ship_polygons(
+    ax: Any,
+    ships: list[Ship],
+    colors: list[Any],
+    *,
+    alpha: float,
+    ship_marker_size: float,
+    rotate_by_heading: bool,
+    cmap: str | None = None,
+    norm: Any | None = None,
+) -> Any:
+    """Add ship-shaped polygons to the axes and return the collection."""
+
+    from matplotlib.collections import PatchCollection  # type: ignore
+    from matplotlib.patches import Polygon  # type: ignore
+
+    patches = []
+    for ship in ships:
+        heading = (ship.heading_rad - 0.5 * np.pi) if rotate_by_heading else 0.0
+        base_poly = _ship_marker_polygon(ship_marker_size, ship_marker_size * 0.35)
+        if base_poly.size == 0:
+            continue
+        cos_a = float(np.cos(heading))
+        sin_a = float(np.sin(heading))
+        rotation = np.array([[cos_a, -sin_a], [sin_a, cos_a]], dtype=float)
+        rotated = (rotation @ base_poly.T).T
+        translated = rotated + ship.position
+        patches.append(Polygon(translated, closed=True))
+
+    collection = PatchCollection(
+        patches,
+        cmap=cmap,
+        norm=norm,
+        alpha=float(alpha),
+        linewidths=0.0,
+    )
+    if cmap is not None and norm is not None:
+        collection.set_array(np.asarray(colors, dtype=float))
+    else:
+        collection.set_facecolor(colors)
+    ax.add_collection(collection)
+    return collection
+
+
 def ship_color(
     ship: Ship,
     color_by: Literal["class", "value"] = "class",
@@ -159,6 +227,8 @@ def plot_convoy_planview(
     axes_facecolor: str = "#06768d",
     value_cmap: str = "YlGnBu",
     grid_color: str = "lightgrey",
+    ship_marker: Literal["circle", "ship"] = "circle",
+    rotate_by_heading: bool = False,
 ) -> Any:
     """Plot convoy ship centers in plan view."""
 
@@ -174,25 +244,60 @@ def plot_convoy_planview(
         vmax = float(np.max(values)) if len(values) else 1.0
         if vmax <= vmin:
             vmax = vmin + 1.0
-        scatter = ax.scatter(
-            positions[:, 0],
-            positions[:, 1],
-            c=values,
+        colors = list(values)
+        mappable = plt.cm.ScalarMappable(
             cmap=value_cmap,
-            vmin=vmin,
-            vmax=vmax,
-            s=float(ship_marker_size),
-            alpha=float(alpha),
+            norm=plt.Normalize(vmin=vmin, vmax=vmax),
         )
+        mappable.set_array(np.asarray(colors, dtype=float))
     else:
         colors = [ship_color(ship, color_by=color_by) for ship in ships]
-        scatter = ax.scatter(
-            positions[:, 0],
-            positions[:, 1],
-            c=colors,
-            s=float(ship_marker_size),
-            alpha=float(alpha),
-        )
+
+    if ship_marker == "ship":
+        if color_by == "value":
+            scatter = _add_ship_polygons(
+                ax,
+                ships,
+                colors,
+                alpha=alpha,
+                ship_marker_size=ship_marker_size,
+                rotate_by_heading=rotate_by_heading,
+                cmap=value_cmap,
+                norm=mappable.norm,
+            )
+        else:
+            scatter = _add_ship_polygons(
+                ax,
+                ships,
+                colors,
+                alpha=alpha,
+                ship_marker_size=ship_marker_size,
+                rotate_by_heading=rotate_by_heading,
+            )
+        if len(positions):
+            pad = max(1.0, ship_marker_size * 0.6)
+            ax.set_xlim(float(np.min(positions[:, 0]) - pad), float(np.max(positions[:, 0]) + pad))
+            ax.set_ylim(float(np.min(positions[:, 1]) - pad), float(np.max(positions[:, 1]) + pad))
+    else:
+        if color_by == "value":
+            scatter = ax.scatter(
+                positions[:, 0],
+                positions[:, 1],
+                c=colors,
+                cmap=value_cmap,
+                vmin=vmin,
+                vmax=vmax,
+                s=float(ship_marker_size),
+                alpha=float(alpha),
+            )
+        else:
+            scatter = ax.scatter(
+                positions[:, 0],
+                positions[:, 1],
+                c=colors,
+                s=float(ship_marker_size),
+                alpha=float(alpha),
+            )
 
     if show_labels:
         for ship in ships:
@@ -206,6 +311,7 @@ def plot_convoy_planview(
         ax.set_title(title)
     ax.set_xlabel("x (m)")
     ax.set_ylabel("y (m)")
+    ax.set_axisbelow(True)
     ax.set_aspect("equal", adjustable="box")
     ax.set_anchor("C")
     ax.grid(True, color=grid_color, linewidth=0.5, alpha=0.75, linestyle='--')
@@ -221,6 +327,15 @@ def plot_convoy_planview(
         }.items():
             handles.append(ax.scatter([], [], c=color, s=ship_marker_size))
             labels.append(ship_class.value)
+        if ship_marker == "ship":
+            from matplotlib.patches import Patch  # type: ignore
+
+            handles = [Patch(facecolor=color, edgecolor="none") for color in {
+                ShipClass.FREIGHTER: "#0a0a0a",
+                ShipClass.TANKER: "#38160d",
+                ShipClass.ESCORT: "#001845",
+                ShipClass.DECOY: "#ffc600",
+            }.values()]
         ax.legend(
             handles,
             labels,
@@ -231,7 +346,10 @@ def plot_convoy_planview(
             frameon=False,
         )
     else:
-        plt.colorbar(scatter, ax=ax, label="Value weight")
+        if ship_marker == "ship":
+            plt.colorbar(mappable, ax=ax, label="Value weight")
+        else:
+            plt.colorbar(scatter, ax=ax, label="Value weight")
     return ax
 
 
@@ -245,13 +363,16 @@ def plot_layout_overlay(
     footprint_padding: float = 0.0,
     alpha_a: float = 1.0,
     alpha_b: float = 1.0,
-) -> Any:
+    ship_marker_size: float = 40.0,
+    ship_marker: Literal["circle", "ship"] = "circle",
+    rotate_by_heading: bool = False,) -> Any:
     """Overlay two layouts with distinct markers and optional footprints."""
 
     plt = _require_matplotlib()
     if ax is None:
         _, ax = plt.subplots(figsize=(6, 6))
-
+    for spine in plt.gca().spines.values():
+        spine.set_visible(False)
     values = np.array([s.value_weight for s in ships_a + ships_b], dtype=float)
     vmin = float(np.min(values)) if len(values) else 0.0
     vmax = float(np.max(values)) if len(values) else 1.0
@@ -266,8 +387,47 @@ def plot_layout_overlay(
     ]
     pos_a = np.array([ship.position for ship in ships_a], dtype=float)
     pos_b = np.array([ship.position for ship in ships_b], dtype=float)
-    ax.scatter(pos_a[:, 0], pos_a[:, 1], c=colors_a, marker="o", alpha=float(alpha_a), label=labels[0])
-    ax.scatter(pos_b[:, 0], pos_b[:, 1], c=colors_b, marker="^", alpha=float(alpha_b), label=labels[1])
+    if ship_marker == "ship":
+        _add_ship_polygons(
+            ax,
+            ships_a,
+            colors_a,
+            alpha=alpha_a,
+            ship_marker_size=ship_marker_size,
+            rotate_by_heading=rotate_by_heading,
+        )
+        _add_ship_polygons(
+            ax,
+            ships_b,
+            colors_b,
+            alpha=alpha_b,
+            ship_marker_size=ship_marker_size,
+            rotate_by_heading=rotate_by_heading,
+        )
+        from matplotlib.patches import Patch  # type: ignore
+
+        handles = [
+            Patch(facecolor="0.2", edgecolor="none", alpha=float(alpha_a)),
+            Patch(facecolor="0.6", edgecolor="none", alpha=float(alpha_b)),
+        ]
+        ax.legend(handles, list(labels), title="Layout")
+    else:
+        ax.scatter(
+            pos_a[:, 0],
+            pos_a[:, 1],
+            c=colors_a,
+            marker="o",
+            alpha=float(alpha_a),
+            label=labels[0],
+        )
+        ax.scatter(
+            pos_b[:, 0],
+            pos_b[:, 1],
+            c=colors_b,
+            marker="^",
+            alpha=float(alpha_b),
+            label=labels[1],
+        )
 
     if show_footprints:
         poly_a = compute_footprint_polygon(ships_a, padding=footprint_padding)
@@ -279,7 +439,6 @@ def plot_layout_overlay(
     ax.set_ylabel("y (m)")
     ax.set_aspect("equal", adjustable="box")
     ax.set_anchor("C")
-    ax.legend(title="Layout")
     return ax
 
 
@@ -288,6 +447,8 @@ def plot_layout_comparison_grid(
     ncols: int = 2,
     color_by: Literal["class", "value"] = "class",
     show_footprint: bool = True,
+    ship_marker: Literal["circle", "ship"] = "circle",
+    rotate_by_heading: bool = False,
 ) -> Any:
     """Plot multiple layouts in a grid of subplots and return the figure."""
 
@@ -295,8 +456,10 @@ def plot_layout_comparison_grid(
     n_layouts = len(layouts)
     ncols = max(1, int(ncols))
     nrows = int(np.ceil(n_layouts / ncols)) if n_layouts else 1
-    fig, axes = plt.subplots(nrows=nrows, ncols=ncols, figsize=(6 * ncols, 6 * nrows))
+    fig, axes = plt.subplots(nrows=nrows, ncols=ncols, figsize=(6 * ncols, 6 * nrows), facecolor="lightgrey")
     axes_list = np.atleast_1d(axes).ravel()
+    for spine in plt.gca().spines.values():
+        spine.set_visible(False)
     for ax, (name, ships) in zip(axes_list, layouts):
         plot_convoy_planview(
             ships,
@@ -304,6 +467,8 @@ def plot_layout_comparison_grid(
             title=name,
             color_by=color_by,
             show_footprint=show_footprint,
+            ship_marker=ship_marker,
+            rotate_by_heading=rotate_by_heading,
         )
     for ax in axes_list[len(layouts):]:
         ax.axis("off")

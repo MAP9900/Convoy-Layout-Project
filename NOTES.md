@@ -7,3 +7,9 @@ Value:
     -Tanker value_weight = 
     -Decoy value_weight = 
     -
+
+
+
+
+for spine in plt.gca().spines.values():
+    spine.set_visible(False)
