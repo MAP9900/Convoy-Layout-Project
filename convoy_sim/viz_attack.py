@@ -167,10 +167,11 @@ def plot_attack_planview(
             ax.scatter(
                 ship.position[0],
                 ship.position[1],
-                s=120.0,
+                s=300,
                 facecolors="none",
                 edgecolors="red",
-                linewidths=1.5,
+                linewidths=0.75,
+                zorder=5,
             )
 
     if show_miss_annotations and torpedoes:
@@ -205,7 +206,8 @@ def render_attack_frame(
     trail_color: str = "gray",
     legend_bbox_to_anchor: tuple[float, float] | None = None,
     view_bounds: tuple[float, float, float, float] | None = None,
-    hide_spines: bool = False,
+    hide_spines: bool = True,
+    hit_cache: set[str] | None = None,
 ) -> Any:
     """Render a single time frame of a static/dynamic attack."""
 
@@ -234,7 +236,7 @@ def render_attack_frame(
     ax = plot_convoy_planview(
         ships,
         ax=ax,
-        title=f"t={t_global:.1f}s",
+        title=f"Convoy Attack Visual \nt={t_global:.1f}s",
         color_by=color_by,
         show_footprint=show_footprint,
         ship_marker=ship_marker,
@@ -268,26 +270,7 @@ def render_attack_frame(
             alpha=0.7,
         )
 
-    for ship in ships:
-        for torpedo in torpedoes:
-            if t_global < torpedo.launch_delay:
-                continue
-            d_min = min_miss_distance_ship_torpedo(
-                ship,
-                torpedo,
-                max(0.0, t_global - torpedo.launch_delay),
-            )
-            if d_min <= ship.effective_hit_radius():
-                ax.scatter(
-                    ship.position[0],
-                    ship.position[1],
-                    s=120.0,
-                    facecolors="none",
-                    edgecolors="red",
-                    linewidths=1.5,
-                )
-                break
-
+    hit_ids = hit_cache if hit_cache is not None else set()
     if view_bounds is not None:
         xmin, xmax, ymin, ymax = view_bounds
         ax.set_xlim(float(xmin), float(xmax))
@@ -323,6 +306,7 @@ def save_attack_frames(
     dt = 1.0 / float(fps)
     times = np.arange(float(t_start), float(t_end) + 1e-9, dt)
     paths: list[str] = []
+    hit_cache: set[str] = set()
     for idx, t in enumerate(times):
         fig, ax = plt.subplots(figsize=(6, 6))
         render_attack_frame(
@@ -332,6 +316,7 @@ def save_attack_frames(
             t_max=float(t_end),
             dynamics=dynamics,
             ax=ax,
+            hit_cache=hit_cache,
             **kwargs,
         )
         fig.tight_layout()
@@ -367,6 +352,7 @@ def save_attack_animation_mp4(
     dt = 1.0 / float(fps)
     times = np.arange(float(t_start), float(t_end) + 1e-9, dt)
     fig, ax = plt.subplots(figsize=(6, 6))
+    hit_cache: set[str] = set()
 
     def _update(frame_idx: int):
         ax.clear()
@@ -378,6 +364,7 @@ def save_attack_animation_mp4(
             t_max=float(t_end),
             dynamics=dynamics,
             ax=ax,
+            hit_cache=hit_cache,
             **kwargs,
         )
         return ax
@@ -395,3 +382,24 @@ def save_attack_debug_json(path: str, metrics: dict[str, Any]) -> str:
     with open(path, "w", encoding="utf-8") as handle:
         json.dump(metrics, handle, indent=2)
     return path
+    hit_ids = hit_cache if hit_cache is not None else set()
+    for ship in ships:
+        for torpedo in torpedoes:
+            if t_global < torpedo.launch_delay:
+                continue
+            torp_pos = torpedo.position_at(float(t_global))
+            if distance(ship.position, torp_pos) <= ship.effective_hit_radius():
+                hit_ids.add(ship.id)
+                break
+
+    for ship in ships:
+        if ship.id in hit_ids:
+            ax.scatter(
+                ship.position[0],
+                ship.position[1],
+                s=120.0,
+                facecolors="none",
+                edgecolors="red",
+                linewidths=1.5,
+                zorder=5,
+            )

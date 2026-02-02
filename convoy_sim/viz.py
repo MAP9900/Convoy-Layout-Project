@@ -237,6 +237,8 @@ def plot_convoy_planview(
     ship_marker: Literal["circle", "ship"] = "circle",
     rotate_by_heading: bool = False,
     use_hull_dimensions: bool = False,
+    highlight_ids: set[str] | None = None,
+    highlight_color: str = "red",
 ) -> Any:
     """Plot convoy ship centers in plan view."""
 
@@ -260,6 +262,11 @@ def plot_convoy_planview(
         mappable.set_array(np.asarray(colors, dtype=float))
     else:
         colors = [ship_color(ship, color_by=color_by) for ship in ships]
+        if highlight_ids:
+            colors = [
+                (highlight_color if ship.id in highlight_ids else color)
+                for ship, color in zip(ships, colors)
+            ]
 
     if ship_marker == "ship":
         if color_by == "value":
@@ -284,6 +291,20 @@ def plot_convoy_planview(
                 rotate_by_heading=rotate_by_heading,
                 use_hull_dimensions=use_hull_dimensions,
             )
+        if highlight_ids and color_by == "value":
+            highlight_ships = [ship for ship in ships if ship.id in highlight_ids]
+            if highlight_ships:
+                highlight_colors = [highlight_color] * len(highlight_ships)
+                overlay = _add_ship_polygons(
+                    ax,
+                    highlight_ships,
+                    highlight_colors,
+                    alpha=1.0,
+                    ship_marker_size=ship_marker_size,
+                    rotate_by_heading=rotate_by_heading,
+                    use_hull_dimensions=use_hull_dimensions,
+                )
+                overlay.set_zorder(4)
         if len(positions):
             if use_hull_dimensions:
                 max_length = max(float(ship.length) for ship in ships)
@@ -304,6 +325,20 @@ def plot_convoy_planview(
                 s=float(ship_marker_size),
                 alpha=float(alpha),
             )
+            if highlight_ids:
+                highlight_positions = np.array(
+                    [ship.position for ship in ships if ship.id in highlight_ids],
+                    dtype=float,
+                )
+                if len(highlight_positions):
+                    ax.scatter(
+                        highlight_positions[:, 0],
+                        highlight_positions[:, 1],
+                        c=highlight_color,
+                        s=float(ship_marker_size),
+                        alpha=1.0,
+                        zorder=4,
+                    )
         else:
             scatter = ax.scatter(
                 positions[:, 0],

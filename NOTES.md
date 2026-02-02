@@ -22,7 +22,9 @@ Fixes:
 -Make torpedo lines red instead of grey
 
 
-
+Update Static Example to:
+- Make ships red instead of circles when hit
+-Center the plot right, now it is pushed right due to axis labels
 
 
 

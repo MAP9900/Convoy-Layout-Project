@@ -19,12 +19,12 @@ def main() -> None:
     scenario = build_scenario_a(n_trials=1, rng_seed=0)
     ships = scenario.layout_fn(**scenario.layout_kwargs)
     torpedoes = fan_spread(
-        u_pos=np.array([-2000.0, 0.0]),
-        base_bearing_rad=0.0,
-        n=4,
-        spread_rad=np.radians(15.0),
-        speed=25.0,
-        max_run_time=800.0,
+        u_pos=np.array([-2000.0, 0.0]), #Submarine position
+        base_bearing_rad=0.0, #Launch direction (radians)
+        n=4, #Number of torpedos
+        spread_rad=np.radians(15.0), #Torpedo Spread
+        speed=25.0, #Torpedo Speed
+        max_run_time=800.0, #Torpedo distance (TODO add units)
     )
     t_max = float(scenario.t_max)
 
@@ -33,7 +33,7 @@ def main() -> None:
     fig_dir.mkdir(parents=True, exist_ok=True)
     debug_dir.mkdir(parents=True, exist_ok=True)
 
-    fig, ax = plt.subplots(figsize=(8, 8), facecolor="lightgrey")
+    fig, ax = plt.subplots(figsize=(8, 6), facecolor="lightgrey")
     ax = plot_attack_planview(
         ships,
         torpedoes,
@@ -141,8 +141,9 @@ def main() -> None:
         pad = max(200.0, (xmax - xmin) * 0.25, (ymax - ymin) * 0.25)
         ax.set_xlim(xmin - pad, xmax + pad)
         ax.set_ylim(ymin - pad, ymax + pad)
-    fig.tight_layout(rect=(0.0, 0.08, 1.0, 0.92))
-    fig.subplots_adjust(bottom=0.28)
+    ax.set_anchor("C")
+    # fig.tight_layout()
+    # fig.subplots_adjust(left=0.18, right=0.95, bottom=0.28, top=0.92)
     fig_path = fig_dir / "attack_once.png"
     fig.savefig(fig_path, dpi=150)
 
