@@ -48,6 +48,7 @@ def _add_ship_polygons(
     rotate_by_heading: bool,
     cmap: str | None = None,
     norm: Any | None = None,
+    use_hull_dimensions: bool = False,
 ) -> Any:
     """Add ship-shaped polygons to the axes and return the collection."""
 
@@ -57,7 +58,13 @@ def _add_ship_polygons(
     patches = []
     for ship in ships:
         heading = (ship.heading_rad - 0.5 * np.pi) if rotate_by_heading else 0.0
-        base_poly = _ship_marker_polygon(ship_marker_size, ship_marker_size * 0.35)
+        if use_hull_dimensions:
+            length = float(ship.length)
+            beam = float(ship.beam)
+        else:
+            length = float(ship_marker_size)
+            beam = float(ship_marker_size) * 0.35
+        base_poly = _ship_marker_polygon(length, beam)
         if base_poly.size == 0:
             continue
         cos_a = float(np.cos(heading))
@@ -229,6 +236,7 @@ def plot_convoy_planview(
     grid_color: str = "lightgrey",
     ship_marker: Literal["circle", "ship"] = "circle",
     rotate_by_heading: bool = False,
+    use_hull_dimensions: bool = False,
 ) -> Any:
     """Plot convoy ship centers in plan view."""
 
@@ -264,6 +272,7 @@ def plot_convoy_planview(
                 rotate_by_heading=rotate_by_heading,
                 cmap=value_cmap,
                 norm=mappable.norm,
+                use_hull_dimensions=use_hull_dimensions,
             )
         else:
             scatter = _add_ship_polygons(
@@ -273,9 +282,14 @@ def plot_convoy_planview(
                 alpha=alpha,
                 ship_marker_size=ship_marker_size,
                 rotate_by_heading=rotate_by_heading,
+                use_hull_dimensions=use_hull_dimensions,
             )
         if len(positions):
-            pad = max(1.0, ship_marker_size * 0.6)
+            if use_hull_dimensions:
+                max_length = max(float(ship.length) for ship in ships)
+                pad = max(1.0, max_length * 0.6)
+            else:
+                pad = max(1.0, ship_marker_size * 0.6)
             ax.set_xlim(float(np.min(positions[:, 0]) - pad), float(np.max(positions[:, 0]) + pad))
             ax.set_ylim(float(np.min(positions[:, 1]) - pad), float(np.max(positions[:, 1]) + pad))
     else:
@@ -365,7 +379,9 @@ def plot_layout_overlay(
     alpha_b: float = 1.0,
     ship_marker_size: float = 40.0,
     ship_marker: Literal["circle", "ship"] = "circle",
-    rotate_by_heading: bool = False,) -> Any:
+    rotate_by_heading: bool = False,
+    use_hull_dimensions: bool = False,
+) -> Any:
     """Overlay two layouts with distinct markers and optional footprints."""
 
     plt = _require_matplotlib()
@@ -395,6 +411,7 @@ def plot_layout_overlay(
             alpha=alpha_a,
             ship_marker_size=ship_marker_size,
             rotate_by_heading=rotate_by_heading,
+            use_hull_dimensions=use_hull_dimensions,
         )
         _add_ship_polygons(
             ax,
@@ -403,6 +420,7 @@ def plot_layout_overlay(
             alpha=alpha_b,
             ship_marker_size=ship_marker_size,
             rotate_by_heading=rotate_by_heading,
+            use_hull_dimensions=use_hull_dimensions,
         )
         from matplotlib.patches import Patch  # type: ignore
 

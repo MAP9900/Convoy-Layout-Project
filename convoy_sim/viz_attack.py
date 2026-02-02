@@ -128,6 +128,7 @@ def plot_attack_planview(
     ray_alpha: float = 0.6,
     ship_marker: Literal["circle", "ship"] = "circle",
     rotate_by_heading: bool = False,
+    use_hull_dimensions: bool = False,
 ) -> Any:
     """Plot ships plus torpedo rays in plan view."""
 
@@ -144,6 +145,7 @@ def plot_attack_planview(
         show_footprint=show_footprint,
         ship_marker=ship_marker,
         rotate_by_heading=rotate_by_heading,
+        use_hull_dimensions=use_hull_dimensions,
     )
     metrics = attack_debug_metrics(ships, torpedoes, t_max)
     hit_ship_ids = {t["hit_ship_id"] for t in metrics["torpedoes"] if t["hit_ship_id"]}
@@ -199,6 +201,7 @@ def render_attack_frame(
     show_footprint: bool = True,
     ship_marker: Literal["circle", "ship"] = "circle",
     rotate_by_heading: bool = False,
+    use_hull_dimensions: bool = False,
 ) -> Any:
     """Render a single time frame of a static/dynamic attack."""
 
@@ -232,6 +235,7 @@ def render_attack_frame(
         show_footprint=show_footprint,
         ship_marker=ship_marker,
         rotate_by_heading=rotate_by_heading,
+        use_hull_dimensions=use_hull_dimensions,
     )
 
     for torpedo in torpedoes:

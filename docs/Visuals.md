@@ -15,7 +15,7 @@ Historical vs Optimized Layouts (E1) FIXED
   - `results/figures/historical_vs_optimized_grid.png`
 - What it shows: overlay and side-by-side comparison of two layouts, plus summary text.
 
-Static Attack Overlay (E2)
+Static Attack Overlay (E2) FIXED
 - Script: `python -m experiments.plot_attack_once`
 - Output:
   - `results/figures/attack_once.png`
