@@ -8,19 +8,35 @@ Value:
     -Decoy value_weight = 
     -
 
-plot_attack_once.py now!
--Can we make the graphic bigger and focus more on the convoy? The torpedos go out to 8000 m (which may be historically accurate) but is not needed for the plot, just focus on the convoy
--If possible add the new ship markers instead of the circles for the convoys, but insure hit markers (red circles) still work
--Move the legend down so it does not overlap with the x axis
-- add: for spine in plt.gca().spines.values():
-    spine.set_visible(False)
--Change Title to "Static Attack Example"
--Change facecolor='lightgrey'
+Awesome, great.
+
+Now: render_attack_animation.py
+
+Fixes:
+-Vastly expand the blue area so more of the sim can be seen. Right now it is a skinny rectangle. Essentially zoom out more
+-Move the legend down so it does not overlap with the x axis label
+-Add: for spine in plt.gca().spines.values(): spine.set_visible(False)
+-If possible add the dynamic ship markers (the ships in this viz are not moving up but rather upper left ish)
+-Can we increase the size of the convoy, Right now it is only three ships. Maybe make it similar to the historical layout?
+-Remove black grid lines around the convoy
+-Make torpedo lines red instead of grey
 
 
--Expand the visual to also include the point of origin of the torpedos and add a maker for the submarine (add this to legend too, just make it a circle)
--Remove the grid around the convoy
--Either the physics are wrong or the ship markers are too small/not to scale as the the right middle ships are claimed to be hit but the torpedo lines does not intersect them
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 for spine in plt.gca().spines.values():

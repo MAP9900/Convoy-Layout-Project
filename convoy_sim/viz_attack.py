@@ -202,6 +202,10 @@ def render_attack_frame(
     ship_marker: Literal["circle", "ship"] = "circle",
     rotate_by_heading: bool = False,
     use_hull_dimensions: bool = False,
+    trail_color: str = "gray",
+    legend_bbox_to_anchor: tuple[float, float] | None = None,
+    view_bounds: tuple[float, float, float, float] | None = None,
+    hide_spines: bool = False,
 ) -> Any:
     """Render a single time frame of a static/dynamic attack."""
 
@@ -237,6 +241,17 @@ def render_attack_frame(
         rotate_by_heading=rotate_by_heading,
         use_hull_dimensions=use_hull_dimensions,
     )
+    if legend_bbox_to_anchor is not None:
+        handles, labels = ax.get_legend_handles_labels()
+        if handles:
+            ax.legend(
+                handles,
+                labels,
+                loc="lower center",
+                bbox_to_anchor=legend_bbox_to_anchor,
+                ncol=len(labels),
+                frameon=False,
+            )
 
     for torpedo in torpedoes:
         if t_global < torpedo.launch_delay:
@@ -248,7 +263,7 @@ def render_attack_frame(
         ax.plot(
             [p0[0], p1[0]],
             [p0[1], p1[1]],
-            color="gray",
+            color=trail_color,
             linewidth=1.0,
             alpha=0.7,
         )
@@ -273,6 +288,13 @@ def render_attack_frame(
                 )
                 break
 
+    if view_bounds is not None:
+        xmin, xmax, ymin, ymax = view_bounds
+        ax.set_xlim(float(xmin), float(xmax))
+        ax.set_ylim(float(ymin), float(ymax))
+    if hide_spines:
+        for spine in ax.spines.values():
+            spine.set_visible(False)
     ax.set_aspect("equal", adjustable="box")
     return ax
 

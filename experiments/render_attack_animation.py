@@ -8,27 +8,24 @@ import numpy as np
 
 from convoy_sim.attackers import fan_spread
 from convoy_sim.dynamics import ConvoyFormation, ConvoyKinematics, RouteLeg, RoutePlan, ZigZagPlan
-from convoy_sim.entities import Ship, ShipClass
+from convoy_sim.entities import Ship
 from convoy_sim.geometry import as_vec
+from convoy_sim.layouts import make_rectangular_convoy
 from convoy_sim.viz_attack import save_attack_animation_mp4, save_attack_frames
 
 
 def _make_convoy() -> list[Ship]:
-    ships = []
-    positions = [as_vec(0.0, 0.0), as_vec(-200.0, 80.0), as_vec(-200.0, -80.0)]
-    for idx, pos in enumerate(positions, start=1):
-        ships.append(
-            Ship(
-                id=f"S{idx}",
-                position=pos,
-                speed=5.0,
-                heading_rad=0.0,
-                length=80.0,
-                beam=12.0,
-                ship_class=ShipClass.FREIGHTER,
-            )
-        )
-    return ships
+    return make_rectangular_convoy(
+        n_rows=3,
+        n_cols=4,
+        spacing_along=600.0,
+        spacing_across=350.0,
+        speed=5.0,
+        heading_rad=0.0,
+        length=150.0,
+        beam=20.0,
+        origin=as_vec(0.0, 0.0),
+    )
 
 
 def main() -> None:
@@ -60,6 +57,22 @@ def main() -> None:
 
     out_dir = Path("results/frames/demo_attack")
     out_dir.mkdir(parents=True, exist_ok=True)
+    positions = np.array([ship.position for ship in ships], dtype=float)
+    xmin = float(np.min(positions[:, 0]))
+    xmax = float(np.max(positions[:, 0]))
+    ymin = float(np.min(positions[:, 1]))
+    ymax = float(np.max(positions[:, 1]))
+    center_x = 0.5 * (xmin + xmax)
+    center_y = 0.5 * (ymin + ymax)
+    span = max(xmax - xmin, ymax - ymin)
+    pad = max(2000.0, span * 1.5)
+    view_bounds = (
+        center_x - pad,
+        center_x + pad,
+        center_y - pad,
+        center_y + pad,
+    )
+
     save_attack_frames(
         str(out_dir),
         ships_t0=ships,
@@ -71,6 +84,14 @@ def main() -> None:
         color_by="class",
         show_trails=True,
         trail_length_s=40.0,
+        show_footprint=False,
+        ship_marker="ship",
+        rotate_by_heading=True,
+        use_hull_dimensions=True,
+        trail_color="red",
+        legend_bbox_to_anchor=(0.5, -0.24),
+        view_bounds=view_bounds,
+        hide_spines=True,
     )
 
     mp4_path = Path("results/frames/demo_attack.mp4")
@@ -86,6 +107,14 @@ def main() -> None:
             color_by="class",
             show_trails=True,
             trail_length_s=40.0,
+            show_footprint=False,
+            ship_marker="ship",
+            rotate_by_heading=True,
+            use_hull_dimensions=True,
+            trail_color="red",
+            legend_bbox_to_anchor=(0.5, -0.24),
+            view_bounds=view_bounds,
+            hide_spines=True,
         )
     except ImportError as exc:
         print(f"Skipping MP4 export: {exc}")
