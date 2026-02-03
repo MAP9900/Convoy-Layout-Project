@@ -192,12 +192,25 @@ def ship_positions_at(
     formation: ConvoyFormation,
     kin: ConvoyKinematics,
     dt: float = 1.0,
+    *,
+    speed_factors: dict[str, float] | None = None,
+    hit_time_by_ship: dict[str, float] | None = None,
 ) -> list[Vec2]:
     """Return ship positions at time ``t`` using convoy-level kinematics."""
 
     dt = validate_dt(dt)
     if formation.ships0:
-        base_speed = float(sum(ship.speed for ship in formation.ships0) / len(formation.ships0))
+        if speed_factors:
+            speeds = []
+            for ship in formation.ships0:
+                factor = float(speed_factors.get(ship.id, 1.0))
+                if hit_time_by_ship and ship.id in hit_time_by_ship:
+                    if t < float(hit_time_by_ship[ship.id]):
+                        factor = 1.0
+                speeds.append(float(ship.speed) * factor)
+            base_speed = float(sum(speeds) / len(speeds))
+        else:
+            base_speed = float(sum(ship.speed for ship in formation.ships0) / len(formation.ships0))
     else:
         base_speed = 0.0
     origin_t, heading_t, _speed_t = convoy_pose_at(
@@ -209,4 +222,20 @@ def ship_positions_at(
         dt=dt,
     )
     rotation = _rotation_matrix(heading_t)
-    return [origin_t + rotation @ offset for offset in formation.offsets_convoy_frame]
+    positions = [origin_t + rotation @ offset for offset in formation.offsets_convoy_frame]
+    if speed_factors:
+        direction = as_vec(math.cos(heading_t), math.sin(heading_t))
+        adjusted = []
+        for ship, pos in zip(formation.ships0, positions):
+            factor = float(speed_factors.get(ship.id, 1.0))
+            if hit_time_by_ship and ship.id in hit_time_by_ship:
+                hit_time = float(hit_time_by_ship[ship.id])
+                if t < hit_time:
+                    factor = 1.0
+                elapsed = max(0.0, t - hit_time)
+            else:
+                elapsed = t
+            delta_speed = float(ship.speed) * factor - base_speed
+            adjusted.append(pos + direction * delta_speed * elapsed)
+        return adjusted
+    return positions

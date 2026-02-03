@@ -12,7 +12,12 @@ from .entities import Ship, Torpedo
 from .geometry import as_vec, closest_approach_time, distance, step_position
 from .viz import plot_convoy_planview
 from .dynamics import ConvoyFormation, ConvoyKinematics, ship_positions_at
-from .simulation import DynamicHitState, advance_dynamic_hit_state, init_dynamic_hit_state
+from .simulation import (
+    DynamicHitState,
+    HitSlowdownSpec,
+    advance_dynamic_hit_state,
+    init_dynamic_hit_state,
+)
 
 
 def torpedo_segment(
@@ -39,13 +44,23 @@ def get_ship_positions_dynamic(
     ships_t0: list[Ship],
     dynamics: tuple[ConvoyFormation, ConvoyKinematics] | None,
     t_global: float,
+    *,
+    speed_factors: dict[str, float] | None = None,
+    hit_time_by_ship: dict[str, float] | None = None,
 ) -> list[np.ndarray]:
     """Return ship positions at global time for static or dynamic motion."""
 
     if dynamics is None:
         return [ship.position.copy() for ship in ships_t0]
     formation, kin = dynamics
-    return ship_positions_at(t_global, formation, kin, dt=1.0)
+    return ship_positions_at(
+        t_global,
+        formation,
+        kin,
+        dt=1.0,
+        speed_factors=speed_factors,
+        hit_time_by_ship=hit_time_by_ship,
+    )
 
 
 def min_miss_distance_ship_torpedo(
@@ -210,6 +225,8 @@ def render_attack_frame(
     hide_spines: bool = True,
     hit_state: DynamicHitState | None = None,
     hit_dt: float | None = None,
+    apply_hit_slowdown: bool = False,
+    hit_slowdown: HitSlowdownSpec | None = None,
 ) -> Any:
     """Render a single time frame of a static/dynamic attack."""
 
@@ -218,7 +235,18 @@ def render_attack_frame(
     except ImportError as exc:  # pragma: no cover - depends on environment
         raise ImportError("matplotlib is required for attack frame rendering") from exc
 
-    ship_positions = get_ship_positions_dynamic(ships_t0, dynamics, t_global)
+    speed_factors = None
+    hit_time_by_ship = None
+    if apply_hit_slowdown and hit_state is not None:
+        speed_factors = hit_state.speed_factors
+        hit_time_by_ship = hit_state.hit_time_by_ship
+    ship_positions = get_ship_positions_dynamic(
+        ships_t0,
+        dynamics,
+        t_global,
+        speed_factors=speed_factors,
+        hit_time_by_ship=hit_time_by_ship,
+    )
     ships = []
     for ship, pos in zip(ships_t0, ship_positions):
         ships.append(
@@ -267,6 +295,7 @@ def render_attack_frame(
             hit_dt,
             hit_state,
             max_hits_per_torpedo=1,
+            hit_slowdown=hit_slowdown,
         )
 
     for torpedo in torpedoes:

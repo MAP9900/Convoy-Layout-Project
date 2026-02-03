@@ -37,11 +37,10 @@ def main() -> None:
     )
     route = RoutePlan(
         legs=[
-            RouteLeg(duration_s=60.0, heading_rad=0.0),
-            RouteLeg(duration_s=60.0, heading_rad=np.pi / 2.0),
+            RouteLeg(duration_s=120.0, heading_rad=0.0),
         ]
     )
-    zigzag = ZigZagPlan(enabled=True, amplitude_rad=0.15, period_s=30.0, phase_s=0.0)
+    zigzag = ZigZagPlan(enabled=True, amplitude_rad=0.12, period_s=60.0, phase_s=0.0, waveform="sine")
     kin = ConvoyKinematics(route=route, zigzag=zigzag)
 
     torpedoes = fan_spread(
