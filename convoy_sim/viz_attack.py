@@ -47,6 +47,8 @@ def get_ship_positions_dynamic(
     *,
     speed_factors: dict[str, float] | None = None,
     hit_time_by_ship: dict[str, float] | None = None,
+    hit_decay_rate: float | None = None,
+    hit_min_factor: float = 0.3,
 ) -> list[np.ndarray]:
     """Return ship positions at global time for static or dynamic motion."""
 
@@ -58,8 +60,11 @@ def get_ship_positions_dynamic(
         formation,
         kin,
         dt=1.0,
+        motion="independent",
         speed_factors=speed_factors,
         hit_time_by_ship=hit_time_by_ship,
+        hit_decay_rate=hit_decay_rate,
+        hit_min_factor=hit_min_factor,
     )
 
 
@@ -227,6 +232,7 @@ def render_attack_frame(
     hit_dt: float | None = None,
     apply_hit_slowdown: bool = False,
     hit_slowdown: HitSlowdownSpec | None = None,
+    figure_facecolor: str | None = None,
 ) -> Any:
     """Render a single time frame of a static/dynamic attack."""
 
@@ -237,16 +243,25 @@ def render_attack_frame(
 
     speed_factors = None
     hit_time_by_ship = None
-    if apply_hit_slowdown and hit_state is not None:
-        speed_factors = hit_state.speed_factors
+    hit_decay_rate = None
+    hit_min_factor = 0.3
+    if apply_hit_slowdown and hit_state is not None and hit_slowdown and hit_slowdown.enabled:
         hit_time_by_ship = hit_state.hit_time_by_ship
+        hit_decay_rate = float(hit_slowdown.decay_rate)
+        hit_min_factor = float(hit_slowdown.min_factor)
     ship_positions = get_ship_positions_dynamic(
         ships_t0,
         dynamics,
         t_global,
         speed_factors=speed_factors,
         hit_time_by_ship=hit_time_by_ship,
+        hit_decay_rate=hit_decay_rate,
+        hit_min_factor=hit_min_factor,
     )
+    heading_override = None
+    if dynamics is not None:
+        formation, kin = dynamics
+        heading_override = kin.convoy_heading_at(t_global, formation.convoy_heading0)
     ships = []
     for ship, pos in zip(ships_t0, ship_positions):
         ships.append(
@@ -254,7 +269,7 @@ def render_attack_frame(
                 id=ship.id,
                 position=pos,
                 speed=0.0,
-                heading_rad=ship.heading_rad,
+                heading_rad=ship.heading_rad if heading_override is None else heading_override,
                 length=ship.length,
                 beam=ship.beam,
                 ship_class=ship.ship_class,
@@ -368,7 +383,10 @@ def save_attack_frames(
     paths: list[str] = []
     hit_state = init_dynamic_hit_state(t_start)
     for idx, t in enumerate(times):
-        fig, ax = plt.subplots(figsize=(6, 6))
+        fig, ax = plt.subplots(
+            figsize=(6, 6),
+            facecolor=kwargs.get("figure_facecolor"),
+        )
         render_attack_frame(
             ships_t0,
             torpedoes,
@@ -412,7 +430,10 @@ def save_attack_animation_mp4(
         raise ValueError("fps must be positive")
     dt = 1.0 / float(fps)
     times = np.arange(float(t_start), float(t_end) + 1e-9, dt)
-    fig, ax = plt.subplots(figsize=(6, 6))
+    fig, ax = plt.subplots(
+        figsize=(6, 6),
+        facecolor=kwargs.get("figure_facecolor"),
+    )
     hit_state = init_dynamic_hit_state(t_start)
 
     def _update(frame_idx: int):

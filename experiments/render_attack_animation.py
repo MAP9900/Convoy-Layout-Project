@@ -11,6 +11,7 @@ from convoy_sim.dynamics import ConvoyFormation, ConvoyKinematics, RouteLeg, Rou
 from convoy_sim.entities import Ship
 from convoy_sim.geometry import as_vec
 from convoy_sim.layouts import make_rectangular_convoy
+from convoy_sim.simulation import HitSlowdownSpec
 from convoy_sim.viz_attack import save_attack_animation_mp4, save_attack_frames
 
 
@@ -54,6 +55,13 @@ def main() -> None:
     for idx, torpedo in enumerate(torpedoes):
         torpedo.launch_delay = float(idx * 10.0) # Torpedo Lauch Delay
 
+    apply_hit_slowdown = False
+    hit_slowdown = HitSlowdownSpec(
+        enabled=apply_hit_slowdown,
+        decay_rate=0.02,
+        min_factor=0.4,
+    )
+
     out_dir = Path("results/frames/demo_attack")
     out_dir.mkdir(parents=True, exist_ok=True)
     positions = np.array([ship.position for ship in ships], dtype=float)
@@ -91,6 +99,9 @@ def main() -> None:
         legend_bbox_to_anchor=(0.5, -0.24),
         view_bounds=view_bounds,
         hide_spines=True,
+        apply_hit_slowdown=apply_hit_slowdown,
+        hit_slowdown=hit_slowdown,
+        figure_facecolor="lightgrey",
     )
 
     mp4_path = Path("results/frames/demo_attack.mp4")
@@ -114,6 +125,9 @@ def main() -> None:
             legend_bbox_to_anchor=(0.5, -0.24),
             view_bounds=view_bounds,
             hide_spines=True,
+            apply_hit_slowdown=apply_hit_slowdown,
+            hit_slowdown=hit_slowdown,
+            figure_facecolor="lightgrey",
         )
     except ImportError as exc:
         print(f"Skipping MP4 export: {exc}")

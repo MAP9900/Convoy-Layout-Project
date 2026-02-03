@@ -254,7 +254,7 @@ def _simulate_pass_dynamic(
     hits = 0
     time = float(window_start)
     while time <= window_end + 1e-9:
-        ship_positions = ship_positions_at(time, formation, kin, dt=dt)
+        ship_positions = ship_positions_at(time, formation, kin, dt=dt, motion="independent")
         for torp_idx, torpedo in enumerate(torpedoes):
             if torpedo.is_dud:
                 continue

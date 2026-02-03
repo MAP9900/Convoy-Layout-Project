@@ -169,7 +169,7 @@ def torpedo_hits_ship_dynamic(
     torpedo_done: set[int] = set()
     time = float(proposal.launch_time)
     while time <= window_end + 1e-9:
-        ship_positions = ship_positions_at(time, formation, kin, dt=dt)
+        ship_positions = ship_positions_at(time, formation, kin, dt=dt, motion="independent")
         for torp_idx, torpedo in enumerate(torpedoes):
             if torp_idx in torpedo_done or torpedo.is_dud:
                 continue
@@ -519,7 +519,6 @@ class DynamicHitState:
     hit_counts: dict[str, int]
     torpedo_hit_times: dict[str, float]
     hit_time_by_ship: dict[str, float]
-    speed_factors: dict[str, float]
 
 
 @dataclass(frozen=True)
@@ -527,7 +526,7 @@ class HitSlowdownSpec:
     """Optional hit-driven speed reduction model."""
 
     enabled: bool = False
-    per_hit_factor: float = 0.85
+    decay_rate: float = 0.02
     min_factor: float = 0.3
 
 
@@ -541,7 +540,6 @@ def init_dynamic_hit_state(start_time: float = 0.0) -> DynamicHitState:
         hit_counts={},
         torpedo_hit_times={},
         hit_time_by_ship={},
-        speed_factors={},
     )
 
 
@@ -567,7 +565,7 @@ def advance_dynamic_hit_state(
         state.time = t_target
         return state
     while time <= t_target + 1e-9:
-        ship_positions = ship_positions_at(time, formation, kin, dt=dt)
+        ship_positions = ship_positions_at(time, formation, kin, dt=dt, motion="independent")
         for torp_idx, torpedo in enumerate(torpedoes):
             if torpedo.is_dud:
                 continue
@@ -586,10 +584,6 @@ def advance_dynamic_hit_state(
                     state.hit_counts[ship.id] = int(state.hit_counts.get(ship.id, 0)) + 1
                     state.torpedo_hit_times.setdefault(torpedo.id, time)
                     state.hit_time_by_ship.setdefault(ship.id, time)
-                    if hit_slowdown and hit_slowdown.enabled:
-                        current = float(state.speed_factors.get(ship.id, 1.0))
-                        updated = max(float(hit_slowdown.min_factor), current * float(hit_slowdown.per_hit_factor))
-                        state.speed_factors[ship.id] = updated
                     if max_hits_per_torpedo == 1:
                         state.torpedo_done.add(torp_idx)
                     break

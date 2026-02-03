@@ -8,8 +8,11 @@ Value:
     -Decoy value_weight = 
     -
 
+New flag and spec in render_attack_animation.py: apply_hit_slowdown = False  decay_rate is used to determine how much ships slow down by
 
-
+Independent motion: ship_positions_at now integrates each ship’s position forward over time using the convoy heading (zig‑zag included), rather than rotating a rigid formation. Rigid mode still exists as an explicit option (motion="rigid"), but the default is independent.
+Sim alignment: all dynamic hit logic now uses the independent motion path so the visuals and sim stay in lock‑step.
+Slowdown flag: render_attack_animation.py now has a toggle and an exponential decay profile in place.
 
 
 

@@ -193,49 +193,50 @@ def ship_positions_at(
     kin: ConvoyKinematics,
     dt: float = 1.0,
     *,
+    motion: Literal["independent", "rigid"] = "independent",
     speed_factors: dict[str, float] | None = None,
     hit_time_by_ship: dict[str, float] | None = None,
+    hit_decay_rate: float | None = None,
+    hit_min_factor: float = 0.3,
 ) -> list[Vec2]:
     """Return ship positions at time ``t`` using convoy-level kinematics."""
 
     dt = validate_dt(dt)
-    if formation.ships0:
-        if speed_factors:
-            speeds = []
-            for ship in formation.ships0:
-                factor = float(speed_factors.get(ship.id, 1.0))
-                if hit_time_by_ship and ship.id in hit_time_by_ship:
-                    if t < float(hit_time_by_ship[ship.id]):
-                        factor = 1.0
-                speeds.append(float(ship.speed) * factor)
-            base_speed = float(sum(speeds) / len(speeds))
-        else:
+    if motion == "rigid":
+        if formation.ships0:
             base_speed = float(sum(ship.speed for ship in formation.ships0) / len(formation.ships0))
-    else:
-        base_speed = 0.0
-    origin_t, heading_t, _speed_t = convoy_pose_at(
-        t,
-        formation.convoy_origin0,
-        formation.convoy_heading0,
-        base_speed,
-        kin,
-        dt=dt,
-    )
-    rotation = _rotation_matrix(heading_t)
-    positions = [origin_t + rotation @ offset for offset in formation.offsets_convoy_frame]
-    if speed_factors:
-        direction = as_vec(math.cos(heading_t), math.sin(heading_t))
-        adjusted = []
-        for ship, pos in zip(formation.ships0, positions):
-            factor = float(speed_factors.get(ship.id, 1.0))
-            if hit_time_by_ship and ship.id in hit_time_by_ship:
+        else:
+            base_speed = 0.0
+        origin_t, heading_t, _speed_t = convoy_pose_at(
+            t,
+            formation.convoy_origin0,
+            formation.convoy_heading0,
+            base_speed,
+            kin,
+            dt=dt,
+        )
+        rotation = _rotation_matrix(heading_t)
+        return [origin_t + rotation @ offset for offset in formation.offsets_convoy_frame]
+
+    dt = validate_dt(dt)
+    positions: list[Vec2] = []
+    for ship in formation.ships0:
+        pos = _vec(ship.position).copy()
+        time = 0.0
+        while time < t:
+            step = min(dt, t - time)
+            heading = kin.convoy_heading_at(time, ship.heading_rad)
+            speed = float(ship.speed)
+            if hit_time_by_ship and ship.id in hit_time_by_ship and hit_decay_rate is not None:
                 hit_time = float(hit_time_by_ship[ship.id])
-                if t < hit_time:
-                    factor = 1.0
-                elapsed = max(0.0, t - hit_time)
-            else:
-                elapsed = t
-            delta_speed = float(ship.speed) * factor - base_speed
-            adjusted.append(pos + direction * delta_speed * elapsed)
-        return adjusted
+                if time >= hit_time:
+                    elapsed = max(0.0, time - hit_time)
+                    factor = float(math.exp(-float(hit_decay_rate) * elapsed))
+                    speed *= max(float(hit_min_factor), factor)
+            elif speed_factors:
+                speed *= float(speed_factors.get(ship.id, 1.0))
+            direction = as_vec(math.cos(heading), math.sin(heading))
+            pos = pos + direction * speed * float(step)
+            time += step
+        positions.append(pos)
     return positions
