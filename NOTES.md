@@ -8,33 +8,15 @@ Value:
     -Decoy value_weight = 
     -
 
-Awesome, great.
-
-Now: render_attack_animation.py
-
-Fixes:
--Vastly expand the blue area so more of the sim can be seen. Right now it is a skinny rectangle. Essentially zoom out more
--Move the legend down so it does not overlap with the x axis label
--Add: for spine in plt.gca().spines.values(): spine.set_visible(False)
--If possible add the dynamic ship markers (the ships in this viz are not moving up but rather upper left ish)
--Can we increase the size of the convoy, Right now it is only three ships. Maybe make it similar to the historical layout?
--Remove black grid lines around the convoy
--Make torpedo lines red instead of grey
-
-
-Update Static Example to:
-- Make ships red instead of circles when hit
--Center the plot right, now it is pushed right due to axis labels
 
 
 
 
 
-
-
-
-
-
+Back To: render_attack_animation.py
+-Either the hit recognization is wrong or ships are way out of scale as torpedos appear to pass through the middle of ships but no red circle indicating hits appear. Again I want the circle to appear in all remaining frames to know which ships were hit.
+-Also perhaps the red circle can also change colors indicating number of hits. Start with a light red and get darker. Have four shades of red for this. 
+-Also to confirm a torpedo can only hit a ship once correct? If so ideally once it hits a torpedo, the red line stops as to indicate a hit
 
 
 

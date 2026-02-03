@@ -45,9 +45,9 @@ def main() -> None:
     kin = ConvoyKinematics(route=route, zigzag=zigzag)
 
     torpedoes = fan_spread(
-        u_pos=as_vec(1500.0, 0.0), # Submarine Position 
-        base_bearing_rad=np.radians(180), # Launch Radian 0.0 = due east np.radians(180) = due west
-        n=5, #Number of torpedos
+        u_pos=as_vec(0, -1250), # Submarine Position 
+        base_bearing_rad=np.radians(80), # Launch Radian 0.0 = due east np.radians(180) = due west
+        n=4, #Number of torpedos (Typically 4 was max slavo size)
         spread_rad=np.radians(10.0), #Torpedo Spread (ex 10 at launch degree goes -5, 0, 5)
         speed=20.0, # Torpedo Speed
         max_run_time=200.0, 

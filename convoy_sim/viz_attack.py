@@ -12,6 +12,7 @@ from .entities import Ship, Torpedo
 from .geometry import as_vec, closest_approach_time, distance, step_position
 from .viz import plot_convoy_planview
 from .dynamics import ConvoyFormation, ConvoyKinematics, ship_positions_at
+from .simulation import DynamicHitState, advance_dynamic_hit_state, init_dynamic_hit_state
 
 
 def torpedo_segment(
@@ -207,7 +208,8 @@ def render_attack_frame(
     legend_bbox_to_anchor: tuple[float, float] | None = None,
     view_bounds: tuple[float, float, float, float] | None = None,
     hide_spines: bool = True,
-    hit_cache: set[str] | None = None,
+    hit_state: DynamicHitState | None = None,
+    hit_dt: float | None = None,
 ) -> Any:
     """Render a single time frame of a static/dynamic attack."""
 
@@ -255,11 +257,27 @@ def render_attack_frame(
                 frameon=False,
             )
 
+    if dynamics is not None and hit_state is not None and hit_dt is not None:
+        formation, kin = dynamics
+        advance_dynamic_hit_state(
+            formation,
+            kin,
+            torpedoes,
+            t_global,
+            hit_dt,
+            hit_state,
+            max_hits_per_torpedo=1,
+        )
+
     for torpedo in torpedoes:
         if t_global < torpedo.launch_delay:
             continue
         t_end = min(float(t_max), float(t_global))
         t_start = max(0.0, t_end - float(trail_length_s)) if show_trails else t_end
+        if hit_state is not None and torpedo.id in hit_state.torpedo_hit_times:
+            t_end = min(t_end, float(hit_state.torpedo_hit_times[torpedo.id]))
+            if t_end <= t_start:
+                continue
         p0 = torpedo_position_at_global_time(torpedo, t_start)
         p1 = torpedo_position_at_global_time(torpedo, t_end)
         ax.plot(
@@ -270,7 +288,20 @@ def render_attack_frame(
             alpha=0.7,
         )
 
-    hit_ids = hit_cache if hit_cache is not None else set()
+    hit_colors = ["#ffd0d0", "#ff9b9b", "#ff6666", "#d7191c"]
+    for ship in ships:
+        if hit_state is not None and ship.id in hit_state.hit_counts:
+            count = int(hit_state.hit_counts.get(ship.id, 0))
+            color_idx = min(max(count, 1), len(hit_colors)) - 1
+            ax.scatter(
+                ship.position[0],
+                ship.position[1],
+                s=140.0,
+                facecolors="none",
+                edgecolors=hit_colors[color_idx],
+                linewidths=2.0,
+                zorder=5,
+            )
     if view_bounds is not None:
         xmin, xmax, ymin, ymax = view_bounds
         ax.set_xlim(float(xmin), float(xmax))
@@ -306,7 +337,7 @@ def save_attack_frames(
     dt = 1.0 / float(fps)
     times = np.arange(float(t_start), float(t_end) + 1e-9, dt)
     paths: list[str] = []
-    hit_cache: set[str] = set()
+    hit_state = init_dynamic_hit_state(t_start)
     for idx, t in enumerate(times):
         fig, ax = plt.subplots(figsize=(6, 6))
         render_attack_frame(
@@ -316,7 +347,8 @@ def save_attack_frames(
             t_max=float(t_end),
             dynamics=dynamics,
             ax=ax,
-            hit_cache=hit_cache,
+            hit_state=hit_state,
+            hit_dt=dt,
             **kwargs,
         )
         fig.tight_layout()
@@ -352,7 +384,7 @@ def save_attack_animation_mp4(
     dt = 1.0 / float(fps)
     times = np.arange(float(t_start), float(t_end) + 1e-9, dt)
     fig, ax = plt.subplots(figsize=(6, 6))
-    hit_cache: set[str] = set()
+    hit_state = init_dynamic_hit_state(t_start)
 
     def _update(frame_idx: int):
         ax.clear()
@@ -364,7 +396,8 @@ def save_attack_animation_mp4(
             t_max=float(t_end),
             dynamics=dynamics,
             ax=ax,
-            hit_cache=hit_cache,
+            hit_state=hit_state,
+            hit_dt=dt,
             **kwargs,
         )
         return ax
@@ -382,24 +415,3 @@ def save_attack_debug_json(path: str, metrics: dict[str, Any]) -> str:
     with open(path, "w", encoding="utf-8") as handle:
         json.dump(metrics, handle, indent=2)
     return path
-    hit_ids = hit_cache if hit_cache is not None else set()
-    for ship in ships:
-        for torpedo in torpedoes:
-            if t_global < torpedo.launch_delay:
-                continue
-            torp_pos = torpedo.position_at(float(t_global))
-            if distance(ship.position, torp_pos) <= ship.effective_hit_radius():
-                hit_ids.add(ship.id)
-                break
-
-    for ship in ships:
-        if ship.id in hit_ids:
-            ax.scatter(
-                ship.position[0],
-                ship.position[1],
-                s=120.0,
-                facecolors="none",
-                edgecolors="red",
-                linewidths=1.5,
-                zorder=5,
-            )

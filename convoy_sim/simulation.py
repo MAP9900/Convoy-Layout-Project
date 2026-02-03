@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from dataclasses import replace
+from dataclasses import dataclass, replace
 import math
 from typing import Any, Callable, Sequence
 
@@ -507,6 +507,76 @@ def _earliest_hit_time(ship: Ship, torpedo: Torpedo, t_max: float) -> float | No
             earliest = candidate if earliest is None else min(earliest, candidate)
 
     return earliest
+
+
+@dataclass
+class DynamicHitState:
+    """Mutable hit state for stepping dynamic torpedo/convoy interactions."""
+
+    time: float
+    hit_pairs: set[tuple[int, int]]
+    torpedo_done: set[int]
+    hit_counts: dict[str, int]
+    torpedo_hit_times: dict[str, float]
+
+
+def init_dynamic_hit_state(start_time: float = 0.0) -> DynamicHitState:
+    """Initialize hit state for dynamic stepping."""
+
+    return DynamicHitState(
+        time=float(start_time),
+        hit_pairs=set(),
+        torpedo_done=set(),
+        hit_counts={},
+        torpedo_hit_times={},
+    )
+
+
+def advance_dynamic_hit_state(
+    formation: ConvoyFormation,
+    kin: ConvoyKinematics,
+    torpedoes: Sequence[Torpedo],
+    t_target: float,
+    dt: float,
+    state: DynamicHitState,
+    *,
+    safety_margin: float = 0.0,
+    max_hits_per_torpedo: int | None = 1,
+) -> DynamicHitState:
+    """Advance hit state up to ``t_target`` using the same stepping logic as simulation."""
+
+    if dt <= 0.0:
+        raise ValueError("dt must be positive")
+    time = float(state.time)
+    t_target = float(t_target)
+    if t_target < time:
+        state.time = t_target
+        return state
+    while time <= t_target + 1e-9:
+        ship_positions = ship_positions_at(time, formation, kin, dt=dt)
+        for torp_idx, torpedo in enumerate(torpedoes):
+            if torpedo.is_dud:
+                continue
+            if torp_idx in state.torpedo_done:
+                continue
+            if time < torpedo.launch_delay:
+                continue
+            torp_pos = torpedo.position_at(time)
+            for ship_idx, ship in enumerate(formation.ships0):
+                key = (torp_idx, ship_idx)
+                if key in state.hit_pairs:
+                    continue
+                radius = ship.effective_hit_radius() + float(safety_margin)
+                if distance(ship_positions[ship_idx], torp_pos) <= radius:
+                    state.hit_pairs.add(key)
+                    state.hit_counts[ship.id] = int(state.hit_counts.get(ship.id, 0)) + 1
+                    state.torpedo_hit_times.setdefault(torpedo.id, time)
+                    if max_hits_per_torpedo == 1:
+                        state.torpedo_done.add(torp_idx)
+                    break
+        time += dt
+    state.time = t_target
+    return state
 
 
 def sample_torpedo_spread_fixed_origin(

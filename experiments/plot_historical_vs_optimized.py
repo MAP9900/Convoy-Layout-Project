@@ -38,7 +38,7 @@ def main() -> None:
         optimized_kwargs = dict(base_kwargs)
         optimized_kwargs.update(optimized_params)
         optimized = make_rectangular_convoy(**optimized_kwargs)
-        optimized_label = "Optimized (rect)"
+        optimized_label = "Optimized"
     else:
         optimized_kwargs = dict(base_kwargs)
         optimized_kwargs["spacing_across"] = float(base_kwargs["spacing_across"]) * 1.4
@@ -64,7 +64,7 @@ def main() -> None:
             markersize=7,
             markerfacecolor="0.2",
             markeredgecolor="0.2",
-            label="Historical (circle)",
+            label="Historical (Ships)",
         ),
         Line2D(
             [0],
@@ -74,7 +74,7 @@ def main() -> None:
             markersize=7,
             markerfacecolor="0.2",
             markeredgecolor="0.2",
-            label="Optimized (triangle)",
+            label="Optimized (Ships)",
         ),
     ]
     overlay_ax.legend(
