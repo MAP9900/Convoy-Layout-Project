@@ -47,7 +47,7 @@ def main() -> None:
 
     torpedoes = fan_spread(
         u_pos=as_vec(0, -1250),
-        base_bearing_rad=np.radians(80),
+        base_bearing_rad=np.radians(75),
         n=4,
         spread_rad=np.radians(10.0),
         speed=20.0,
