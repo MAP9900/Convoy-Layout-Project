@@ -1,11 +1,8 @@
 """Render frames (and optional MP4) for a dynamic attack demo."""
 
 from __future__ import annotations
-
 from pathlib import Path
-
 import numpy as np
-
 from convoy_sim.attackers import fan_spread
 from convoy_sim.dynamics import ConvoyFormation, ConvoyKinematics, RouteLeg, RoutePlan, ZigZagPlan
 from convoy_sim.entities import Ship
@@ -48,8 +45,8 @@ def main() -> None:
         u_pos=as_vec(0, -1250), # Submarine Position 
         base_bearing_rad=np.radians(80), # Launch Radian 0.0 = due east np.radians(180) = due west
         n=4, #Number of torpedos (Typically 4 was max slavo size)
-        spread_rad=np.radians(10.0), #Torpedo Spread (ex 10 at launch degree goes -5, 0, 5)
-        speed=20.0, # Torpedo Speed
+        spread_rad=np.radians(10.0), #Torpedo Spread (ex 3 Torpedos at 10 spread radian goes -5, 0, 5)
+        speed=20.6, # Torpedo Speed (meters per second)
         max_run_time=200.0, 
     )
     for idx, torpedo in enumerate(torpedoes):

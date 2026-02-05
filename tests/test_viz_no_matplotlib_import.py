@@ -1,7 +1,6 @@
 """Tests for visualization helpers without requiring matplotlib."""
 
 import sys
-
 from convoy_sim.entities import Ship, ShipClass
 from convoy_sim.geometry import as_vec
 from convoy_sim.viz import compute_footprint_polygon
@@ -9,7 +8,6 @@ from convoy_sim.viz import compute_footprint_polygon
 
 def test_viz_import_does_not_require_matplotlib() -> None:
     assert "matplotlib" not in sys.modules
-
 
 def test_compute_footprint_polygon_bbox() -> None:
     ships = [

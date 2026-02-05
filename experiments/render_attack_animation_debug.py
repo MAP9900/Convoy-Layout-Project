@@ -1,12 +1,9 @@
 """Render debug frames with heading arrows for the attack demo."""
 
 from __future__ import annotations
-
 from pathlib import Path
-
 import numpy as np
 import matplotlib.pyplot as plt  # type: ignore
-
 from convoy_sim.attackers import fan_spread
 from convoy_sim.dynamics import ConvoyFormation, ConvoyKinematics, RouteLeg, RoutePlan, ZigZagPlan, ship_positions_at
 from convoy_sim.entities import Ship
