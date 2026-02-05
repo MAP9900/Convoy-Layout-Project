@@ -46,13 +46,15 @@ def fan_spread(
         if ships is None:
             raise ValueError("ships must be provided when constraints are enabled")
         rng = rng or np.random.default_rng()
-        cfg = proposal_cfg or {
-            "u_boat_pos": origin_vec,
-            "target_point": "centroid",
-            "approach_mode": (next(iter(constraints.allowed_modes)) if constraints.allowed_modes else ApproachMode.ABEAM),
-            "salvo_size": salvo_size,
-            "bearing_rad": bearing,
-        }
+        cfg = dict(proposal_cfg or {})
+        cfg.setdefault("u_boat_pos", origin_vec)
+        cfg.setdefault("target_point", "centroid")
+        if "approach_mode" not in cfg and "approach_modes" not in cfg:
+            cfg["approach_modes"] = list(constraints.allowed_modes) if constraints.allowed_modes else [ApproachMode.ABEAM]
+        cfg.setdefault("salvo_size", salvo_size)
+        cfg.setdefault("bearing_rad", bearing)
+        if "bearing_offset_rad" in cfg:
+            cfg.pop("bearing_rad", None)
         last_details = {}
         for _ in range(max_resample_attempts):
             proposal = propose_attack_from_config(ships, cfg, rng)

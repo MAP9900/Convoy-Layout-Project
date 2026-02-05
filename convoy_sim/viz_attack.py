@@ -367,6 +367,24 @@ def render_attack_frame(
             max_hits_per_torpedo=1,
             hit_slowdown=hit_slowdown,
         )
+    elif dynamics is None:
+        hit_colors = ["#ffd0d0", "#ff9b9b", "#ff6666", "#d7191c"]
+        for ship in ships:
+            for torpedo in torpedoes:
+                if t_global < torpedo.launch_delay:
+                    continue
+                torp_pos = torpedo.position_at(float(t_global))
+                if distance(ship.position, torp_pos) <= ship.effective_hit_radius():
+                    ax.scatter(
+                        ship.position[0],
+                        ship.position[1],
+                        s=140.0,
+                        facecolors="none",
+                        edgecolors=hit_colors[0],
+                        linewidths=2.0,
+                        zorder=5,
+                    )
+                    break
 
     for torpedo in torpedoes:
         if t_global < torpedo.launch_delay:

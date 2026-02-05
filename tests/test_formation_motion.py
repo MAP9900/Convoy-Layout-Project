@@ -92,7 +92,7 @@ def test_ship_offsets_remain_constant_in_convoy_frame() -> None:
         ]
     )
     kin = ConvoyKinematics(route=route)
-    positions = ship_positions_at(6.0, formation, kin, dt=1.0)
+    positions = ship_positions_at(6.0, formation, kin, dt=1.0, motion="rigid")
     origin_t, heading_t, _speed_t = convoy_pose_at(
         6.0,
         formation.convoy_origin0,

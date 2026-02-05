@@ -47,9 +47,9 @@ def build_scenario_a1(n_trials: int = 200, rng_seed: int | None = 1234) -> Scena
     proposal_cfg = {
         "u_boat_box": (-4000.0, -1500.0, -1500.0, 1500.0),
         "target_point": "centroid",
-        "approach_modes": [ApproachMode.ABEAM, ApproachMode.BOW_ON],
+        "approach_mode": ApproachMode.ABEAM,
         "salvo_size": 4,
-        "bearing_rad": 0.0,
+        "bearing_offset_rad": math.pi / 2.0,
     }
 
     def sampler(rng: np.random.Generator):

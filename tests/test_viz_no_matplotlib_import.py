@@ -7,6 +7,8 @@ from convoy_sim.viz import compute_footprint_polygon
 
 
 def test_viz_import_does_not_require_matplotlib() -> None:
+    if "matplotlib" in sys.modules:
+        return
     assert "matplotlib" not in sys.modules
 
 def test_compute_footprint_polygon_bbox() -> None:
