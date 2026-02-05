@@ -159,21 +159,12 @@ High‑level overview of runnable scripts and scenario definitions. All scripts 
   - `results/figures/attack_once.png`
   - `results/debug/attack_once.json`
 
-### `experiments/plot_coverage.py`
-- Purpose: Plot torpedo coverage heatmap from sampled attacks.
-- Usage:
-  - `python -m experiments.plot_coverage`
-- Outputs:
-  - `results/figures/coverage_heatmap.png`
-
 ### `experiments/run_diagnostics_before_after.py`
 - Purpose: Generate before/after diagnostics figures and JSON summary.
 - Usage:
   - `python -m experiments.run_diagnostics_before_after`
 - Outputs:
-  - `results/figures/diag_layout_before_after.png`
   - `results/figures/diag_attack_overlay.png`
-  - `results/figures/diag_coverage_compare.png`
   - `results/diag/diagnostics_summary.json`
 
 ### `experiments/render_attack_animation.py`

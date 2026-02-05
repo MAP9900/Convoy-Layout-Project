@@ -9,13 +9,10 @@ from pathlib import Path
 import numpy as np
 
 from convoy_sim.attackers import fan_spread
-from convoy_sim.coverage import accumulate_torpedo_coverage
 from convoy_sim.diagnostics import (
     compare_layout_metrics,
     lane_vulnerability_proxy,
     plot_before_after_attack_overlay,
-    plot_before_after_layout,
-    plot_coverage_comparison,
     render_diagnostics_report,
 )
 from convoy_sim.layouts import make_rectangular_convoy, make_staggered_convoy
@@ -92,21 +89,11 @@ def main() -> None:
     lane_before = lane_vulnerability_proxy(ships_before, headings=headings, n_rays=50)
     lane_after = lane_vulnerability_proxy(ships_after, headings=headings, n_rays=50)
 
-    torpedo_samples = [sampler(rng) for _ in range(100)]
-    bounds = (-2500.0, 500.0, -1500.0, 1500.0)
-    cov_before = accumulate_torpedo_coverage(torpedo_samples, t_max=400.0, bounds=bounds, grid_n=120, dt=5.0)
-    cov_after = cov_before
-
     fig_dir = Path("results/figures")
     diag_dir = Path("results/diag")
     fig_dir.mkdir(parents=True, exist_ok=True)
     diag_dir.mkdir(parents=True, exist_ok=True)
 
-    plot_before_after_layout(
-        ships_before,
-        ships_after,
-        out_path=str(fig_dir / "diag_layout_before_after.png"),
-    )
     plot_before_after_attack_overlay(
         ships_before,
         sampler(rng),
@@ -114,12 +101,6 @@ def main() -> None:
         sampler(rng),
         t_max=scenario.t_max,
         out_path=str(fig_dir / "diag_attack_overlay.png"),
-    )
-    plot_coverage_comparison(
-        cov_before,
-        cov_after,
-        ships_overlay=ships_after,
-        out_path=str(fig_dir / "diag_coverage_compare.png"),
     )
 
     render_diagnostics_report(

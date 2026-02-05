@@ -14,7 +14,7 @@ Historical vs Optimized Layouts (E1) FIXED
   - `results/figures/historical_vs_optimized_overlay.png`
   - `results/figures/historical_vs_optimized_grid.png`
 - What it shows: overlay and side-by-side comparison of two layouts, plus summary text. 
--Currently Optimized layout not based on any RL/ML. #TODO Remind myself how it gets optimized. 
+-Currently Optimized layout not based on any RL/ML. Right now Optimized is just an example
 
 Static Attack Overlay (E2) FIXED
 - Script: `python -m experiments.plot_attack_once`
@@ -35,19 +35,12 @@ Temporal Attack Frames (E2) FIXED?
   - If animation fails, the PNG frames still render. 
   -Debug Version added which adds directional arrows to each ship. Point in the direction of the ship's heading. Used to verify ship movements. #TODO Make arrow a vector which arrow size decreasing when speed decreases. 
 
-Coverage Heatmap (E3)
-- Script: `python -m experiments.plot_coverage`
-- Output: `results/figures/coverage_heatmap.png`
-- What it shows: density map of torpedo paths over space, with optional ship overlay.
-
 Before/After Diagnostics (E3)
 - Script: `python -m experiments.run_diagnostics_before_after`
 - Output:
-  - `results/figures/diag_layout_before_after.png`
   - `results/figures/diag_attack_overlay.png`
-  - `results/figures/diag_coverage_compare.png`
   - `results/diag/diagnostics_summary.json`
-- What it shows: side-by-side layouts, attack overlays, coverage comparisons, and a JSON summary.
+- What it shows: attack overlays and a JSON summary.
 
 Static vs Dynamic Notes
 - Static plots (`plot_attack_once`, plan-view layouts) assume ships are stationary at t=0. Used for initial testing and verification. Static plots used for testing, creating visuals, and simple verifications. Not used in validation prior to RL & ML sections - see dynamic plots for this. 

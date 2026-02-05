@@ -8,9 +8,8 @@ import numpy as np
 
 from .entities import Ship, ShipClass, Torpedo
 from .geometry import distance
-from .viz import add_summary_text, layout_summary, plot_convoy_planview
+from .viz import layout_summary
 from .viz_attack import plot_attack_planview
-from .viz_coverage import plot_coverage_heatmap
 
 
 def _counts_by_class(ships: list[Ship]) -> dict[str, int]:
@@ -138,31 +137,6 @@ def lane_vulnerability_proxy(
     }
 
 
-def plot_before_after_layout(
-    ships_before: list[Ship],
-    ships_after: list[Ship],
-    names: tuple[str, str] = ("Before", "After"),
-    color_by: Literal["class", "value"] = "class",
-    out_path: str | None = None,
-) -> Any:
-    """Plot side-by-side plan views with summary text."""
-
-    try:
-        import matplotlib.pyplot as plt  # type: ignore
-    except ImportError as exc:  # pragma: no cover - depends on environment
-        raise ImportError("matplotlib is required for diagnostics plotting") from exc
-
-    fig, axes = plt.subplots(1, 2, figsize=(12, 6))
-    plot_convoy_planview(ships_before, ax=axes[0], title=names[0], color_by=color_by, show_footprint=True)
-    plot_convoy_planview(ships_after, ax=axes[1], title=names[1], color_by=color_by, show_footprint=True)
-    add_summary_text(axes[0], layout_summary(ships_before), loc="upper right", title=names[0])
-    add_summary_text(axes[1], layout_summary(ships_after), loc="upper right", title=names[1])
-    fig.tight_layout()
-    if out_path:
-        fig.savefig(out_path, dpi=150)
-    return fig
-
-
 def plot_before_after_attack_overlay(
     ships_before: list[Ship],
     torps_before: list[Torpedo],
@@ -179,55 +153,104 @@ def plot_before_after_attack_overlay(
     except ImportError as exc:  # pragma: no cover - depends on environment
         raise ImportError("matplotlib is required for diagnostics plotting") from exc
 
-    fig, axes = plt.subplots(1, 2, figsize=(12, 6))
-    plot_attack_planview(ships_before, torps_before, t_max=t_max, ax=axes[0], title="Before", color_by=color_by)
-    plot_attack_planview(ships_after, torps_after, t_max=t_max, ax=axes[1], title="After", color_by=color_by)
-    fig.tight_layout()
-    if out_path:
-        fig.savefig(out_path, dpi=150)
-    return fig
+    from matplotlib.lines import Line2D  # type: ignore
+    from matplotlib.patches import Patch  # type: ignore
 
-
-def plot_coverage_comparison(
-    cov_before: dict[str, Any],
-    cov_after: dict[str, Any],
-    ships_overlay: list[Ship] | None = None,
-    out_path: str | None = None,
-) -> Any:
-    """Plot side-by-side coverage heatmaps and a difference panel."""
-
-    try:
-        import matplotlib.pyplot as plt  # type: ignore
-    except ImportError as exc:  # pragma: no cover - depends on environment
-        raise ImportError("matplotlib is required for diagnostics plotting") from exc
-
-    fig, axes = plt.subplots(1, 3, figsize=(18, 6))
-    plot_coverage_heatmap(
-        cov_before["grid_density"],
-        cov_before["x_edges"],
-        cov_before["y_edges"],
-        ships=ships_overlay,
-        ax=axes[0],
+    fig, axes = plt.subplots(2, 1, figsize=(7, 10), facecolor="lightgrey")
+    fig.suptitle("Before & After Optimization Attack (Static) Visual \n")
+    axes_list = list(np.atleast_1d(axes).ravel())
+    plot_attack_planview(
+        ships_before,
+        torps_before,
+        t_max=t_max,
+        ax=axes_list[0],
         title="Before",
+        color_by=color_by,
+        miss_color="black",
+        ship_marker="ship",
+        use_hull_dimensions=True,
     )
-    plot_coverage_heatmap(
-        cov_after["grid_density"],
-        cov_after["x_edges"],
-        cov_after["y_edges"],
-        ships=ships_overlay,
-        ax=axes[1],
-        title="After",
+    plot_attack_planview(
+        ships_after,
+        torps_after,
+        t_max=t_max,
+        ax=axes_list[1],
+        title="\nAfter",
+        color_by=color_by,
+        miss_color="black",
+        ship_marker="ship",
+        use_hull_dimensions=True,
     )
-    diff = cov_after["grid_density"] - cov_before["grid_density"]
-    plot_coverage_heatmap(
-        diff,
-        cov_before["x_edges"],
-        cov_before["y_edges"],
-        ships=ships_overlay,
-        ax=axes[2],
-        title="After - Before",
+    for ax in axes_list:
+        if ax.get_legend() is not None:
+            ax.get_legend().remove()
+
+    launch_pos = None
+    if torps_before:
+        launch_pos = torps_before[0].launch_position
+    elif torps_after:
+        launch_pos = torps_after[0].launch_position
+    if launch_pos is not None:
+        for ax in axes_list:
+            ax.scatter(
+                launch_pos[0],
+                launch_pos[1],
+                s=70.0,
+                marker="o",
+                facecolor="white",
+                edgecolor="black",
+                zorder=6,
+            )
+
+    positions = np.array([ship.position for ship in ships_before + ships_after], dtype=float)
+    if len(positions):
+        xmin = float(np.min(positions[:, 0]))
+        xmax = float(np.max(positions[:, 0]))
+        ymin = float(np.min(positions[:, 1]))
+        ymax = float(np.max(positions[:, 1]))
+        if launch_pos is not None:
+            xmin = min(xmin, float(launch_pos[0]))
+            xmax = max(xmax, float(launch_pos[0]))
+            ymin = min(ymin, float(launch_pos[1]))
+            ymax = max(ymax, float(launch_pos[1]))
+        pad = max(200.0, (xmax - xmin) * 0.25, (ymax - ymin) * 0.25)
+        for ax in axes_list:
+            ax.set_xlim(xmin - pad, xmax + pad)
+            ax.set_ylim(ymin - pad, ymax + pad)
+            for spine in ax.spines.values():
+                spine.set_visible(False)
+
+    class_colors = {
+        ShipClass.FREIGHTER: "#0a0a0a",
+        ShipClass.TANKER: "#38160d",
+        ShipClass.ESCORT: "#001845",
+        ShipClass.DECOY: "#ffc600",
+    }
+    handles = [
+        Patch(facecolor=color, edgecolor="none", label=ship_class.value)
+        for ship_class, color in class_colors.items()
+    ]
+    handles.append(
+        Line2D(
+            [0],
+            [0],
+            marker="o",
+            linestyle="none",
+            markersize=7,
+            markerfacecolor="white",
+            markeredgecolor="black",
+            label="Submarine",
+        )
+    )
+    axes_list[1].legend(
+        handles=handles,
+        loc="lower center",
+        bbox_to_anchor=(0.5, -0.26),
+        ncol=len(handles),
+        frameon=False,
     )
     fig.tight_layout()
+    fig.subplots_adjust(bottom=0.24)
     if out_path:
         fig.savefig(out_path, dpi=150)
     return fig

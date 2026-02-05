@@ -95,6 +95,34 @@ def min_miss_distance_ship_torpedo(
     return distance(ship.position, torp_pos)
 
 
+def _earliest_static_hit_time(ship: Ship, torpedo: Torpedo, t_max: float) -> float | None:
+    """Return earliest hit time for a stationary ship, or None."""
+
+    if t_max <= 0.0 or torpedo.is_dud:
+        return None
+    window = min(float(t_max), float(torpedo.max_run_time) + float(torpedo.launch_delay))
+    if window <= float(torpedo.launch_delay):
+        return None
+    ship_pos = ship.position
+    ship_radius = ship.effective_hit_radius()
+    launch_time = float(torpedo.launch_delay)
+    torp_start = torpedo.position_at(launch_time)
+    if distance(ship_pos, torp_start) <= ship_radius:
+        return launch_time
+    remaining = window - launch_time
+    t_closest = closest_approach_time(
+        ship_pos,
+        as_vec(0.0, 0.0),
+        torp_start,
+        torpedo.velocity_vec(),
+    )
+    t_closest = float(np.clip(t_closest, 0.0, remaining))
+    torp_pos = torpedo.position_at(launch_time + t_closest)
+    if distance(ship_pos, torp_pos) <= ship_radius:
+        return launch_time + t_closest
+    return None
+
+
 def attack_debug_metrics(
     ships: list[Ship],
     torpedoes: list[Torpedo],
@@ -147,6 +175,7 @@ def plot_attack_planview(
     show_miss_annotations: bool = False,
     miss_k: int = 5,
     ray_alpha: float = 0.6,
+    miss_color: str = "gray",
     ship_marker: Literal["circle", "ship"] = "circle",
     rotate_by_heading: bool = False,
     use_hull_dimensions: bool = False,
@@ -168,16 +197,42 @@ def plot_attack_planview(
         rotate_by_heading=rotate_by_heading,
         use_hull_dimensions=use_hull_dimensions,
     )
-    metrics = attack_debug_metrics(ships, torpedoes, t_max)
-    hit_ship_ids = {t["hit_ship_id"] for t in metrics["torpedoes"] if t["hit_ship_id"]}
+    hit_info: dict[str, dict[str, Any]] = {}
+    hit_ship_ids: set[str] = set()
+    for torpedo in torpedoes:
+        hit_time = None
+        hit_ship_id = None
+        min_dist = float("inf")
+        closest_ship_id = None
+        for ship in ships:
+            candidate = _earliest_static_hit_time(ship, torpedo, t_max)
+            if candidate is not None:
+                if hit_time is None or candidate < hit_time:
+                    hit_time = candidate
+                    hit_ship_id = ship.id
+            d_min = min_miss_distance_ship_torpedo(ship, torpedo, t_max)
+            if d_min < min_dist:
+                min_dist = d_min
+                closest_ship_id = ship.id
+        if hit_ship_id is not None:
+            hit_ship_ids.add(hit_ship_id)
+        hit_info[torpedo.id] = {
+            "hit_ship_id": hit_ship_id,
+            "hit_time": hit_time,
+            "min_miss_distance": float(min_dist),
+            "closest_ship_id": closest_ship_id,
+        }
 
     for torpedo in torpedoes:
-        p0, p1 = torpedo_segment(torpedo, t0=0.0, t1=t_max)
-        hit = any(t["id"] == torpedo.id and t["hit_ship_id"] for t in metrics["torpedoes"])
+        info = hit_info.get(torpedo.id, {})
+        hit_time = info.get("hit_time")
+        t_end = float(t_max) if hit_time is None else float(hit_time)
+        p0, p1 = torpedo_segment(torpedo, t0=0.0, t1=t_end)
+        hit = hit_time is not None
         ax.plot(
             [p0[0], p1[0]],
             [p0[1], p1[1]],
-            color="red" if hit else "gray",
+            color="red" if hit else miss_color,
             linewidth=1.5 if hit else 1.0,
             alpha=float(ray_alpha),
             linestyle="-" if hit else "--",
@@ -197,13 +252,13 @@ def plot_attack_planview(
 
     if show_miss_annotations and torpedoes:
         misses = [
-            (t["min_miss_distance"], t)
-            for t in metrics["torpedoes"]
-            if t["hit_ship_id"] is None
+            (info["min_miss_distance"], torp_id)
+            for torp_id, info in hit_info.items()
+            if info.get("hit_ship_id") is None
         ]
         misses.sort(key=lambda x: x[0])
-        for dist, torp in misses[: max(0, int(miss_k))]:
-            torpedo = next(t for t in torpedoes if t.id == torp["id"])
+        for dist, torp_id in misses[: max(0, int(miss_k))]:
+            torpedo = next(t for t in torpedoes if t.id == torp_id)
             p0, p1 = torpedo_segment(torpedo, t0=0.0, t1=t_max)
             ax.annotate(f"{dist:.1f}m", (p1[0], p1[1]), fontsize=8, color="gray")
 
