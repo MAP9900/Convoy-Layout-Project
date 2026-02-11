@@ -28,7 +28,16 @@ Codex Checkable Items
 
 Manual Checkable Items
 - [TODO] Canonical trial JSON schema fields/size limits.
-- [TODO] Which environment variables are stochastic vs fixed.
+    -Need to define standard consistent JSON Record (layout params, attack params, hits, seed, timestamps, etc.)
+    -Current Framework:
+        - `convoy_sim/trial_records.py`: `make_trial_record(...)` used in `convoy_sim/defender_policy.py`.
+        - `convoy_sim/rl_wrapper.py`: episode + observation serialization.
+        - `scenarios/scenario_base.py`: scenario `to_dict/from_dict`.
+        - `convoy_sim/simulation.py`: Monte Carlo outputs (`hits_per_trial`, `expected_hits`, `var_hits`, etc.).
+- [TODO] Which environment variables are stochastic (change randomly) vs fixed.
+    -Dud probability 
+    -Convoy Speed (?)
+    -ETC
 - [TODO] Preferred objective weights for defender vs attacker.
 - [TODO] Fidelity vs speed tradeoffs for ML training.
 - [TODO] RL framing: single-agent vs two-agent/self-play.
