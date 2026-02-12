@@ -23,7 +23,7 @@ Static Attack Overlay (E2) FIXED
   - `results/debug/attack_once.json`
 - What it shows: static ships (t=0), torpedo rays, hit markers, and miss annotations.
 
-Temporal Attack Frames (E2) FIXED?
+Temporal Attack Frames (E2) FIXED (Can Edit Depending on What Example One is Looking At)
 - Script: `python -m experiments.render_attack_animation`
 - Output:
   - `results/frames/demo_attack/frame_*.png`
@@ -35,7 +35,7 @@ Temporal Attack Frames (E2) FIXED?
   - If animation fails, the PNG frames still render. 
   -Debug Version added which adds directional arrows to each ship. Point in the direction of the ship's heading. Used to verify ship movements. #TODO Make arrow a vector which arrow size decreasing when speed decreases. 
 
-Before/After Diagnostics (E3)
+Before/After Diagnostics (E3) FIXED
 - Script: `python -m experiments.run_diagnostics_before_after`
 - Output:
   - `results/figures/diag_attack_overlay.png`

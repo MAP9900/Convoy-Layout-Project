@@ -41,10 +41,11 @@ Manual Checkable Items
 - [TODO] Preferred objective weights for defender vs attacker.
 - [TODO] Fidelity vs speed tradeoffs for ML training.
 - [TODO] RL framing: single-agent vs two-agent/self-play.
-    -Start with single agent but have library of attach profiles. One attack profile would see RL simply move ships out of the torpedo vectors
+    -Start with single agent but have library of attack profiles. One attack profile would see RL simply move ships out of the torpedo vectors.
+    -Alternatively, have two agents, the ships and submarine attacking 
 - [TODO] Dataset sizes and compute budgets.
 - [TODO] Decide whether to enable hit-driven slowdown for training.
-    -Yes, will most likely add this
+    -Yes, will most likely add this.
 - [TODO] Confirm per-ship independent motion default for RL scenarios.
 
 Suggested Next Steps (proposed batch)
