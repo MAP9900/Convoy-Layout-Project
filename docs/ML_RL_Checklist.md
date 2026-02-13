@@ -39,14 +39,32 @@ Manual Checkable Items
     -Convoy Speed (?)
     -ETC
 - [TODO] Preferred objective weights for defender vs attacker.
+    -Measure rewards as number of hits or values. Values comes from hits on specific types of ships. EX Escorts have higher value than merchant. 
 - [TODO] Fidelity vs speed tradeoffs for ML training.
+    -The time over which the sim takes place, like in render_attack_animation
+    -Larger dt = fewer steps → faster runs but less precise hit timing and motion.
+    -Smaller dt = more steps → more accurate but slower.
+
 - [TODO] RL framing: single-agent vs two-agent/self-play.
     -Start with single agent but have library of attack profiles. One attack profile would see RL simply move ships out of the torpedo vectors.
     -Alternatively, have two agents, the ships and submarine attacking 
 - [TODO] Dataset sizes and compute budgets.
+    -How many Monte Carlo trials per evaluation
+    -How many RL episodes per training run
+    -Total runtime or cost budget
+    -Whether it needs smaller/faster configs for iteration and larger/high‑fidelity configs for final results.
 - [TODO] Decide whether to enable hit-driven slowdown for training.
-    -Yes, will most likely add this.
+    -Yes, will most likely add this. 
 - [TODO] Confirm per-ship independent motion default for RL scenarios.
+    -Whether or not ships move as one or individually 
+- [TODO] Create Starting Convoy Layout
+    -Decide how many ships, if there are different types of ships, shape of convoy, etc
+    -Look into historic shapes to determine this. 
+    -50 ships, mix of ship type (use values instead of hits then), start with no zig-zag but independent shape movements (hit ships slow down)
+- [TODO] Create Layout Constraints 
+- [TODO] Build Attack Profiles
+
+
 
 Suggested Next Steps (proposed batch)
 - Decide a canonical trial JSON schema.
