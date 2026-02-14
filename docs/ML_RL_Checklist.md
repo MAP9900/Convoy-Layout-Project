@@ -107,6 +107,60 @@ Manual Checkable Items
     -Dynamic visual: `python -m experiments.render_attack_animation --profile rl_large`
     -Static visual: `python -m experiments.plot_attack_once --scenario scenario_rl`
     -TODO: verify tanker placement, escort ring, and spacing look correct before training.
+
+- [TODO] Pre-Training Gate
+    -Add attack profile validation checks.
+    -Enforce bounds for `n`, `speed`, `max_run_time`, bearings, and spacing.
+    -Fail fast on invalid/impossible profile configs before training.
+    -Add deterministic sampling test for RL reset integration.
+    -Same seed => same sampled profile sequence.
+    -Different seed => distribution changes.
+    -Log full attack profile payload per episode.
+    -Store resolved fields used to build torpedoes, not only `profile_id`.
+    -Add per-profile performance dashboard output.
+    -Report reward, hits, and survival split by `profile_id`.
+    -Flag profile collapse / overfitting automatically.
+    -Add convoy composition assertions.
+    -Check expected class counts (freighter/tanker/escort/decoy) at layout build time.
+    -Prevent class-map drift from accidental edits.
+    -Add visual regression captures for `small_demo` and `rl_large`.
+    -Save reference images and compare geometry summaries (ship count, bounds, class counts).
+    -Add held-out eval protocol doc block.
+    -Lock eval profile list, seeds, and trial counts separately from training distribution.
+
+- [TODO] RL Execution Track (from scaffold to first trained policy)
+    -Select RL training pathway and freeze it for first pass.
+    -Decision: `convoy_sim/rl_wrapper.py` discrete episode path vs `convoy_sim/rl_env.py` vector state path.
+    -Implement profile-driven attacker in the chosen RL path.
+    -At reset: sample attack profile from `AttackProfileLibrary`.
+    -At step: build torpedoes via `AttackProfile.build_torpedoes(...)` using sampled profile.
+    -Finalize observation payload for learning.
+    -Include: layout metrics, sampled `profile_id`, and key attack params actually used.
+    -Define action space for defender.
+    -Pick first controllable layout knobs (for example spacing and offsets).
+    -Define action bounds/discretization and invalid-action handling.
+    -Finalize reward for first training run.
+    -Primary term: negative expected hits (or trial hits for 1-step episodes).
+    -Optional penalties: complexity, footprint, collision/constraint violations.
+    -Wire episode bookkeeping.
+    -Episode length, done conditions, seed handling, and reproducible resets.
+    -Trial logging per episode: reward, hits, chosen action, sampled profile, constraint violations.
+    -Build training config file(s) for repeatability.
+    -Hyperparameters: algorithm, learning rate, batch size, rollout length, total steps.
+    -Data split: train profile distribution vs held-out eval profile distribution.
+    -Run non-learning baselines in the same environment contract.
+    -Random policy baseline.
+    -Heuristic/baseline layout policy.
+    -Run first RL smoke training.
+    -Short run only (sanity): verify reward trends, no NaNs, stable episode completion.
+    -Run full RL training.
+    -Long run with checkpoints, periodic eval, and seed repeats.
+    -Add model checkpointing and restore path.
+    -Save best-by-eval and latest checkpoints with metadata.
+    -Define acceptance criteria for “RL up and running”.
+    -Policy beats random baseline on held-out eval set.
+    -Gains are repeatable across at least 3 seeds.
+    -Per-profile results show no catastrophic failures on any critical profile.
     -Curriculum / training schedule:
         - Phase 1: `P1`, `P2` only (stability + baseline learning).
         - Phase 2: all profiles with weighted sampling.
