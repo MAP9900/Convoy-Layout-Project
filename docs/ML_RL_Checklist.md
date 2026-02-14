@@ -57,9 +57,11 @@ Manual Checkable Items
 - [TODO] Confirm per-ship independent motion default for RL scenarios.
     -Whether or not ships move as one or individually 
 - [TODO] Create Starting Convoy Layout
-    -Decide how many ships, if there are different types of ships, shape of convoy, etc
-    -Look into historic shapes to determine this. 
-    -50 ships, mix of ship type (use values instead of hits then), start with no zig-zag but independent shape movements (hit ships slow down)
+    -Scaffold added: `scenarios/convoy_profiles.py` with `rl_large` profile and class-map hook.
+    -TODO: set exact `rl_large` layout params (`n_rows`, `n_cols`, `spacing_along`, `spacing_across`, `speed`, `heading_rad`, `length`, `beam`).
+    -TODO: finalize per-cell class placement in `_ship_class_map_rl_large(...)` (tankers center, escorts perimeter, etc.).
+    -TODO: (optional) add `ship_overrides_map` for per-ship hull/value differences.
+    -TODO: validate class counts and center-of-mass visually with `--profile rl_large`.
 - [TODO] Create Layout Constraints 
 - [TODO] Build Attack Profiles
     -Current code status:
@@ -89,6 +91,22 @@ Manual Checkable Items
         - Initial weights example: `P1=0.30, P2=0.20, P3=0.20, P4=0.15, P5=0.15`.
         - Keep RNG seeded for reproducibility and log selected `profile_id` each episode.
         - NOTE: RL wrapper is not yet auto-wired to sample profile library at reset; add this integration step in `convoy_sim/rl_wrapper.py`.
+    -Immediate profile setup tasks:
+        - TODO: fill `P01` to `P25` in `convoy_sim/attack_profiles.py` (flat sim-native fields only).
+        - TODO: set per-profile `weight` values for training distribution.
+        - TODO: verify each profile builds torpedoes via `AttackProfile.build_torpedoes(...)`.
+        - TODO: define held-out eval profile subset and lock seeds.
+- [TODO] Wire RL profile sampling into episode reset.
+    -Add reset-time attack profile sampling in `convoy_sim/rl_wrapper.py`.
+    -Include sampled `profile_id` in observation/info/trial record.
+    -Use sampled profile to build torpedoes during step execution.
+- [TODO] Tune RL scenario scaffold.
+    -Scaffold added: `scenarios/scenario_rl.py`.
+    -TODO: tune attacker params and metadata for RL runs.
+- [TODO] Use visual selectors for profile/scenario validation.
+    -Dynamic visual: `python -m experiments.render_attack_animation --profile rl_large`
+    -Static visual: `python -m experiments.plot_attack_once --scenario scenario_rl`
+    -TODO: verify tanker placement, escort ring, and spacing look correct before training.
     -Curriculum / training schedule:
         - Phase 1: `P1`, `P2` only (stability + baseline learning).
         - Phase 2: all profiles with weighted sampling.
@@ -105,4 +123,3 @@ Suggested Next Steps (proposed batch)
 - Pick one sim pathway (static or dynamic) as the ML default.
 - Approve a minimal episode wrapper for both sides.
 - Lock a baseline scenario + seeds for reproducible RL/ML runs.
-
