@@ -14,6 +14,10 @@ High‑level overview of runnable scripts and scenario definitions. All scripts 
   - Scenario B1 policy demo with threat priors and randomized layout selection.
 - `scenarios/scenario_b2_multisalvo_demo.py`
   - Scenario B2 multi-pass attacker plan demo with abort logic.
+- `scenarios/scenario_rl.py`
+  - RL convoy layout scaffold scenario using profile `rl_large`.
+- `scenarios/convoy_profiles.py`
+  - Convoy layout profile registry (`small_demo`, `rl_large`) used by scenarios/visuals.
 
 ## Experiment Scripts
 
@@ -158,6 +162,8 @@ High‑level overview of runnable scripts and scenario definitions. All scripts 
 - Outputs:
   - `results/figures/attack_once.png`
   - `results/debug/attack_once.json`
+- Key args:
+  - `--scenario`: choose scenario layout (`scenario_a` default, `scenario_rl` scaffold)
 
 ### `experiments/run_diagnostics_before_after.py`
 - Purpose: Generate before/after diagnostics figures and JSON summary.
@@ -171,6 +177,9 @@ High‑level overview of runnable scripts and scenario definitions. All scripts 
 - Purpose: Render time-series attack frames and optional MP4 (E2).
 - Usage:
   - `python -m experiments.render_attack_animation`
+  - `python -m experiments.render_attack_animation --profile rl_large`
+- Key args:
+  - `--profile`: convoy layout profile selector (`small_demo` default, `rl_large` scaffold)
 - Outputs:
   - `results/frames/demo_attack/frame_*.png`
   - `results/frames/demo_attack.mp4` (optional)

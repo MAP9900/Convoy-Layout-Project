@@ -1,6 +1,7 @@
 """Render a single static attack with torpedo rays and debug metrics."""
 
 from __future__ import annotations
+import argparse
 
 from pathlib import Path
 
@@ -13,10 +14,29 @@ from matplotlib.lines import Line2D  # type: ignore
 from convoy_sim.attackers import fan_spread
 from convoy_sim.viz_attack import plot_attack_planview, save_attack_debug_json, attack_debug_metrics
 from scenarios.scenario_a import build_scenario_a
+from scenarios.scenario_rl import build_scenario_rl
+
+
+SCENARIOS = {
+    "scenario_a": build_scenario_a,
+    "scenario_rl": build_scenario_rl,
+}
+
+
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description="Render a static attack plan-view figure")
+    parser.add_argument(
+        "--scenario",
+        choices=SCENARIOS.keys(),
+        default="scenario_a",
+        help="Scenario selector (default keeps current small setup)",
+    )
+    return parser.parse_args()
 
 
 def main() -> None:
-    scenario = build_scenario_a(n_trials=1, rng_seed=0)
+    args = parse_args()
+    scenario = SCENARIOS[args.scenario](n_trials=1, rng_seed=0)
     ships = scenario.layout_fn(**scenario.layout_kwargs)
     torpedoes = fan_spread(
         u_pos=np.array([-2000.0, 0.0]), #Submarine position

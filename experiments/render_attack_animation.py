@@ -1,6 +1,7 @@
 """Render frames (and optional MP4) for a dynamic attack demo."""
 
 from __future__ import annotations
+import argparse
 from pathlib import Path
 import numpy as np
 from convoy_sim.attackers import fan_spread
@@ -10,6 +11,7 @@ from convoy_sim.geometry import as_vec
 from convoy_sim.layouts import make_rectangular_convoy
 from convoy_sim.simulation import HitSlowdownSpec
 from convoy_sim.viz_attack import save_attack_animation_mp4, save_attack_frames
+from scenarios.convoy_profiles import get_convoy_layout_profile, list_convoy_layout_profiles
 
 
 def _make_convoy() -> list[Ship]:
@@ -26,8 +28,27 @@ def _make_convoy() -> list[Ship]:
     )
 
 
+def _make_convoy_from_profile(profile_name: str) -> list[Ship]:
+    if profile_name == "small_demo":
+        return _make_convoy()
+    profile = get_convoy_layout_profile(profile_name)
+    return profile.build_ships()
+
+
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description="Render dynamic convoy attack visuals")
+    parser.add_argument(
+        "--profile",
+        choices=list_convoy_layout_profiles(),
+        default="small_demo",
+        help="Convoy layout profile selector (default keeps current small demo layout)",
+    )
+    return parser.parse_args()
+
+
 def main() -> None:
-    ships = _make_convoy()
+    args = parse_args()
+    ships = _make_convoy_from_profile(args.profile)
     formation = ConvoyFormation(
         ships0=ships,
         convoy_origin0=as_vec(0.0, 0.0),

@@ -9,10 +9,12 @@ import numpy as np
 from convoy_sim.simulation import run_monte_carlo_attack_scored
 from scenarios.scenario_a import build_scenario_a
 from scenarios.scenario_a1_constraints import build_scenario_a1
+from scenarios.scenario_rl import build_scenario_rl
 
 SCENARIOS = {
     "scenario_a": build_scenario_a,
     "scenario_a1": build_scenario_a1,
+    "scenario_rl": build_scenario_rl,
 }
 
 def _json_default(o):
