@@ -55,6 +55,14 @@ from .simulation import (
 )
 from .minmax_loop import run_minmax_loop
 from .ship_catalog import SHIP_CATALOG, make_ship
+from .attack_profiles import (
+    AttackProfile,
+    AttackProfileLibrary,
+    build_scaffolded_attack_profile_library,
+    make_placeholder_profile,
+    make_placeholder_profile_library,
+    DEFAULT_ATTACK_PROFILE_LIBRARY,
+)
 
 __all__ = [
     "Vec2",
@@ -112,4 +120,10 @@ __all__ = [
     "run_minmax_loop",
     "SHIP_CATALOG",
     "make_ship",
+    "AttackProfile",
+    "AttackProfileLibrary",
+    "build_scaffolded_attack_profile_library",
+    "make_placeholder_profile",
+    "make_placeholder_profile_library",
+    "DEFAULT_ATTACK_PROFILE_LIBRARY",
 ]

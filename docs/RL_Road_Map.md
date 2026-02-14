@@ -24,13 +24,13 @@ Phase 2: RL Problem Definition
 - Episode length: 1-step layout selection or short horizon with adjustments.
 
 Phase 3: Attacker Library (fixed threat model)
-- Build a small library of attacker profiles (10-20):
-  - Approach modes (abeam, bow-on, stern).
-  - Range bands (near, mid, far).
-  - Spread widths (narrow, medium, wide).
-  - Salvo sizes (1-4).
-- Use a stochastic sampler over this library during training.
+- Build and maintain attacker profiles in `convoy_sim/attack_profiles.py`.
+  - Current implementation is a flat schema with sim-native fields:
+  - `mode`, `u_pos`, `n`, `speed`, `max_run_time`, `base_bearing_rad`, `spread_rad`, `bearing_rad`, `lateral_spacing`, `launch_delay_s`, `salvo_interval_s`.
+  - Use `AttackProfile.build_torpedoes(...)` to generate torpedoes for simulation.
+- Use weighted sampling with `AttackProfileLibrary.sample_profile(...)` during training.
 - Reserve a held-out set for evaluation.
+- Integration note: RL wrapper still needs explicit reset-time profile sampling wiring.
 
 Phase 4: RL Training
 - Train on the attacker library distribution.

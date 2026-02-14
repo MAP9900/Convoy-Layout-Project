@@ -238,3 +238,8 @@ High‑level overview of runnable scripts and scenario definitions. All scripts 
 - `convoy_sim/trial_records.py`: Standardized trial record helper/schema.
 - `convoy_sim/batch_eval.py`: Reusable batch evaluation utility.
 - `convoy_sim/rl_wrapper.py`: Minimal RL episode wrapper, action mapping, observation schema.
+- `convoy_sim/attack_profiles.py`: Flat attacker profile schema (`mode/u_pos/n/speed/max_run_time/...`), 25-profile scaffold, weighted sampling, and profile-to-torpedo builder helper.
+
+Notes on attack profile integration:
+- Profiles are ready for direct simulation use via `AttackProfile.build_torpedoes(...)`.
+- RL environment sampling is not auto-wired yet; add profile sampling at episode reset in `convoy_sim/rl_wrapper.py` when enabling profile-driven RL training.
