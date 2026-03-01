@@ -8,15 +8,15 @@ from typing import Any, Callable
 
 import numpy as np
 
-from .defender_policy import (
+from convoy_sim.defender_policy import (
     DefenderPolicy,
     LayoutAction,
     ThreatPrior,
     ThreatType,
     evaluate_defender_policy,
 )
-from .entities import Torpedo
-from .objectives import ObjectiveSpec
+from convoy_sim.entities import Torpedo
+from convoy_sim.objectives import ObjectiveSpec
 
 
 @dataclass(frozen=True)

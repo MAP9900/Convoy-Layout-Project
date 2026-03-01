@@ -7,9 +7,9 @@ from typing import Callable, Sequence
 
 import numpy as np
 
-from .entities import Ship, ShipClass
-from .geometry import Vec2, as_vec
-from .ship_catalog import make_ship
+from convoy_sim.entities import Ship, ShipClass
+from convoy_sim.geometry import Vec2, as_vec
+from convoy_sim.ship_catalog import make_ship
 
 
 def _rotation_matrix(heading_rad: float) -> np.ndarray:

@@ -8,13 +8,13 @@ from typing import Any, Callable, Sequence
 
 import numpy as np
 
-from .attackers import fan_spread, parallel_spread
-from .dynamics import ConvoyFormation, ConvoyKinematics, ship_positions_at, validate_dt
-from .entities import Ship, ShipClass, Torpedo, torpedo_hits_ship
-from .feasibility import AttackProposal
-from .geometry import Vec2, as_vec, closest_approach_time, distance
-from .noise import NoiseModel
-from .risk import empirical_cvar, empirical_var
+from convoy_sim.attackers import fan_spread, parallel_spread
+from convoy_sim.dynamics import ConvoyFormation, ConvoyKinematics, ship_positions_at, validate_dt
+from convoy_sim.entities import Ship, ShipClass, Torpedo, torpedo_hits_ship
+from convoy_sim.feasibility import AttackProposal
+from convoy_sim.geometry import Vec2, as_vec, closest_approach_time, distance
+from convoy_sim.noise import NoiseModel
+from convoy_sim.risk import empirical_cvar, empirical_var
 
 LayoutFn = Callable[..., list[Ship]]
 TorpedoSampler = Callable[[np.random.Generator], Sequence[Torpedo]]

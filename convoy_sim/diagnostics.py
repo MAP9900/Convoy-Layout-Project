@@ -6,10 +6,10 @@ from typing import Any, Literal
 
 import numpy as np
 
-from .entities import Ship, ShipClass, Torpedo
-from .geometry import distance
-from .viz import layout_summary
-from .viz_attack import plot_attack_planview
+from convoy_sim.entities import Ship, ShipClass, Torpedo
+from convoy_sim.geometry import distance
+from convoy_sim.viz import layout_summary
+from convoy_sim.viz_attack import plot_attack_planview
 
 
 def _counts_by_class(ships: list[Ship]) -> dict[str, int]:

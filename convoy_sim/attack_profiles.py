@@ -11,9 +11,9 @@ from typing import Any, Literal, Sequence
 
 import numpy as np
 
-from .attackers import fan_spread, parallel_spread
-from .entities import Ship, Torpedo
-from .feasibility import AttackConstraints, Environment
+from convoy_sim.attackers import fan_spread, parallel_spread
+from convoy_sim.entities import Ship, Torpedo
+from convoy_sim.feasibility import AttackConstraints, Environment
 
 
 SpreadMode = Literal["fan", "parallel"]

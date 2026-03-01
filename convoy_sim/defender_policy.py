@@ -8,11 +8,11 @@ from typing import Any, Callable
 
 import numpy as np
 
-from .entities import Ship, ShipClass, Torpedo
-from .feasibility import compute_convoy_reference
-from .objectives import ObjectiveSpec, score_trial_result
-from .trial_records import make_trial_record
-from .simulation import simulate_attack_once_scored
+from convoy_sim.entities import Ship, ShipClass, Torpedo
+from convoy_sim.feasibility import compute_convoy_reference
+from convoy_sim.objectives import ObjectiveSpec, score_trial_result
+from convoy_sim.trial_records import make_trial_record
+from convoy_sim.simulation import simulate_attack_once_scored
 
 
 class ThreatType(str, Enum):

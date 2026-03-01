@@ -8,9 +8,9 @@ from typing import Any, Literal
 
 import numpy as np
 
-from .dynamics import ConvoyFormation, ConvoyKinematics, ship_positions_at, validate_dt
-from .entities import Ship, Torpedo
-from .feasibility import (
+from convoy_sim.dynamics import ConvoyFormation, ConvoyKinematics, ship_positions_at, validate_dt
+from convoy_sim.entities import Ship, Torpedo
+from convoy_sim.feasibility import (
     ApproachMode,
     AttackConstraints,
     AttackProposal,
@@ -18,10 +18,10 @@ from .feasibility import (
     detection_risk_score,
     is_attack_feasible,
 )
-from .geometry import Vec2, as_vec, distance
-from .noise import NoiseModel
-from .objectives import ObjectiveSpec, score_trial_result
-from .simulation import apply_noise_to_torpedoes, simulate_attack_once_scored
+from convoy_sim.geometry import Vec2, as_vec, distance
+from convoy_sim.noise import NoiseModel
+from convoy_sim.objectives import ObjectiveSpec, score_trial_result
+from convoy_sim.simulation import apply_noise_to_torpedoes, simulate_attack_once_scored
 
 
 class TacticAction(str, Enum):

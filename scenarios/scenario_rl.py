@@ -7,8 +7,8 @@ import numpy as np
 
 from convoy_sim.attackers import fan_spread
 from convoy_sim.geometry import as_vec
-from .convoy_profiles import get_convoy_layout_profile
-from .scenario_base import Scenario
+from scenarios.convoy_profiles import get_convoy_layout_profile
+from scenarios.scenario_base import Scenario
 
 
 def build_scenario_rl(n_trials: int = 200, rng_seed: int | None = 1234) -> Scenario:

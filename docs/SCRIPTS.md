@@ -1,11 +1,16 @@
 # Script Reference
 
-High‑level overview of runnable scripts and scenario definitions. All scripts write outputs under `results/` unless overridden.
+Source-of-truth index for runnable scripts and scenario definitions.
+All scripts write under `results/` unless overridden.
+
+Related docs:
+- Repo-wide map and review findings: `PROJECT_CODE_REVIEW.md`
+- Visualization details: `docs/Visuals.md`
 
 ## Scenario Definitions
 
 - `scenarios/scenario_base.py`
-  - Scenario dataclass and `run()` helper that executes Monte Carlo with a fixed layout and torpedo sampler.
+  - Scenario dataclass and `run()` helper for Monte Carlo execution.
 - `scenarios/scenario_a.py`
   - Baseline Scenario A (rectangular layout + fan spread).
 - `scenarios/scenario_a1_constraints.py`
@@ -17,238 +22,212 @@ High‑level overview of runnable scripts and scenario definitions. All scripts 
 - `scenarios/scenario_rl.py`
   - RL convoy layout scaffold scenario using profile `rl_large`.
 - `scenarios/convoy_profiles.py`
-  - Convoy layout profile registry (`small_demo`, `rl_large`) used by scenarios/visuals.
+  - Convoy profile registry (`small_demo`, `rl_large`).
+
+## Workflow Paths
+
+Baseline simulation/optimization:
+1. `python -m experiments.run_scenario scenario_a --trials 1000 --seed 123`
+2. `python -m experiments.optimize_defender --trials 200 --seed 0`
+3. `python -m experiments.optimize_attacker --defense-json results/defender_best.json --trials 200 --seed 0`
+4. `python -m experiments.run_minmax --rounds 5 --trials 100 --seed 0`
+
+Policy/tactics/game:
+1. `python -m experiments.run_policy scenario_b1 --trials 200 --seed 0`
+2. `python -m experiments.optimize_policy --trials 200 --seed 0`
+3. `python -m experiments.run_attacker_plan scenario_b2 --trials 50 --seed 0`
+4. `python -m experiments.optimize_attacker_tactics --trials 50 --seed 0 --top-k 10`
+5. `python -m experiments.estimate_game --trials 50 --seed 0`
+6. `python -m experiments.solve_nash_from_matrix results/game_matrix.json --iters 500 --seed 0`
+
+Data/ML:
+1. `python experiments/make_dataset.py --samples 200 --trials 50 --seed 0`
+2. `python experiments/train_surrogate.py --data results/datasets/dataset.csv --target expected_hits`
+
+Visual/diagnostics:
+1. `python -m experiments.plot_layout`
+2. `python -m experiments.plot_historical_vs_optimized`
+3. `python -m experiments.plot_attack_once`
+4. `python -m experiments.render_attack_animation`
+5. `python -m experiments.render_attack_animation_debug`
+6. `python -m experiments.run_diagnostics_before_after`
 
 ## Experiment Scripts
 
 ### `experiments/run_scenario.py`
 - Purpose: Run a named scenario and save JSON results.
 - Usage:
-  - `python -m experiments.run_scenario scenario_a --n_trials 1000 --seed 123`
-- Key args:
-  - `scenario`: scenario name (e.g., `scenario_a`)
-  - `--trials`: override number of trials
-  - `--seed`: RNG seed
-  - `--output`: output directory
-- Outputs: `results/scenario_a.json`
-  - Scenario A1 writes `results/scenario_a1.json`
+  - `python -m experiments.run_scenario scenario_a --trials 1000 --seed 123`
+- Outputs:
+  - `results/scenario_a.json`
+  - `results/scenario_a1.json` (for A1)
 
 ### `experiments/sensitivity_oat.py`
-- Purpose: One‑at‑a‑time sensitivity sweep over layout/attack/noise parameters.
+- Purpose: One-at-a-time sensitivity sweeps.
 - Usage:
   - `python experiments/sensitivity_oat.py --n-trials 200 --seed 0`
-- Key args:
-  - `--scenario`: scenario name (default `scenario_a`)
-  - `--n-trials`: trials per point
-  - `--seed`: RNG seed
-  - `--output`: CSV path
 - Outputs: `results/sensitivity.csv`
 
 ### `experiments/optimize_defender.py`
-- Purpose: Brute‑force defender layout search vs fixed attacker.
+- Purpose: Brute-force defender layout search vs fixed attacker.
 - Usage:
   - `python -m experiments.optimize_defender --trials 200 --seed 0`
-- Key args:
-  - `--trials`: trials per candidate
-  - `--seed`: RNG seed
-  - `--output`: output directory
-- Outputs: `results/defender_opt.csv`, `results/defender_best.json`
+- Outputs:
+  - `results/defender_opt.csv`
+  - `results/defender_best.json`
 
 ### `experiments/optimize_attacker.py`
-- Purpose: Brute‑force attacker search vs best defense JSON.
+- Purpose: Brute-force attacker search vs selected defense.
 - Usage:
   - `python -m experiments.optimize_attacker --defense-json results/defender_best.json --trials 200 --seed 0 --mode fan`
-- Key args:
-  - `--defense-json`: path to `defender_best.json`
-  - `--trials`: trials per candidate
-  - `--seed`: RNG seed
-  - `--mode`: `fan` or `parallel`
-  - `--output`: output directory
-- Outputs: `results/attacker_opt.csv`, `results/attacker_best.json`
+- Outputs:
+  - `results/attacker_opt.csv`
+  - `results/attacker_best.json`
 
 ### `experiments/run_minmax.py`
-- Purpose: Alternating defender/attacker best‑response loop.
+- Purpose: Alternating defender/attacker best-response loop.
 - Usage:
   - `python -m experiments.run_minmax --rounds 5 --trials 100 --seed 0`
-- Key args:
-  - `--rounds`: number of alternating rounds
-  - `--trials`: trials per candidate
-  - `--seed`: RNG seed
-  - `--output`: output JSON path
 - Outputs: `results/minmax_history.json`
 
 ### `experiments/run_policy.py`
-- Purpose: Evaluate defender policy over threat priors (B1).
+- Purpose: Evaluate defender policy over threat priors.
 - Usage:
   - `python -m experiments.run_policy scenario_b1 --trials 200 --seed 0`
-- Key args:
-  - `scenario`: scenario name (e.g., `scenario_b1`)
-  - `--trials`: number of trials
-  - `--seed`: RNG seed
-  - `--output`: output directory
 - Outputs: `results/scenario_b1.json`
 
 ### `experiments/optimize_policy.py`
-- Purpose: Optimize policy tables with deterministic and pairwise-mixture search.
+- Purpose: Optimize policy tables (deterministic + mixture search).
 - Usage:
   - `python -m experiments.optimize_policy --trials 200 --seed 0`
-- Key args:
-  - `--trials`: trials per evaluation
-  - `--seed`: RNG seed
-  - `--output`: output directory
-  - `--w-loss`, `--w-footprint`, `--w-complexity`: tradeoff weights
-  - `--footprint-budget`, `--complexity-budget`: hard constraints
 - Outputs: `results/policy_opt.json`
 
 ### `experiments/run_attacker_plan.py`
-- Purpose: Execute multi-pass attacker plans (B2) and summarize outcomes.
+- Purpose: Execute multi-pass attacker plans.
 - Usage:
   - `python -m experiments.run_attacker_plan scenario_b2 --trials 50 --seed 0`
-- Key args:
-  - `scenario`: scenario name (e.g., `scenario_b2`)
-  - `--trials`: number of plan executions
-  - `--seed`: RNG seed
-  - `--output`: output directory
 - Outputs: `results/scenario_b2.json`
 
 ### `experiments/optimize_attacker_tactics.py`
-- Purpose: Coarse grid search over attacker multi-pass plan templates.
+- Purpose: Grid search over attacker multi-pass plan templates.
 - Usage:
   - `python -m experiments.optimize_attacker_tactics --trials 50 --seed 0 --top-k 10`
-- Key args:
-  - `--trials`: trials per plan
-  - `--seed`: RNG seed
-  - `--top-k`: number of top plans to return
-  - `--output`: output directory
 - Outputs: `results/attacker_tactics_opt.json`
 
 ### `experiments/estimate_game.py`
-- Purpose: Estimate payoff matrices and exploitability for small strategy sets (B3).
+- Purpose: Estimate payoff matrices and exploitability.
 - Usage:
   - `python -m experiments.estimate_game --trials 50 --seed 0`
-- Key args:
-  - `--trials`: trials per payoff entry
-  - `--seed`: RNG seed
-  - `--output`: output directory
 - Outputs: `results/game_matrix.json`
 
 ### `experiments/solve_nash_from_matrix.py`
-- Purpose: Compute approximate Nash mixed strategies via fictitious play (B4).
+- Purpose: Approximate Nash solution from saved matrix.
 - Usage:
   - `python -m experiments.solve_nash_from_matrix results/game_matrix.json --iters 500 --seed 0`
-- Key args:
-  - `matrix_json`: path to payoff matrix JSON
-  - `--iters`: number of fictitious play iterations
-  - `--seed`: RNG seed
-  - `--output`: output JSON path
 - Outputs: `results/nash_solution.json`
 
 ### `experiments/plot_layout.py`
-- Purpose: Render plan-view layout PNGs (optional matplotlib).
+- Purpose: Render plan-view layout PNGs.
 - Usage:
   - `python -m experiments.plot_layout`
 - Outputs: `results/figures/*.png`
 
 ### `experiments/plot_historical_vs_optimized.py`
-- Purpose: Overlay historical vs optimized layouts and save comparison grids.
+- Purpose: Overlay historical vs optimized layouts.
 - Usage:
   - `python -m experiments.plot_historical_vs_optimized`
 - Outputs: `results/figures/historical_vs_optimized_*.png`
 
 ### `experiments/plot_attack_once.py`
-- Purpose: Plot a single static attack with torpedo rays and debug JSON.
+- Purpose: Plot one attack with torpedo rays and debug JSON.
 - Usage:
   - `python -m experiments.plot_attack_once`
 - Outputs:
   - `results/figures/attack_once.png`
   - `results/debug/attack_once.json`
-- Key args:
-  - `--scenario`: choose scenario layout (`scenario_a` default, `scenario_rl` scaffold)
+
+### `experiments/render_attack_animation.py`
+- Purpose: Render time-indexed attack frames and optional MP4.
+- Usage:
+  - `python -m experiments.render_attack_animation`
+- Outputs:
+  - `results/frames/demo_attack/frame_*.png`
+  - `results/frames/demo_attack.mp4` (optional)
+
+### `experiments/render_attack_animation_debug.py`
+- Purpose: Debug variant of animation rendering with heading arrows.
+- Usage:
+  - `python -m experiments.render_attack_animation_debug`
+- Outputs:
+  - `results/frames/demo_attack_debug/frame_*.png`
+  - `results/frames/demo_attack_debug.mp4` (optional)
 
 ### `experiments/run_diagnostics_before_after.py`
-- Purpose: Generate before/after diagnostics figures and JSON summary.
+- Purpose: Generate before/after diagnostics plot + summary.
 - Usage:
   - `python -m experiments.run_diagnostics_before_after`
 - Outputs:
   - `results/figures/diag_attack_overlay.png`
   - `results/diag/diagnostics_summary.json`
 
-### `experiments/render_attack_animation.py`
-- Purpose: Render time-series attack frames and optional MP4 (E2).
-- Usage:
-  - `python -m experiments.render_attack_animation`
-  - `python -m experiments.render_attack_animation --profile rl_large`
-- Key args:
-  - `--profile`: convoy layout profile selector (`small_demo` default, `rl_large` scaffold)
-- Outputs:
-  - `results/frames/demo_attack/frame_*.png`
-  - `results/frames/demo_attack.mp4` (optional)
 ### `experiments/robustness_report.py`
 - Purpose: Compare baseline vs optimized defense across noise settings.
 - Usage:
   - `python experiments/robustness_report.py --defense-json results/defender_best.json --trials 200 --seed 0`
-- Key args:
-  - `--defense-json`: optimized defense JSON path
-  - `--trials`: trials per run
-  - `--seed`: RNG seed
-  - `--output`: CSV path
 - Outputs: `results/robustness_report.csv`
 
 ### `experiments/make_dataset.py`
-- Purpose: Generate surrogate modeling dataset from random parameter samples.
+- Purpose: Generate surrogate dataset from random parameter samples.
 - Usage:
   - `python experiments/make_dataset.py --samples 200 --trials 50 --seed 0`
-- Key args:
-  - `--samples`: number of samples
-  - `--trials`: trials per sample
-  - `--seed`: RNG seed
-  - `--output`: output directory
-- Outputs: `results/datasets/dataset.csv`, `results/datasets/dataset.npz`
+- Outputs:
+  - `results/datasets/dataset.csv`
+  - `results/datasets/dataset.npz`
 
 ### `experiments/train_surrogate.py`
-- Purpose: Train baseline regressors (RandomForest/GradientBoosting) on a dataset.
+- Purpose: Train baseline regressors on dataset targets.
 - Usage:
-  - `PYTHONPATH=. python experiments/train_surrogate.py --data results/datasets/dataset.csv --target expected_hits`
-- Key args:
-  - `--data`: dataset CSV path
-  - `--target`: target column name
-  - `--seed`: RNG seed
-  - `--test-size`: test split fraction
-  - `--output`: output directory
+  - `python experiments/train_surrogate.py --data results/datasets/dataset.csv --target expected_hits`
 - Outputs:
   - `results/surrogate_report_<target>.json`
   - `results/*.joblib`
 
-## Utilities (Non‑Executable)
+## Core Utilities (`convoy_sim/`)
 
-- `convoy_sim/attackers.py`: Deterministic fan/parallel torpedo spread samplers.
-- `convoy_sim/attack_proposals.py`: Attack proposal generation and value-biased aimpoints.
-- `convoy_sim/defender_opt.py`: Defender layout search utilities.
-- `convoy_sim/attacker_opt.py`: Attacker parameter search utilities.
-- `convoy_sim/minmax_loop.py`: Min‑max loop coordinator.
-- `convoy_sim/datasets.py`: Dataset generator for surrogate modeling.
-- `convoy_sim/risk.py`: VaR/CVaR metrics for Monte Carlo outputs.
-- `convoy_sim/noise.py`: Noise toggles for heading/timing/duds.
-- `convoy_sim/feasibility.py`: Attack feasibility checks and detection risk scoring.
-- `convoy_sim/dynamics.py`: Convoy-level route legs, zig-zag plans, and formation-preserving kinematics.
-- `convoy_sim/simulation.py`: Includes `run_monte_carlo_attack_dynamic` and time-aware hit checks (opt-in).
-- `convoy_sim/defender_policy.py`: Threat priors, layout actions, and policy evaluation utilities.
-- `convoy_sim/defender_policy_opt.py`: Policy objective and coarse deterministic/mixture optimizers.
-- `convoy_sim/attacker_tactics.py`: Multi-pass attacker plans, salvo shaping, and execution helpers.
-- `convoy_sim/attacker_tactics_opt.py`: Coarse grid search over attacker plan templates.
-- `convoy_sim/game.py`: Strategy wrappers, payoff matrix estimation, and exploitability.
-- `convoy_sim/nash.py`: Fictitious play and replicator dynamics solvers.
-- `convoy_sim/double_oracle.py`: Double-oracle style loop hook for strategy expansion.
-- `convoy_sim/viz.py`: Optional matplotlib-based plan-view plotting helpers.
-- `convoy_sim/viz_attack.py`: Optional static + temporal attack visualization helpers.
-- `convoy_sim/coverage.py`: Pure-numpy torpedo coverage accumulation utilities.
-- `convoy_sim/viz_coverage.py`: Optional matplotlib coverage heatmap plotting.
-- `convoy_sim/diagnostics.py`: Comparative diagnostics helpers and plots.
-- `convoy_sim/trial_records.py`: Standardized trial record helper/schema.
-- `convoy_sim/batch_eval.py`: Reusable batch evaluation utility.
-- `convoy_sim/rl_wrapper.py`: Minimal RL episode wrapper, action mapping, observation schema.
-- `convoy_sim/attack_profiles.py`: Flat attacker profile schema (`mode/u_pos/n/speed/max_run_time/...`), 25-profile scaffold, weighted sampling, and profile-to-torpedo builder helper.
+- `simulation.py`: core Monte Carlo execution.
+- `dynamics.py`: time-aware route legs and convoy motion.
+- `attackers.py`: fan/parallel torpedo spread samplers.
+- `attack_profiles.py`: attacker profile schema and profile-to-torpedo builder.
+- `attack_proposals.py`: attack proposal helpers and aimpoint selection.
+- `feasibility.py`: range/cone/risk feasibility checks.
+- `risk.py`: VaR/CVaR metrics.
+- `objectives.py`: objective weighting/scoring.
+- `layouts.py`: formation generation and helpers.
+- `layout_roles.py`: role assignment helpers.
+- `entities.py`: domain entities/dataclasses.
+- `geometry.py`: geometric primitives and computations.
+- `ship_catalog.py`: ship class/catalog metadata.
+- `defender_opt.py`: defender search utilities.
+- `attacker_opt.py`: attacker search utilities.
+- `minmax_loop.py`: alternating best-response coordinator.
+- `defender_policy.py`: policy representation/evaluation.
+- `defender_policy_opt.py`: policy search/objectives.
+- `attacker_tactics.py`: multi-pass tactics execution.
+- `attacker_tactics_opt.py`: tactics template search.
+- `game.py`: payoff matrix utilities/exploitability helpers.
+- `nash.py`: fictitious-play/replicator solvers.
+- `double_oracle.py`: double-oracle loop support.
+- `datasets.py`: surrogate dataset assembly.
+- `batch_eval.py`: batch evaluation utilities.
+- `trial_records.py`: standardized trial record schema.
+- `rl_wrapper.py`: RL episode wrapper and action mapping.
+- `rl_env.py`: RL env data structures/helpers.
+- `viz.py`: plan-view plotting helpers.
+- `viz_attack.py`: static/temporal attack plotting helpers.
+- `diagnostics.py`: comparative diagnostics generation.
 
-Notes on attack profile integration:
-- Profiles are ready for direct simulation use via `AttackProfile.build_torpedoes(...)`.
-- RL environment sampling is not auto-wired yet; add profile sampling at episode reset in `convoy_sim/rl_wrapper.py` when enabling profile-driven RL training.
+## Notes
+
+- Some scripts are designed for `python -m ...`; a few are plain-file invocation (`python experiments/...py`).
+- Matplotlib is optional for plotting scripts only.
+- `scikit-learn` and `joblib` are only needed for surrogate training.

@@ -21,6 +21,29 @@ A research‑focused simulator for WWII‑style convoys and straight‑running t
 - **RL wrapper**: minimal episode-style interface + observation schema for ML experiments.
 - **Scenarios & experiments**: scripted runs that save JSON/CSV results under `results/`.
 
+## Project Map and Review
+
+- Full repository map, dependency surface, workflow paths, and review findings:
+  - `PROJECT_CODE_REVIEW.md`
+- Script-by-script operator reference:
+  - `docs/SCRIPTS.md`
+
+## Environment Setup
+
+Create and activate a virtual environment, then install dependencies:
+
+```bash
+python -m venv .venv
+source .venv/bin/activate
+pip install -r requirements-dev.txt
+```
+
+If you only need core simulation (no ML/test tooling):
+
+```bash
+pip install -r requirements.txt
+```
+
 ## Quick Start
 
 Run a baseline scenario:
@@ -108,10 +131,10 @@ Render temporal attack frames (E2):
 python -m experiments.render_attack_animation
 ```
 
-Plot torpedo coverage heatmap (E3):
+Render temporal attack frames with heading arrows (debug helper):
 
 ```bash
-python -m experiments.plot_coverage
+python -m experiments.render_attack_animation_debug
 ```
 
 Run before/after diagnostics report (E3):

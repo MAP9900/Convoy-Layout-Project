@@ -6,7 +6,7 @@ from typing import Any
 
 import numpy as np
 
-from .game import exploitability
+from convoy_sim.game import exploitability
 
 
 def _one_hot(index: int, size: int) -> np.ndarray:

@@ -9,12 +9,12 @@ from typing import Any
 
 import numpy as np
 
-from .attacker_tactics import AttackerPlan, PassSpec, SalvoSpec, execute_attacker_plan
-from .dynamics import ConvoyFormation, ConvoyKinematics
-from .entities import Ship
-from .feasibility import ApproachMode, AttackConstraints, Environment
-from .objectives import ObjectiveSpec
-from .risk import empirical_cvar, empirical_var
+from convoy_sim.attacker_tactics import AttackerPlan, PassSpec, SalvoSpec, execute_attacker_plan
+from convoy_sim.dynamics import ConvoyFormation, ConvoyKinematics
+from convoy_sim.entities import Ship
+from convoy_sim.feasibility import ApproachMode, AttackConstraints, Environment
+from convoy_sim.objectives import ObjectiveSpec
+from convoy_sim.risk import empirical_cvar, empirical_var
 
 
 @dataclass(frozen=True)

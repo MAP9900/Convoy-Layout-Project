@@ -6,14 +6,14 @@ from typing import Any, Callable
 
 import numpy as np
 
-from .game import (
+from convoy_sim.game import (
     AttackerStrategy,
     DefenderStrategy,
     estimate_payoff_matrix,
     expected_loss,
     exploitability,
 )
-from .nash import fictitious_play
+from convoy_sim.nash import fictitious_play
 
 
 def _best_response_value_defender(q: np.ndarray, m: np.ndarray) -> float:

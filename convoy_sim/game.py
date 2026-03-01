@@ -7,13 +7,13 @@ from typing import Any, Callable, Literal
 
 import numpy as np
 
-from .attacker_tactics import AttackerPlan, execute_attacker_plan
-from .defender_policy import DefenderPolicy, LayoutAction, ThreatPrior, ThreatType, compute_layout_metrics
-from .dynamics import ConvoyFormation, ConvoyKinematics
-from .entities import Ship, Torpedo
-from .feasibility import AttackConstraints, Environment
-from .objectives import ObjectiveSpec, defender_loss_from_outcome
-from .simulation import apply_noise_to_torpedoes, simulate_attack_once_scored
+from convoy_sim.attacker_tactics import AttackerPlan, execute_attacker_plan
+from convoy_sim.defender_policy import DefenderPolicy, LayoutAction, ThreatPrior, ThreatType, compute_layout_metrics
+from convoy_sim.dynamics import ConvoyFormation, ConvoyKinematics
+from convoy_sim.entities import Ship, Torpedo
+from convoy_sim.feasibility import AttackConstraints, Environment
+from convoy_sim.objectives import ObjectiveSpec, defender_loss_from_outcome
+from convoy_sim.simulation import apply_noise_to_torpedoes, simulate_attack_once_scored
 
 
 @dataclass(frozen=True)

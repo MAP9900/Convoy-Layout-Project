@@ -3,7 +3,7 @@
 from __future__ import annotations
 from typing import Any, Literal
 import numpy as np
-from .entities import Ship, ShipClass
+from convoy_sim.entities import Ship, ShipClass
 
 
 def _require_matplotlib() -> Any:

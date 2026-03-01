@@ -7,7 +7,7 @@ import numpy as np
 
 from convoy_sim import as_vec, make_rectangular_convoy
 from convoy_sim.attackers import fan_spread
-from .scenario_base import Scenario
+from scenarios.scenario_base import Scenario
 
 
 def build_scenario_a(n_trials: int = 200, rng_seed: int | None = 1234) -> Scenario:

@@ -14,7 +14,7 @@ from convoy_sim.feasibility import (
     Environment,
     EscortZone,
 )
-from .scenario_base import Scenario
+from scenarios.scenario_base import Scenario
 
 
 def build_scenario_a1(n_trials: int = 200, rng_seed: int | None = 1234) -> Scenario:

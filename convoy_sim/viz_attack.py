@@ -8,11 +8,11 @@ from typing import Any, Literal
 import numpy as np
 from pathlib import Path
 
-from .entities import Ship, Torpedo
-from .geometry import as_vec, closest_approach_time, distance, step_position
-from .viz import plot_convoy_planview
-from .dynamics import ConvoyFormation, ConvoyKinematics, ship_positions_at
-from .simulation import (
+from convoy_sim.entities import Ship, Torpedo
+from convoy_sim.geometry import as_vec, closest_approach_time, distance, step_position
+from convoy_sim.viz import plot_convoy_planview
+from convoy_sim.dynamics import ConvoyFormation, ConvoyKinematics, ship_positions_at
+from convoy_sim.simulation import (
     DynamicHitState,
     HitSlowdownSpec,
     advance_dynamic_hit_state,

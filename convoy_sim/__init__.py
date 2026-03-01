@@ -4,7 +4,7 @@ The package surfaces a geometry-based simulator for WWII-style convoys and
 straight-running torpedoes on a 2D plane measured in meters.
 """
 
-from .geometry import (
+from convoy_sim.geometry import (
     Point2D,
     Vector2D,
     Vec2,
@@ -17,19 +17,19 @@ from .geometry import (
     step_position,
     translate_point,
 )
-from .entities import Convoy, Ship, ShipClass, Torpedo, torpedo_hits_ship
-from .layouts import (
+from convoy_sim.entities import Convoy, Ship, ShipClass, Torpedo, torpedo_hits_ship
+from convoy_sim.layouts import (
     apply_jitter,
     make_hexagonal_convoy,
     make_rectangular_convoy,
     make_staggered_convoy,
 )
-from .noise import NoiseModel
-from .risk import empirical_cvar, empirical_var
-from .objectives import ObjectiveSpec, aggregate_objective, score_trial_result
-from .attackers import fan_spread, parallel_spread
-from .rl_wrapper import ActionSpaceMap, OBS_SCHEMA_VERSION, RLEpisode, build_observation
-from .defender_policy import (
+from convoy_sim.noise import NoiseModel
+from convoy_sim.risk import empirical_cvar, empirical_var
+from convoy_sim.objectives import ObjectiveSpec, aggregate_objective, score_trial_result
+from convoy_sim.attackers import fan_spread, parallel_spread
+from convoy_sim.rl_wrapper import ActionSpaceMap, OBS_SCHEMA_VERSION, RLEpisode, build_observation
+from convoy_sim.defender_policy import (
     DefenderPolicy,
     LayoutAction,
     ThreatPrior,
@@ -38,7 +38,7 @@ from .defender_policy import (
     make_deterministic_policy,
     make_uniform_policy,
 )
-from .simulation import (
+from convoy_sim.simulation import (
     run_monte_carlo_attack,
     run_monte_carlo_attack_dynamic,
     run_monte_carlo_attack_scored,
@@ -53,9 +53,9 @@ from .simulation import (
     simulate_attack_once_scored,
     torpedo_hits_ship_dynamic,
 )
-from .minmax_loop import run_minmax_loop
-from .ship_catalog import SHIP_CATALOG, make_ship
-from .attack_profiles import (
+from convoy_sim.minmax_loop import run_minmax_loop
+from convoy_sim.ship_catalog import SHIP_CATALOG, make_ship
+from convoy_sim.attack_profiles import (
     AttackProfile,
     AttackProfileLibrary,
     build_scaffolded_attack_profile_library,

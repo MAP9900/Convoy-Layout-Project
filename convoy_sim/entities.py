@@ -9,7 +9,7 @@ from typing import Sequence
 
 import numpy as np
 
-from .geometry import (
+from convoy_sim.geometry import (
     Vec2,
     as_vec,
     closest_approach_time,

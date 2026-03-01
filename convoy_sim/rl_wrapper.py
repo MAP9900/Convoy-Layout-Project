@@ -7,12 +7,12 @@ from typing import Any, Literal
 
 import numpy as np
 
-from .defender_policy import ThreatPrior
-from .game import AttackerStrategy, DefenderStrategy
-from .objectives import ObjectiveSpec, attacker_utility_from_outcome, defender_loss_from_outcome
-from .trial_records import _to_serializable
-from .feasibility import AttackConstraints, Environment
-from .dynamics import ConvoyFormation, ConvoyKinematics
+from convoy_sim.defender_policy import ThreatPrior
+from convoy_sim.game import AttackerStrategy, DefenderStrategy
+from convoy_sim.objectives import ObjectiveSpec, attacker_utility_from_outcome, defender_loss_from_outcome
+from convoy_sim.trial_records import _to_serializable
+from convoy_sim.feasibility import AttackConstraints, Environment
+from convoy_sim.dynamics import ConvoyFormation, ConvoyKinematics
 
 
 OBS_SCHEMA_VERSION = 1

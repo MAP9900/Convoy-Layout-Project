@@ -13,8 +13,8 @@ from typing import Literal
 
 import numpy as np
 
-from .entities import Ship
-from .geometry import Vec2, as_vec
+from convoy_sim.entities import Ship
+from convoy_sim.geometry import Vec2, as_vec
 
 
 def validate_dt(dt: float) -> float:
