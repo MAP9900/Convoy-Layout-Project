@@ -2,6 +2,7 @@
 
 import numpy as np
 
+from convoy_sim.attack_profiles import AttackProfile, AttackProfileLibrary
 from convoy_sim.attackers import fan_spread
 from convoy_sim.defender_policy import LayoutAction, ThreatPrior, ThreatType
 from convoy_sim.game import AttackerStrategy, DefenderStrategy
@@ -24,6 +25,8 @@ def test_build_observation_schema_version() -> None:
         outcome=None,
     )
     assert obs["schema_version"] == OBS_SCHEMA_VERSION
+    assert "attack_profile_id" in obs
+    assert "attack_profile" in obs
 
 
 def test_episode_step_returns_reward_and_done() -> None:
@@ -150,3 +153,79 @@ def test_episode_reward_sign_consistency() -> None:
     _obs_a, reward_a, _done_a, info_a = env_att.step(0, 0)
     assert np.isclose(reward_a, info_d["attacker_utility"])
     assert np.isclose(reward_d, -info_d["defender_loss"])
+
+
+def test_episode_samples_attack_profile_on_reset_and_logs_payload() -> None:
+    defenders = [
+        DefenderStrategy(
+            name="rect",
+            kind="layout_action",
+            payload=LayoutAction(
+                name="rect",
+                layout_fn=make_rectangular_convoy,
+                layout_kwargs={
+                    "n_rows": 1,
+                    "n_cols": 1,
+                    "spacing_along": 100.0,
+                    "spacing_across": 100.0,
+                    "speed": 0.0,
+                    "heading_rad": 0.0,
+                    "length": 40.0,
+                    "beam": 10.0,
+                    "origin": np.array([0.0, 0.0]),
+                },
+                complexity_cost=1.0,
+            ),
+        )
+    ]
+    attackers = [
+        AttackerStrategy(
+            name="fan1",
+            kind="torpedo_sampler",
+            payload=lambda rng: fan_spread(
+                u_pos=np.array([-200.0, 0.0]),
+                base_bearing_rad=0.0,
+                n=1,
+                spread_rad=0.0,
+                speed=20.0,
+                max_run_time=200.0,
+            ),
+        )
+    ]
+    profile_lib = AttackProfileLibrary(
+        profiles=[
+            AttackProfile(
+                profile_id="P01",
+                name="single_profile",
+                mode="fan",
+                u_pos=(-200.0, 0.0),
+                n=1,
+                speed=20.0,
+                max_run_time=200.0,
+                base_bearing_rad=0.0,
+                spread_rad=0.0,
+            )
+        ]
+    )
+    prior = ThreatPrior(probs={ThreatType.ABEAM_FAN: 1.0})
+    env = RLEpisode(
+        defenders=defenders,
+        attackers=attackers,
+        prior=prior,
+        env=None,
+        constraints=None,
+        dynamics=None,
+        sim_params={"t_max": 200.0},
+        attack_profile_library=profile_lib,
+        max_steps=1,
+        rng=np.random.default_rng(0),
+    )
+    obs0 = env.reset(seed=123)
+    assert obs0["attack_profile_id"] == "P01"
+    assert obs0["attack_profile"]["profile_id"] == "P01"
+
+    obs, _reward, _done, info = env.step(0, 0)
+    assert obs["attack_profile_id"] == "P01"
+    assert obs["attack_profile"]["profile_id"] == "P01"
+    assert info["attack_profile_id"] == "P01"
+    assert info["attack_profile"]["profile_id"] == "P01"

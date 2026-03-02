@@ -96,10 +96,10 @@ Manual Checkable Items
         - TODO: set per-profile `weight` values for training distribution.
         - TODO: verify each profile builds torpedoes via `AttackProfile.build_torpedoes(...)`.
         - TODO: define held-out eval profile subset and lock seeds.
-- [TODO] Wire RL profile sampling into episode reset.
-    -Add reset-time attack profile sampling in `convoy_sim/rl_wrapper.py`.
-    -Include sampled `profile_id` in observation/info/trial record.
-    -Use sampled profile to build torpedoes during step execution.
+- [DONE] Wire RL profile sampling into episode reset.
+    -Added reset-time profile sampling in `convoy_sim/rl_wrapper.py` (`RLEpisode.reset`).
+    -Included sampled `profile_id` and full profile payload in observation/info.
+    -When enabled, sampled profile now builds torpedoes for `torpedo_sampler` attacker path.
 - [TODO] Tune RL scenario scaffold.
     -Scaffold added: `scenarios/scenario_rl.py`.
     -TODO: tune attacker params and metadata for RL runs.
@@ -109,14 +109,14 @@ Manual Checkable Items
     -TODO: verify tanker placement, escort ring, and spacing look correct before training.
 
 - [TODO] Pre-Training Gate
-    -Add attack profile validation checks.
-    -Enforce bounds for `n`, `speed`, `max_run_time`, bearings, and spacing.
-    -Fail fast on invalid/impossible profile configs before training.
-    -Add deterministic sampling test for RL reset integration.
-    -Same seed => same sampled profile sequence.
-    -Different seed => distribution changes.
-    -Log full attack profile payload per episode.
-    -Store resolved fields used to build torpedoes, not only `profile_id`.
+    -[DONE] Add attack profile validation checks.
+    -[DONE] Enforce bounds for `n`, `speed`, `max_run_time`, bearings, and spacing.
+    -[DONE] Fail fast on invalid/impossible profile configs before training.
+    -[DONE] Add deterministic sampling test for RL reset integration.
+    -[DONE] Same seed => same sampled profile sequence.
+    -[DONE] Different seed => distribution changes.
+    -[DONE] Log full attack profile payload per episode.
+    -[DONE] Store resolved fields used to build torpedoes, not only `profile_id`.
     -Add per-profile performance dashboard output.
     -Report reward, hits, and survival split by `profile_id`.
     -Flag profile collapse / overfitting automatically.

@@ -18,6 +18,23 @@ from convoy_sim.feasibility import AttackConstraints, Environment
 
 SpreadMode = Literal["fan", "parallel"]
 
+_MIN_TORPEDO_COUNT = 1
+_MAX_TORPEDO_COUNT = 32
+_MIN_SPEED = 0.01
+_MAX_SPEED = 200.0
+_MIN_MAX_RUN_TIME = 0.01
+_MAX_MAX_RUN_TIME = 7200.0
+_MIN_BEARING_RAD = -2.0 * np.pi
+_MAX_BEARING_RAD = 2.0 * np.pi
+_MIN_SPREAD_RAD = 0.0
+_MAX_SPREAD_RAD = np.pi
+_MIN_LATERAL_SPACING = 0.0
+_MAX_LATERAL_SPACING = 5000.0
+_MIN_LAUNCH_DELAY = 0.0
+_MAX_LAUNCH_DELAY = 7200.0
+_MIN_SALVO_INTERVAL = 0.0
+_MAX_SALVO_INTERVAL = 3600.0
+
 
 def _vec2_tuple(value: Sequence[float] | np.ndarray) -> tuple[float, float]:
     arr = np.asarray(value, dtype=float)
@@ -69,14 +86,42 @@ class AttackProfile:
             raise ValueError("mode must be 'fan' or 'parallel'")
         if self.weight < 0.0:
             raise ValueError("weight must be non-negative")
-        if self.n <= 0:
-            raise ValueError("n must be positive")
-        if self.speed <= 0.0:
-            raise ValueError("speed must be positive")
-        if self.max_run_time <= 0.0:
-            raise ValueError("max_run_time must be positive")
-        if self.salvo_interval_s < 0.0:
-            raise ValueError("salvo_interval_s must be non-negative")
+        if not self.profile_id.strip():
+            raise ValueError("profile_id must be non-empty")
+        if not self.name.strip():
+            raise ValueError("name must be non-empty")
+        if not _MIN_TORPEDO_COUNT <= self.n <= _MAX_TORPEDO_COUNT:
+            raise ValueError(f"n must be in [{_MIN_TORPEDO_COUNT}, {_MAX_TORPEDO_COUNT}]")
+        if not np.isfinite(self.speed) or not _MIN_SPEED <= self.speed <= _MAX_SPEED:
+            raise ValueError(f"speed must be finite and in [{_MIN_SPEED}, {_MAX_SPEED}]")
+        if not np.isfinite(self.max_run_time) or not _MIN_MAX_RUN_TIME <= self.max_run_time <= _MAX_MAX_RUN_TIME:
+            raise ValueError(
+                f"max_run_time must be finite and in [{_MIN_MAX_RUN_TIME}, {_MAX_MAX_RUN_TIME}]"
+            )
+        if not np.isfinite(self.launch_delay_s) or not _MIN_LAUNCH_DELAY <= self.launch_delay_s <= _MAX_LAUNCH_DELAY:
+            raise ValueError(
+                f"launch_delay_s must be finite and in [{_MIN_LAUNCH_DELAY}, {_MAX_LAUNCH_DELAY}]"
+            )
+        if not np.isfinite(self.salvo_interval_s) or not _MIN_SALVO_INTERVAL <= self.salvo_interval_s <= _MAX_SALVO_INTERVAL:
+            raise ValueError(
+                f"salvo_interval_s must be finite and in [{_MIN_SALVO_INTERVAL}, {_MAX_SALVO_INTERVAL}]"
+            )
+        if self.mode == "fan":
+            if not np.isfinite(self.base_bearing_rad) or not _MIN_BEARING_RAD <= self.base_bearing_rad <= _MAX_BEARING_RAD:
+                raise ValueError(
+                    f"base_bearing_rad must be finite and in [{_MIN_BEARING_RAD}, {_MAX_BEARING_RAD}]"
+                )
+            if not np.isfinite(self.spread_rad) or not _MIN_SPREAD_RAD <= self.spread_rad <= _MAX_SPREAD_RAD:
+                raise ValueError(f"spread_rad must be finite and in [{_MIN_SPREAD_RAD}, {_MAX_SPREAD_RAD}]")
+        else:
+            if not np.isfinite(self.bearing_rad) or not _MIN_BEARING_RAD <= self.bearing_rad <= _MAX_BEARING_RAD:
+                raise ValueError(
+                    f"bearing_rad must be finite and in [{_MIN_BEARING_RAD}, {_MAX_BEARING_RAD}]"
+                )
+            if not np.isfinite(self.lateral_spacing) or not _MIN_LATERAL_SPACING <= self.lateral_spacing <= _MAX_LATERAL_SPACING:
+                raise ValueError(
+                    f"lateral_spacing must be finite and in [{_MIN_LATERAL_SPACING}, {_MAX_LATERAL_SPACING}]"
+                )
 
     def build_torpedoes(
         self,

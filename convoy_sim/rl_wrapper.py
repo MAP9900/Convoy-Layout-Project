@@ -7,12 +7,14 @@ from typing import Any, Literal
 
 import numpy as np
 
+from convoy_sim.attack_profiles import AttackProfile, AttackProfileLibrary
 from convoy_sim.defender_policy import ThreatPrior
 from convoy_sim.game import AttackerStrategy, DefenderStrategy
 from convoy_sim.objectives import ObjectiveSpec, attacker_utility_from_outcome, defender_loss_from_outcome
 from convoy_sim.trial_records import _to_serializable
 from convoy_sim.feasibility import AttackConstraints, Environment
 from convoy_sim.dynamics import ConvoyFormation, ConvoyKinematics
+from convoy_sim.simulation import apply_noise_to_torpedoes, simulate_attack_once_scored
 
 
 OBS_SCHEMA_VERSION = 1
@@ -46,6 +48,8 @@ def build_observation(
     attacker_action: str | None,
     layout_metrics: dict[str, Any] | None,
     outcome: dict[str, Any] | None,
+    attack_profile_id: str | None = None,
+    attack_profile: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Return a JSON-friendly observation record."""
 
@@ -57,6 +61,8 @@ def build_observation(
         "attacker_action": attacker_action,
         "layout_metrics": layout_metrics,
         "outcome": outcome,
+        "attack_profile_id": attack_profile_id,
+        "attack_profile": attack_profile,
     }
     return _to_serializable(obs)
 
@@ -75,6 +81,8 @@ class RLEpisode:
     objective: ObjectiveSpec | None = None
     max_steps: int = 1
     reward_perspective: Literal["defender", "attacker"] = "defender"
+    attack_profile_library: AttackProfileLibrary | None = None
+    use_sampled_attack_profile_for_torpedo_sampler: bool = True
     rng: np.random.Generator | None = None
 
     def __post_init__(self) -> None:
@@ -82,11 +90,15 @@ class RLEpisode:
             raise ValueError("max_steps must be positive")
         self._rng = self.rng or np.random.default_rng()
         self._step = 0
+        self._sampled_attack_profile: AttackProfile | None = None
 
     def reset(self, seed: int | None = None) -> dict[str, Any]:
         if seed is not None:
             self._rng = np.random.default_rng(seed)
         self._step = 0
+        self._sampled_attack_profile = (
+            self.attack_profile_library.sample_profile(self._rng) if self.attack_profile_library is not None else None
+        )
         return build_observation(
             time_step=self._step,
             threat=None,
@@ -94,6 +106,12 @@ class RLEpisode:
             attacker_action=None,
             layout_metrics=None,
             outcome=None,
+            attack_profile_id=(
+                self._sampled_attack_profile.profile_id if self._sampled_attack_profile is not None else None
+            ),
+            attack_profile=(
+                self._sampled_attack_profile.to_dict() if self._sampled_attack_profile is not None else None
+            ),
         )
 
     def step(self, defender_action_idx: int, attacker_action_idx: int) -> tuple[dict[str, Any], float, bool, dict[str, Any]]:
@@ -107,14 +125,7 @@ class RLEpisode:
         attacker = self.attackers[attacker_action_idx]
 
         ships, layout_metrics = defender.sample_layout(threat, self._rng)
-        outcome = attacker.execute(
-            ships_t0=ships,
-            constraints=self.constraints,
-            env=self.env,
-            dynamics=self.dynamics,
-            sim_params=self.sim_params,
-            rng=self._rng,
-        )
+        outcome = self._execute_attacker(attacker=attacker, ships=ships)
         loss = defender_loss_from_outcome(outcome, self.objective)
         utility = attacker_utility_from_outcome(outcome, self.objective)
         reward = -loss if self.reward_perspective == "defender" else utility
@@ -126,11 +137,53 @@ class RLEpisode:
             attacker_action=attacker.name,
             layout_metrics=layout_metrics,
             outcome=outcome,
+            attack_profile_id=(
+                self._sampled_attack_profile.profile_id if self._sampled_attack_profile is not None else None
+            ),
+            attack_profile=(
+                self._sampled_attack_profile.to_dict() if self._sampled_attack_profile is not None else None
+            ),
         )
         info = {
             "defender_loss": float(loss),
             "attacker_utility": float(utility),
+            "attack_profile_id": (
+                self._sampled_attack_profile.profile_id if self._sampled_attack_profile is not None else None
+            ),
+            "attack_profile": (
+                self._sampled_attack_profile.to_dict() if self._sampled_attack_profile is not None else None
+            ),
         }
         self._step += 1
         done = self._step >= self.max_steps
         return obs, float(reward), done, info
+
+    def _execute_attacker(self, *, attacker: AttackerStrategy, ships: list[Any]) -> dict[str, Any]:
+        if (
+            self.use_sampled_attack_profile_for_torpedo_sampler
+            and self._sampled_attack_profile is not None
+            and attacker.kind == "torpedo_sampler"
+        ):
+            torpedoes = self._sampled_attack_profile.build_torpedoes(
+                self._rng,
+                constraints=self.constraints,
+                env=self.env,
+            )
+            noise_model = self.sim_params.get("noise_model")
+            if noise_model and not noise_model.is_inactive():
+                torpedoes = apply_noise_to_torpedoes(torpedoes, noise_model, self._rng)
+            return simulate_attack_once_scored(
+                ships=ships,
+                torpedoes=torpedoes,
+                t_max=float(self.sim_params.get("t_max", 0.0)),
+                max_hits_per_torpedo=self.sim_params.get("max_hits_per_torpedo"),
+            )
+
+        return attacker.execute(
+            ships_t0=ships,
+            constraints=self.constraints,
+            env=self.env,
+            dynamics=self.dynamics,
+            sim_params=self.sim_params,
+            rng=self._rng,
+        )
