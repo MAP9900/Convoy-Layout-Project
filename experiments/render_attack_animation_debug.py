@@ -42,8 +42,9 @@ def main() -> None:
     zigzag = ZigZagPlan(enabled=True, amplitude_rad=0.12, period_s=60.0, phase_s=0.0, waveform="sine")
     kin = ConvoyKinematics(route=route, zigzag=zigzag)
 
+    u_boat_pos = as_vec(0, -1250)
     torpedoes = fan_spread(
-        u_pos=as_vec(0, -1250),
+        u_pos=u_boat_pos,
         base_bearing_rad=np.radians(75),
         n=4,
         spread_rad=np.radians(10.0),
@@ -111,6 +112,8 @@ def main() -> None:
             hit_state=hit_state,
             hit_dt=dt,
             figure_facecolor="lightgrey",
+            show_u_boat=True,
+            u_boat_position=u_boat_pos,
         )
 
         heading = kin.convoy_heading_at(float(t), formation.convoy_heading0)
@@ -180,6 +183,8 @@ def main() -> None:
                 hit_state=hit_state,
                 hit_dt=dt,
                 figure_facecolor="lightgrey",
+                show_u_boat=True,
+                u_boat_position=u_boat_pos,
             )
             heading = kin.convoy_heading_at(float(t), formation.convoy_heading0)
             ship_positions = ship_positions_at(

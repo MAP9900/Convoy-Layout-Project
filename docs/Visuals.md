@@ -42,6 +42,17 @@ Before/After Diagnostics (E3) FIXED
   - `results/diag/diagnostics_summary.json`
 - What it shows: attack overlays and a JSON summary.
 
+Attack Profile Frame 0600 Review (Notebook)
+- Notebook: `docs/notebooks/attack_profile_frame600_review.ipynb`
+- Output:
+  - `results/frames/attack_profile_previews/<PROFILE_ID>/frame_0600.png`
+- What it shows:
+  - One frame at `t=120s` (`frame_0600` at `fps=5`) for each attack profile in `DEFAULT_ATTACK_PROFILE_LIBRARY`.
+  - Includes U-boat marker at each profile's `u_pos`.
+- Notes:
+  - Designed as plug-and-play for when `P01..P25` are updated in `convoy_sim/attack_profiles.py`.
+  - Set `SELECT_PROFILE_IDS` in the notebook to preview a subset.
+
 Static vs Dynamic Notes
 - Static plots (`plot_attack_once`, plan-view layouts) assume ships are stationary at t=0. Used for initial testing and verification. Static plots used for testing, creating visuals, and simple verifications. Not used in validation prior to RL & ML sections - see dynamic plots for this. 
 - Dynamic plots (`render_attack_animation`, `render_attack_frame`) move ships according to convoy kinematics when provided (kinematics same as in the simulation). Primary tool for verification before moving onto the RL & ML portions. 

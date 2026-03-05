@@ -8,7 +8,7 @@ from typing import Any, Literal
 import numpy as np
 from pathlib import Path
 
-from convoy_sim.entities import Ship, Torpedo
+from convoy_sim.entities import Ship, ShipClass, Torpedo
 from convoy_sim.geometry import as_vec, closest_approach_time, distance, step_position
 from convoy_sim.viz import plot_convoy_planview
 from convoy_sim.dynamics import ConvoyFormation, ConvoyKinematics, ship_positions_at
@@ -288,6 +288,12 @@ def render_attack_frame(
     apply_hit_slowdown: bool = False,
     hit_slowdown: HitSlowdownSpec | None = None,
     figure_facecolor: str | None = None,
+    show_u_boat: bool = False,
+    u_boat_position: np.ndarray | None = None,
+    u_boat_marker: str = "o",
+    u_boat_color: str = "#111111",
+    u_boat_size: float = 45.0,
+    u_boat_label: str | None = "U-boat",
 ) -> Any:
     """Render a single time frame of a static/dynamic attack."""
 
@@ -343,18 +349,6 @@ def render_attack_frame(
         rotate_by_heading=rotate_by_heading,
         use_hull_dimensions=use_hull_dimensions,
     )
-    if legend_bbox_to_anchor is not None:
-        handles, labels = ax.get_legend_handles_labels()
-        if handles:
-            ax.legend(
-                handles,
-                labels,
-                loc="lower center",
-                bbox_to_anchor=legend_bbox_to_anchor,
-                ncol=len(labels),
-                frameon=False,
-            )
-
     if dynamics is not None and hit_state is not None and hit_dt is not None:
         formation, kin = dynamics
         advance_dynamic_hit_state(
@@ -405,6 +399,26 @@ def render_attack_frame(
             alpha=0.7,
         )
 
+    if show_u_boat and torpedoes:
+        if u_boat_position is None:
+            inferred = np.array([torpedo.launch_position for torpedo in torpedoes], dtype=float)
+            u_pos = np.mean(inferred, axis=0)
+        else:
+            u_pos = np.asarray(u_boat_position, dtype=float)
+            if u_pos.shape != (2,):
+                raise ValueError("u_boat_position must have shape (2,)")
+        ax.scatter(
+            float(u_pos[0]),
+            float(u_pos[1]),
+            s=float(u_boat_size),
+            marker=u_boat_marker,
+            c=u_boat_color,
+            edgecolors="none",
+            linewidths=0.0,
+            zorder=8,
+            label=u_boat_label,
+        )
+
     hit_colors = ["#ffd0d0", "#ff9b9b", "#ff6666", "#d7191c"]
     for ship in ships:
         if hit_state is not None and ship.id in hit_state.hit_counts:
@@ -426,6 +440,47 @@ def render_attack_frame(
     if hide_spines:
         for spine in ax.spines.values():
             spine.set_visible(False)
+    if legend_bbox_to_anchor is not None:
+        handles: list[Any] = []
+        labels: list[str] = []
+        if color_by == "class":
+            from matplotlib.patches import Patch  # type: ignore
+
+            class_colors = {
+                ShipClass.FREIGHTER: "#0a0a0a",
+                ShipClass.TANKER: "#38160d",
+                ShipClass.ESCORT: "#001845",
+                ShipClass.DECOY: "#ffc600",
+            }
+            for ship_class, color in class_colors.items():
+                handles.append(Patch(facecolor=color, edgecolor="none"))
+                labels.append(ship_class.value)
+        if show_u_boat and torpedoes and u_boat_label:
+            from matplotlib.lines import Line2D  # type: ignore
+
+            handles.append(
+                Line2D(
+                    [0],
+                    [0],
+                    marker=u_boat_marker,
+                    color="none",
+                    markerfacecolor=u_boat_color,
+                    markeredgecolor=u_boat_color,
+                    markersize=max(4.0, float(u_boat_size) ** 0.5),
+                    linewidth=0.0,
+                )
+            )
+            labels.append(u_boat_label)
+        if handles:
+            ax.legend(
+                handles,
+                labels,
+                loc="lower center",
+                bbox_to_anchor=legend_bbox_to_anchor,
+                ncol=max(1, len(labels)),
+                frameon=False,
+                title="Ship class" if color_by == "class" else None,
+            )
     ax.set_aspect("equal", adjustable="box")
     return ax
 

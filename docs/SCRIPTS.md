@@ -51,6 +51,7 @@ Visual/diagnostics:
 4. `python -m experiments.render_attack_animation`
 5. `python -m experiments.render_attack_animation_debug`
 6. `python -m experiments.run_diagnostics_before_after`
+7. Open `docs/notebooks/attack_profile_frame600_review.ipynb` to export `frame_0600` for each attack profile
 
 ## Experiment Scripts
 

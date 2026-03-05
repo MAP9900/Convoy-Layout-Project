@@ -62,8 +62,9 @@ def main() -> None:
     zigzag = ZigZagPlan(enabled=True, amplitude_rad=0.12, period_s=60.0, phase_s=0.0, waveform="sine")
     kin = ConvoyKinematics(route=route, zigzag=zigzag)
 
+    u_boat_pos = as_vec(0, -1250)
     torpedoes = fan_spread(
-        u_pos=as_vec(0, -1250), # Submarine Position 
+        u_pos=u_boat_pos, # Submarine Position 
         base_bearing_rad=np.radians(80), # Launch Radian 0.0 = due east np.radians(180) = due west
         n=4, #Number of torpedos (Typically 4 was max slavo size)
         spread_rad=np.radians(10.0), #Torpedo Spread (ex 3 Torpedos at 10 spread radian goes -5, 0, 5)
@@ -120,6 +121,8 @@ def main() -> None:
         apply_hit_slowdown=apply_hit_slowdown,
         hit_slowdown=hit_slowdown,
         figure_facecolor="lightgrey",
+        show_u_boat=True,
+        u_boat_position=u_boat_pos,
     )
 
     mp4_path = Path("results/frames/demo_attack.mp4")
@@ -146,6 +149,8 @@ def main() -> None:
             apply_hit_slowdown=apply_hit_slowdown,
             hit_slowdown=hit_slowdown,
             figure_facecolor="lightgrey",
+            show_u_boat=True,
+            u_boat_position=u_boat_pos,
         )
     except ImportError as exc:
         print(f"Skipping MP4 export: {exc}")
