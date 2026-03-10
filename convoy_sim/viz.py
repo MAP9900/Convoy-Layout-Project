@@ -238,8 +238,7 @@ def plot_convoy_planview(
     rotate_by_heading: bool = False,
     use_hull_dimensions: bool = False,
     highlight_ids: set[str] | None = None,
-    highlight_color: str = "red",
-) -> Any:
+    highlight_color: str = "red",) -> Any:
     """Plot convoy ship centers in plan view."""
 
     plt = _require_matplotlib()
@@ -390,7 +389,7 @@ def plot_convoy_planview(
             labels,
             title="Ship class",
             loc="lower center",
-            bbox_to_anchor=(0.5, -0.26),
+            bbox_to_anchor=(0.5, 1),
             ncol=len(labels),
             frameon=False,
         )

@@ -79,8 +79,8 @@ def build_convoy_layout_1_profile() -> ConvoyLayoutProfile:
         layout_kwargs={
             "n_rows": 6,
             "n_cols": 7,
-            "spacing_along": 1371.6,  # 1500 yards in meters
-            "spacing_across": 457.2,  # 500 yards in meters
+            "spacing_along": 457.2,  # 500 yards in meters
+            "spacing_across": 1371.6,  # 1500 yards in meters
             "speed": 5.0,
             "heading_rad": 0.0,
             "length": 150.0,
