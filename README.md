@@ -137,10 +137,10 @@ Render temporal attack frames with heading arrows (debug helper):
 python -m experiments.render_attack_animation_debug
 ```
 
-Preview all attack profiles at `frame_0600` (notebook):
+Preview all attack profiles at first/middle/last frames (notebook):
 
 ```bash
-jupyter lab docs/notebooks/attack_profile_frame600_review.ipynb
+jupyter lab docs/notebooks/attack_profile_tests.ipynb
 ```
 
 Run before/after diagnostics report (E3):

@@ -91,6 +91,27 @@ def build_convoy_layout_1_profile() -> ConvoyLayoutProfile:
     )
 
 
+def build_convoy_layout_2_profile() -> ConvoyLayoutProfile:
+    """Secondary convoy layout profile (7x7, all freighters)."""
+
+    return ConvoyLayoutProfile(
+        name="convoy_layout_2",
+        layout_fn=make_rectangular_convoy,
+        layout_kwargs={
+            "n_rows": 7,
+            "n_cols": 7,
+            "spacing_along": 731.52,  # 800 yards in meters
+            "spacing_across": 914.4,  # 1000 yards in meters
+            "speed": 5.0,
+            "heading_rad": 0.0,
+            "length": 150.0,
+            "beam": 20.0,
+            "origin": as_vec(0.0, 0.0),
+        },
+        description="7x7 convoy layout with 800yd along-spacing and 1000yd across-spacing.",
+    )
+
+
 def build_rl_large_profile_scaffold() -> ConvoyLayoutProfile:
     """RL-focused large convoy scaffold profile.
 
@@ -124,6 +145,7 @@ def get_convoy_layout_profile_registry() -> dict[str, ConvoyLayoutProfile]:
     return {
         "small_demo": build_small_demo_profile(),
         "convoy_layout_1": build_convoy_layout_1_profile(),
+        "convoy_layout_2": build_convoy_layout_2_profile(),
         "rl_large": build_rl_large_profile_scaffold(),
     }
 

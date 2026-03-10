@@ -43,11 +43,13 @@ Before/After Diagnostics (E3) FIXED
 - What it shows: attack overlays and a JSON summary.
 
 Attack Profile Frame 0600 Review (Notebook)
-- Notebook: `docs/notebooks/attack_profile_frame600_review.ipynb`
+- Notebook: `docs/notebooks/attack_profile_tests.ipynb`
 - Output:
-  - `results/frames/attack_profile_previews/<PROFILE_ID>/frame_0600.png`
+  - `results/frames/attack_profile_previews/<PROFILE_ID>/frame_0001.png`
+  - `results/frames/attack_profile_previews/<PROFILE_ID>/frame_1500.png` (middle at 600s, fps=5)
+  - `results/frames/attack_profile_previews/<PROFILE_ID>/frame_3000.png`
 - What it shows:
-  - One frame at `t=120s` (`frame_0600` at `fps=5`) for each attack profile in `DEFAULT_ATTACK_PROFILE_LIBRARY`.
+  - First, middle, and last frame for each attack profile over a 600-second run at `fps=5`.
   - Includes U-boat marker at each profile's `u_pos`.
 - Notes:
   - Designed as plug-and-play for when `P01..P25` are updated in `convoy_sim/attack_profiles.py`.
