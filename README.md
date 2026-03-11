@@ -143,6 +143,24 @@ Preview all attack profiles at first/middle/last frames (notebook):
 jupyter lab docs/notebooks/attack_profile_tests.ipynb
 ```
 
+Notebook runtime modes (`docs/notebooks/attack_profile_tests.ipynb`):
+- `RUN_MODE = 'fast'`
+  - `SIM_DURATION_S = 300`
+  - `HIT_DT = 0.5`
+  - `PROFILE_LIMIT = 6`
+  - Use for quick iteration and profile cleanup.
+- `RUN_MODE = 'verify'`
+  - `SIM_DURATION_S = 600`
+  - `HIT_DT = 1/FPS` (at `FPS=5`, `HIT_DT=0.2`)
+  - Full profile set
+  - Use for final validation outputs.
+
+Run fast geometry plausibility audit before rendering:
+
+```bash
+python -m experiments.audit_attack_profiles --convoy-profile convoy_layout_1
+```
+
 Run before/after diagnostics report (E3):
 
 ```bash

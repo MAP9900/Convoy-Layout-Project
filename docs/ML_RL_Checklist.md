@@ -44,6 +44,26 @@ Manual Checkable Items
     -The time over which the sim takes place, like in render_attack_animation
     -Larger dt = fewer steps → faster runs but less precise hit timing and motion.
     -Smaller dt = more steps → more accurate but slower.
+- [TODO] Runtime Optimization Track (recommended near-term).
+    -[TODO] Define two runtime modes and lock defaults:
+        - Fast mode (iteration): `SIM_DURATION_S=300`, `hit_dt=0.5` or `1.0`, profile subset (`3-5`), reduced MC trials.
+        - Verify mode (accuracy): `SIM_DURATION_S=600`, `hit_dt=1/FPS` (for current visuals `0.2`), full profile set, full MC trials.
+    -[TODO] Add config toggles to notebooks/scripts:
+        - `RUN_MODE in {fast, verify}`
+        - `PROFILE_SUBSET_IDS`, `HIT_DT`, `SIM_DURATION_S`, `N_TRIALS`.
+    -[TODO] Add script-based batch runner for heavy jobs (avoid notebook overhead).
+        - Dedicated CLI for profile sweeps and frame exports.
+        - Include per-profile progress logging and timing stats.
+    -[TODO] Parallelize across profiles/candidates.
+        - Use multiprocessing for independent profile runs.
+        - Keep deterministic seeding scheme per worker/profile.
+    -[TODO] Add lightweight profiling checkpoints.
+        - Record wall-clock runtime per profile/run.
+        - Track where time is spent (sim stepping vs plotting vs I/O).
+    -[TODO] RL train/eval fidelity split protocol:
+        - Train with fast mode defaults.
+        - Periodically evaluate in verify mode and compare to baselines.
+        - Block promotion of a policy unless verify-mode metrics improve.
 - [TODO] RL framing: single-agent vs two-agent/self-play.
     -Start with single agent but have library of attack profiles. One attack profile would see RL simply move ships out of the torpedo vectors.
     -Alternatively, have two agents, the ships and submarine attacking 

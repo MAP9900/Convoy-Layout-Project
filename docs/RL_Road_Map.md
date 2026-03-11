@@ -38,6 +38,18 @@ Phase 4: RL Training
 - Check convergence vs baselines.
 - Use periodic evaluation on held-out attacks.
 
+Training Fidelity Tiers (speed + rigor)
+- Fast tier (for iteration velocity):
+  - Shorter horizon and coarser hit stepping (`hit_dt`), profile subset, reduced trials.
+  - Used for rapid reward shaping, action-space checks, and smoke training.
+- Verify tier (for acceptance):
+  - Full horizon, finer stepping, full profile distribution, full trial budgets.
+  - Used for baseline comparisons and release decisions.
+- Workflow:
+  - Train mostly in fast tier.
+  - Run scheduled verify-tier evaluations (fixed seeds + held-out profile set).
+  - Promote policies only when verify-tier metrics improve.
+
 Phase 5: Risk-Aware Evaluation
 - Re-run Monte Carlo at higher trial counts.
 - Report mean, VaR, CVaR, and variance.
@@ -63,3 +75,4 @@ Notes
 - Avoid single fixed attack profiles (trivial solutions).
 - Prefer risk-aware metrics for realism.
 - Keep sim + viz aligned for debugging and validation.
+- For heavy experiments, prefer script/CLI batch runs over notebooks and parallelize profile evaluations when possible.

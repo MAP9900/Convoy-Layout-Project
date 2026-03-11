@@ -52,6 +52,15 @@ Visual/diagnostics:
 5. `python -m experiments.render_attack_animation_debug`
 6. `python -m experiments.run_diagnostics_before_after`
 7. Open `docs/notebooks/attack_profile_tests.ipynb` to export first/middle/last frames for each attack profile
+8. `python -m experiments.audit_attack_profiles --convoy-profile convoy_layout_1` for fast profile plausibility triage
+
+Notebook runtime modes (`docs/notebooks/attack_profile_tests.ipynb`):
+- Fast mode:
+  - `RUN_MODE='fast'`
+  - Uses shorter horizon/coarser hit-step/profile cap for quick iteration.
+- Verify mode:
+  - `RUN_MODE='verify'`
+  - Uses full horizon/finer hit-step/full profile set for final checks.
 
 ## Experiment Scripts
 
@@ -170,6 +179,14 @@ Visual/diagnostics:
 - Outputs:
   - `results/figures/diag_attack_overlay.png`
   - `results/diag/diagnostics_summary.json`
+
+### `experiments/audit_attack_profiles.py`
+- Purpose: Fast geometry plausibility audit for attack profiles against a selected convoy layout.
+- Usage:
+  - `python -m experiments.audit_attack_profiles --convoy-profile convoy_layout_1`
+- Outputs:
+  - `results/diag/attack_profile_geometry_audit.csv`
+  - `results/diag/attack_profile_geometry_audit.json`
 
 ### `experiments/robustness_report.py`
 - Purpose: Compare baseline vs optimized defense across noise settings.
