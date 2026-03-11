@@ -96,6 +96,19 @@ Use this as the single operational list and keep detailed references in linked d
     - One pathway selected and documented
     - First hyperparameter config committed
 
+- [ ] Attack profile generation track (new profile creation + repair loop).
+  - Owner: CODEX
+  - Best done by: CODEX
+  - Scope:
+    - Option A (first): constrained random generator with doctrine priors
+    - Option B (second): evolutionary mutation/crossover on vetted profiles
+    - Option C (optional): LLM-assisted template proposal + deterministic validator
+  - Acceptance:
+    - Generated profiles pass geometry audit gate
+    - Auto-repair pass for minor bearing/spread errors
+    - Output labeled as `credible_hit_threat` or `credible_near_miss`
+    - Export artifacts: JSON library + audit CSV/JSON + sample frames
+
 ## Later
 
 - [ ] Run first RL smoke training on fast tier.
