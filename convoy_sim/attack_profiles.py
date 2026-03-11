@@ -300,9 +300,6 @@ def build_scaffolded_attack_profile_library() -> AttackProfileLibrary:
     """
 
     profiles = [
-
-
-
         AttackProfile(profile_id="P01", name="profile_01", mode="fan", u_pos=(2600.0, 3200.0), n=4, speed=15.4333, max_run_time=486.0, base_bearing_rad=4.0400, spread_rad=0.0698, bearing_rad=0.0, lateral_spacing=120.0, launch_delay_s=0.5, salvo_interval_s=2.0),
         AttackProfile(profile_id="P02", name="profile_02", mode="fan", u_pos=(3000.0, 2600.0), n=4, speed=15.4333, max_run_time=486.0, base_bearing_rad=3.8600, spread_rad=0.1047, bearing_rad=0.0, lateral_spacing=120.0, launch_delay_s=0.7, salvo_interval_s=2.0),
         AttackProfile(profile_id="P03", name="profile_03", mode="fan", u_pos=(2200.0, 3500.0), n=4, speed=15.4333, max_run_time=486.0, base_bearing_rad=4.1500, spread_rad=0.0873, bearing_rad=0.0, lateral_spacing=120.0, launch_delay_s=0.9, salvo_interval_s=3.0),
@@ -316,6 +313,8 @@ def build_scaffolded_attack_profile_library() -> AttackProfileLibrary:
         AttackProfile(profile_id="P11", name="profile_11", mode="fan", u_pos=(2800.0, -1800.0), n=4, speed=15.4333, max_run_time=486.0, base_bearing_rad=2.5700, spread_rad=0.10470, bearing_rad=0.0, lateral_spacing=120.0, launch_delay_s=1.7, salvo_interval_s=2.0),
         AttackProfile(profile_id="P12", name="profile_12", mode="fan", u_pos=(2400.0, -2500.0), n=4, speed=15.4333, max_run_time=486.0, base_bearing_rad=2.3400, spread_rad=0.1047, bearing_rad=0.0, lateral_spacing=120.0, launch_delay_s=0.8, salvo_interval_s=2.0),
         AttackProfile(profile_id="P13", name="profile_13", mode="fan", u_pos=(3200.0, -1400.0), n=4, speed=15.4333, max_run_time=486.0, base_bearing_rad=2.7300, spread_rad=0.0873, bearing_rad=0.0, lateral_spacing=120.0, launch_delay_s=1.7, salvo_interval_s=3.0),
+        # GEOMETRY_AUDIT_FLAGGED (implausible_geometry): P14, P15, P16, P17, P18, P19, P20, P21, P23, P24
+        # Keep visible for manual correction; avoid using these as held-out eval profiles until corrected.
         AttackProfile(profile_id="P14", name="profile_14", mode="fan", u_pos=(-300.0, 700.0), n=4, speed=15.4333, max_run_time=486.0, base_bearing_rad=0.1500, spread_rad=0.0873, bearing_rad=0.0, lateral_spacing=120.0, launch_delay_s=1.3, salvo_interval_s=2.0),
         AttackProfile(profile_id="P15", name="profile_15", mode="fan", u_pos=(100.0, -900.0), n=4, speed=15.4333, max_run_time=486.0, base_bearing_rad=-0.0500, spread_rad=0.0873, bearing_rad=0.0, lateral_spacing=120.0, launch_delay_s=2.4, salvo_interval_s=3.0),
         AttackProfile(profile_id="P16", name="profile_16", mode="fan", u_pos=(400.0, 1300.0), n=4, speed=15.4333, max_run_time=486.0, base_bearing_rad=0.2200, spread_rad=0.0698, bearing_rad=0.0, lateral_spacing=120.0, launch_delay_s=0.6, salvo_interval_s=0.0),
@@ -325,6 +324,7 @@ def build_scaffolded_attack_profile_library() -> AttackProfileLibrary:
         AttackProfile(profile_id="P20", name="profile_20", mode="fan", u_pos=(350.0, -2100.0), n=4, speed=15.4333, max_run_time=486.0, base_bearing_rad=-0.2400, spread_rad=0.0698, bearing_rad=0.0, lateral_spacing=120.0, launch_delay_s=1.9, salvo_interval_s=2.0),
         AttackProfile(profile_id="P21", name="profile_21", mode="fan", u_pos=(0.0, 1100.0), n=4, speed=15.4333, max_run_time=486.0, base_bearing_rad=0.1000, spread_rad=0.1047, bearing_rad=0.0, lateral_spacing=120.0, launch_delay_s=1.4, salvo_interval_s=2.0),
         AttackProfile(profile_id="P22", name="profile_22", mode="fan", u_pos=(-2800.0, 0.0), n=4, speed=15.4333, max_run_time=486.0, base_bearing_rad=0.0000, spread_rad=0.1047, bearing_rad=0.0, lateral_spacing=120.0, launch_delay_s=0.9, salvo_interval_s=3.0),
+        # GEOMETRY_AUDIT_FLAGGED (implausible_geometry): fan_not_covering_target (lower severity than near-range opposite-direction group)
         AttackProfile(profile_id="P23", name="profile_23", mode="fan", u_pos=(-3200.0, 900.0), n=4, speed=15.4333, max_run_time=486.0, base_bearing_rad=-0.0600, spread_rad=0.0873, bearing_rad=0.0, lateral_spacing=120.0, launch_delay_s=0.5, salvo_interval_s=3.0),
         AttackProfile(profile_id="P24", name="profile_24", mode="fan", u_pos=(-3000.0, -900.0), n=4, speed=15.4333, max_run_time=486.0, base_bearing_rad=0.0600, spread_rad=0.0698, bearing_rad=0.0, lateral_spacing=120.0, launch_delay_s=1.9, salvo_interval_s=2.0),
         AttackProfile(profile_id="P25", name="profile_25", mode="fan", u_pos=(3600.0, 0.0), n=4, speed=15.4333, max_run_time=486.0, base_bearing_rad=3.1416, spread_rad=0.0698, bearing_rad=0.0, lateral_spacing=120.0, launch_delay_s=2.0, salvo_interval_s=3.0),
