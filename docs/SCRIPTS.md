@@ -51,16 +51,19 @@ Visual/diagnostics:
 4. `python -m experiments.render_attack_animation`
 5. `python -m experiments.render_attack_animation_debug`
 6. `python -m experiments.run_diagnostics_before_after`
-7. Open `docs/notebooks/attack_profile_tests.ipynb` to export first/middle/last frames for each attack profile
-8. `python -m experiments.audit_attack_profiles --convoy-profile convoy_layout_1` for fast profile plausibility triage
+7. `python -m experiments.render_attack_profile_previews --convoy-profile convoy_layout_1 --run-mode verify --workers 8`
+8. Open `docs/notebooks/attack_profile_tests.ipynb` to export first/middle/last frames for each attack profile (notebook now calls the same script)
+9. `python -m experiments.audit_attack_profiles --convoy-profile convoy_layout_1` for fast profile plausibility triage
 
 Notebook runtime modes (`docs/notebooks/attack_profile_tests.ipynb`):
 - Fast mode:
   - `RUN_MODE='fast'`
   - Uses shorter horizon/coarser hit-step/profile cap for quick iteration.
+  - Uses fewer workers and shorter trail length.
 - Verify mode:
   - `RUN_MODE='verify'`
   - Uses full horizon/finer hit-step/full profile set for final checks.
+  - Uses process parallelism (`PARALLEL_WORKERS`) with deterministic per-profile seeds.
 
 ## Experiment Scripts
 
@@ -187,6 +190,23 @@ Notebook runtime modes (`docs/notebooks/attack_profile_tests.ipynb`):
 - Outputs:
   - `results/diag/attack_profile_geometry_audit.csv`
   - `results/diag/attack_profile_geometry_audit.json`
+
+### `experiments/render_attack_profile_previews.py`
+- Purpose: Render first/middle/last preview frames per attack profile with optional process parallelism.
+- Usage:
+  - `python -m experiments.render_attack_profile_previews --convoy-profile convoy_layout_1 --run-mode verify --workers 8`
+  - `python -m experiments.render_attack_profile_previews --convoy-profile convoy_layout_1 --run-mode fast --workers 4 --select-profile-ids P15,P16,P19,P21`
+- Outputs:
+  - `results/frames/attack_profile_previews/<PROFILE_ID>/frame_0001.png`
+  - `results/frames/attack_profile_previews/<PROFILE_ID>/frame_<middle>.png`
+  - `results/frames/attack_profile_previews/<PROFILE_ID>/frame_<last>.png`
+  - `results/diag/attack_profile_geometry_audit.csv`
+  - `results/diag/attack_profile_geometry_audit.json`
+- Runtime knobs:
+  - `--workers` parallel profiles (recommended for verify runs).
+  - `--trail-length-s`, `--trail-linewidth`, `--trail-alpha`, `--trail-antialiased` for trail render cost/quality.
+  - `--hit-dt` controls hit-state stepping fidelity/speed.
+  - `--select-profile-ids` and `--profile-limit` reduce scope for tuning loops.
 
 ### `experiments/robustness_report.py`
 - Purpose: Compare baseline vs optimized defense across noise settings.

@@ -1,21 +1,58 @@
 [
   {
-    "profile_id": "P14",
-    "name": "profile_14",
+    "profile_id": "P21",
+    "name": "profile_21",
     "mode": "fan",
-    "u_pos_x": -300.0,
-    "u_pos_y": 700.0,
-    "range_to_centroid_m": 761.5773105863908,
-    "intent_bearing_rad": -1.1659045405098132,
-    "active_bearing_rad": 0.15,
-    "bearing_error_deg": 75.39577641331414,
-    "spread_deg": 5.001921551492087,
+    "u_pos_x": 0.0,
+    "u_pos_y": 1100.0,
+    "range_to_centroid_m": 1100.0,
+    "intent_bearing_rad": -1.5707963267948966,
+    "active_bearing_rad": 5.23599,
+    "bearing_error_deg": 30.00012857270387,
+    "spread_deg": 5.998868115019719,
     "flag_count": 2,
     "flags": [
       "near_range_large_error",
       "fan_not_covering_target"
     ],
-    "severity": 100.0,
+    "severity": 56.00015428724464,
+    "suggested_label": "implausible_geometry"
+  },
+  {
+    "profile_id": "P16",
+    "name": "profile_16",
+    "mode": "fan",
+    "u_pos_x": 400.0,
+    "u_pos_y": 900.0,
+    "range_to_centroid_m": 984.8857801796105,
+    "intent_bearing_rad": -1.9890206563741257,
+    "active_bearing_rad": 4.81038,
+    "bearing_error_deg": 29.576960828719102,
+    "spread_deg": 3.9992454100131463,
+    "flag_count": 2,
+    "flags": [
+      "near_range_large_error",
+      "fan_not_covering_target"
+    ],
+    "severity": 55.49235299446292,
+    "suggested_label": "implausible_geometry"
+  },
+  {
+    "profile_id": "P25",
+    "name": "profile_25",
+    "mode": "fan",
+    "u_pos_x": 3600.0,
+    "u_pos_y": -1100.0,
+    "range_to_centroid_m": 3764.3060449437426,
+    "intent_bearing_rad": 2.845046844520093,
+    "active_bearing_rad": 2.35619,
+    "bearing_error_deg": 28.009433977084424,
+    "spread_deg": 3.9992454100131463,
+    "flag_count": 1,
+    "flags": [
+      "fan_not_covering_target"
+    ],
+    "severity": 53.61132077250131,
     "suggested_label": "implausible_geometry"
   },
   {
@@ -26,95 +63,15 @@
     "u_pos_y": -900.0,
     "range_to_centroid_m": 905.5385138137417,
     "intent_bearing_rad": 1.6814535479687922,
-    "active_bearing_rad": -0.05,
-    "bearing_error_deg": 99.20498072156403,
+    "active_bearing_rad": 1.308996939,
+    "bearing_error_deg": 21.34019174566625,
     "spread_deg": 5.001921551492087,
-    "flag_count": 3,
-    "flags": [
-      "near_range_large_error",
-      "fan_not_covering_target",
-      "near_range_opposite_direction"
-    ],
-    "severity": 100.0,
-    "suggested_label": "implausible_geometry"
-  },
-  {
-    "profile_id": "P16",
-    "name": "profile_16",
-    "mode": "fan",
-    "u_pos_x": 400.0,
-    "u_pos_y": 1300.0,
-    "range_to_centroid_m": 1360.1470508735442,
-    "intent_bearing_rad": -1.8692952583810758,
-    "active_bearing_rad": 0.22,
-    "bearing_error_deg": 119.70780046193052,
-    "spread_deg": 3.9992454100131463,
-    "flag_count": 3,
-    "flags": [
-      "near_range_large_error",
-      "fan_not_covering_target",
-      "near_range_opposite_direction"
-    ],
-    "severity": 100.0,
-    "suggested_label": "implausible_geometry"
-  },
-  {
-    "profile_id": "P17",
-    "name": "profile_17",
-    "mode": "fan",
-    "u_pos_x": -500.0,
-    "u_pos_y": -1500.0,
-    "range_to_centroid_m": 1581.1388300841897,
-    "intent_bearing_rad": 1.2490457723982544,
-    "active_bearing_rad": -0.18,
-    "bearing_error_deg": 81.87829148943281,
-    "spread_deg": 5.998868115019719,
     "flag_count": 2,
     "flags": [
       "near_range_large_error",
       "fan_not_covering_target"
     ],
-    "severity": 100.0,
-    "suggested_label": "implausible_geometry"
-  },
-  {
-    "profile_id": "P18",
-    "name": "profile_18",
-    "mode": "fan",
-    "u_pos_x": 250.0,
-    "u_pos_y": 0.0,
-    "range_to_centroid_m": 249.99999999999997,
-    "intent_bearing_rad": 3.141592653589793,
-    "active_bearing_rad": 0.0,
-    "bearing_error_deg": 180.0,
-    "spread_deg": 5.001921551492087,
-    "flag_count": 3,
-    "flags": [
-      "near_range_large_error",
-      "fan_not_covering_target",
-      "near_range_opposite_direction"
-    ],
-    "severity": 100.0,
-    "suggested_label": "implausible_geometry"
-  },
-  {
-    "profile_id": "P19",
-    "name": "profile_19",
-    "mode": "fan",
-    "u_pos_x": -150.0,
-    "u_pos_y": 1900.0,
-    "range_to_centroid_m": 1905.9118552545917,
-    "intent_bearing_rad": -1.4920123658057527,
-    "active_bearing_rad": 0.28,
-    "bearing_error_deg": 101.5288298056618,
-    "spread_deg": 5.001921551492087,
-    "flag_count": 3,
-    "flags": [
-      "near_range_large_error",
-      "fan_not_covering_target",
-      "near_range_opposite_direction"
-    ],
-    "severity": 100.0,
+    "severity": 45.608230094799495,
     "suggested_label": "implausible_geometry"
   },
   {
@@ -125,54 +82,15 @@
     "u_pos_y": -2100.0,
     "range_to_centroid_m": 2128.966885604377,
     "intent_bearing_rad": 1.7359450042095235,
-    "active_bearing_rad": -0.24,
-    "bearing_error_deg": 113.21330929116537,
+    "active_bearing_rad": 1.44862,
+    "bearing_error_deg": 16.462510089784306,
     "spread_deg": 3.9992454100131463,
-    "flag_count": 3,
+    "flag_count": 2,
     "flags": [
       "near_range_large_error",
-      "fan_not_covering_target",
-      "near_range_opposite_direction"
-    ],
-    "severity": 100.0,
-    "suggested_label": "implausible_geometry"
-  },
-  {
-    "profile_id": "P21",
-    "name": "profile_21",
-    "mode": "fan",
-    "u_pos_x": 0.0,
-    "u_pos_y": 1100.0,
-    "range_to_centroid_m": 1100.0,
-    "intent_bearing_rad": -1.5707963267948966,
-    "active_bearing_rad": 0.1,
-    "bearing_error_deg": 95.72957795130822,
-    "spread_deg": 5.998868115019719,
-    "flag_count": 3,
-    "flags": [
-      "near_range_large_error",
-      "fan_not_covering_target",
-      "near_range_opposite_direction"
-    ],
-    "severity": 100.0,
-    "suggested_label": "implausible_geometry"
-  },
-  {
-    "profile_id": "P24",
-    "name": "profile_24",
-    "mode": "fan",
-    "u_pos_x": -3000.0,
-    "u_pos_y": -900.0,
-    "range_to_centroid_m": 3132.091952673165,
-    "intent_bearing_rad": 0.2914567944778671,
-    "active_bearing_rad": 0.06,
-    "bearing_error_deg": 13.261497463208686,
-    "spread_deg": 3.9992454100131463,
-    "flag_count": 1,
-    "flags": [
       "fan_not_covering_target"
     ],
-    "severity": 35.91379695585042,
+    "severity": 39.755012107741166,
     "suggested_label": "implausible_geometry"
   },
   {
@@ -183,15 +101,99 @@
     "u_pos_y": 900.0,
     "range_to_centroid_m": 3324.1540277189324,
     "intent_bearing_rad": -0.2741674511196588,
-    "active_bearing_rad": -0.06,
-    "bearing_error_deg": 12.270891058230802,
+    "active_bearing_rad": 5.81195,
+    "bearing_error_deg": 11.291156429925449,
     "spread_deg": 5.001921551492087,
     "flag_count": 1,
     "flags": [
       "fan_not_covering_target"
     ],
-    "severity": 34.72506926987696,
+    "severity": 33.54938771591054,
     "suggested_label": "implausible_geometry"
+  },
+  {
+    "profile_id": "P14",
+    "name": "profile_14",
+    "mode": "fan",
+    "u_pos_x": -300.0,
+    "u_pos_y": 700.0,
+    "range_to_centroid_m": 761.5773105863908,
+    "intent_bearing_rad": -1.1659045405098132,
+    "active_bearing_rad": 4.97418836818,
+    "bearing_error_deg": 8.198590513868195,
+    "spread_deg": 5.001921551492087,
+    "flag_count": 1,
+    "flags": [
+      "fan_not_covering_target"
+    ],
+    "severity": 29.838308616641832,
+    "suggested_label": "implausible_geometry"
+  },
+  {
+    "profile_id": "P18",
+    "name": "profile_18",
+    "mode": "fan",
+    "u_pos_x": 250.0,
+    "u_pos_y": -2500.0,
+    "range_to_centroid_m": 2512.4689052802228,
+    "intent_bearing_rad": 1.6704649792860586,
+    "active_bearing_rad": 1.5708,
+    "bearing_error_deg": 5.710382678349934,
+    "spread_deg": 5.001921551492087,
+    "flag_count": 1,
+    "flags": [
+      "fan_not_covering_target"
+    ],
+    "severity": 26.85245921401992,
+    "suggested_label": "implausible_geometry"
+  },
+  {
+    "profile_id": "P19",
+    "name": "profile_19",
+    "mode": "fan",
+    "u_pos_x": -150.0,
+    "u_pos_y": 1900.0,
+    "range_to_centroid_m": 1905.9118552545917,
+    "intent_bearing_rad": -1.4920123658057527,
+    "active_bearing_rad": 4.88692,
+    "bearing_error_deg": 5.485902360070996,
+    "spread_deg": 5.001921551492087,
+    "flag_count": 0,
+    "flags": [],
+    "severity": 6.5830828320851955,
+    "suggested_label": "credible_hit_threat"
+  },
+  {
+    "profile_id": "P24",
+    "name": "profile_24",
+    "mode": "fan",
+    "u_pos_x": -3000.0,
+    "u_pos_y": -900.0,
+    "range_to_centroid_m": 3132.091952673165,
+    "intent_bearing_rad": 0.2914567944778671,
+    "active_bearing_rad": 0.261799,
+    "bearing_error_deg": 1.6992664532481707,
+    "spread_deg": 5.006505213853133,
+    "flag_count": 0,
+    "flags": [],
+    "severity": 2.0391197438978046,
+    "suggested_label": "credible_hit_threat"
+  },
+  {
+    "profile_id": "P22",
+    "name": "profile_22",
+    "mode": "fan",
+    "u_pos_x": -2800.0,
+    "u_pos_y": 200.0,
+    "range_to_centroid_m": 2807.13376952364,
+    "intent_bearing_rad": -0.07130746478529032,
+    "active_bearing_rad": 6.19592,
+    "bearing_error_deg": 0.914317019328145,
+    "spread_deg": 5.998868115019719,
+    "flag_count": 0,
+    "flags": [],
+    "severity": 1.097180423193774,
+    "suggested_label": "credible_hit_threat"
   },
   {
     "profile_id": "P08",
@@ -239,6 +241,22 @@
     "flag_count": 0,
     "flags": [],
     "severity": 0.5528076200565918,
+    "suggested_label": "credible_hit_threat"
+  },
+  {
+    "profile_id": "P17",
+    "name": "profile_17",
+    "mode": "fan",
+    "u_pos_x": -500.0,
+    "u_pos_y": -1900.0,
+    "range_to_centroid_m": 1964.68827043885,
+    "intent_bearing_rad": 1.313472611823808,
+    "active_bearing_rad": 1.309,
+    "bearing_error_deg": 0.25626178090452617,
+    "spread_deg": 5.998868115019719,
+    "flag_count": 0,
+    "flags": [],
+    "severity": 0.3075141370854314,
     "suggested_label": "credible_hit_threat"
   },
   {
@@ -399,38 +417,6 @@
     "flag_count": 0,
     "flags": [],
     "severity": 0.017544455125006242,
-    "suggested_label": "credible_hit_threat"
-  },
-  {
-    "profile_id": "P25",
-    "name": "profile_25",
-    "mode": "fan",
-    "u_pos_x": 3600.0,
-    "u_pos_y": 0.0,
-    "range_to_centroid_m": 3600.0,
-    "intent_bearing_rad": 3.141592653589793,
-    "active_bearing_rad": 3.1416,
-    "bearing_error_deg": 0.00042091829942331134,
-    "spread_deg": 3.9992454100131463,
-    "flag_count": 0,
-    "flags": [],
-    "severity": 0.0005051019593079735,
-    "suggested_label": "credible_hit_threat"
-  },
-  {
-    "profile_id": "P22",
-    "name": "profile_22",
-    "mode": "fan",
-    "u_pos_x": -2800.0,
-    "u_pos_y": 0.0,
-    "range_to_centroid_m": 2800.0,
-    "intent_bearing_rad": 7.733798484463675e-18,
-    "active_bearing_rad": 0.0,
-    "bearing_error_deg": 0.0,
-    "spread_deg": 5.998868115019719,
-    "flag_count": 0,
-    "flags": [],
-    "severity": 0.0,
     "suggested_label": "credible_hit_threat"
   }
 ]

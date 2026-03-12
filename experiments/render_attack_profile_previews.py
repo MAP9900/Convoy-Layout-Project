@@ -281,10 +281,43 @@ def main() -> None:
             print(f"Completed {profile_id} [{label}, err={err:.1f}deg]: {', '.join(frame_names)}")
             saved += len(frame_names)
     else:
-        with ProcessPoolExecutor(max_workers=int(args.workers)) as pool:
-            futures = [
-                pool.submit(
-                    _render_one_profile,
+        try:
+            with ProcessPoolExecutor(max_workers=int(args.workers)) as pool:
+                futures = [
+                    pool.submit(
+                        _render_one_profile,
+                        profile,
+                        idx,
+                        convoy_profile=args.convoy_profile,
+                        sim_duration_s=sim_duration_s,
+                        fps=int(args.fps),
+                        hit_dt=hit_dt,
+                        frame_indices=frame_indices,
+                        output_root=args.output_root,
+                        rng_seed=int(args.rng_seed),
+                        view_bounds=view_bounds,
+                        trail_length_s=float(args.trail_length_s),
+                        trail_linewidth=float(args.trail_linewidth),
+                        trail_alpha=float(args.trail_alpha),
+                        trail_antialiased=bool(args.trail_antialiased),
+                        dpi=int(args.dpi),
+                    )
+                    for idx, profile in enumerate(profiles)
+                ]
+                for future in as_completed(futures):
+                    profile_id, frame_names = future.result()
+                    row = audit_by_id.get(profile_id)
+                    label = row["suggested_label"] if row is not None else "n/a"
+                    err = row["bearing_error_deg"] if row is not None else float("nan")
+                    print(f"Completed {profile_id} [{label}, err={err:.1f}deg]: {', '.join(frame_names)}")
+                    saved += len(frame_names)
+        except (PermissionError, OSError) as exc:
+            print(
+                "Parallel worker startup failed; falling back to serial rendering. "
+                f"Reason: {exc}"
+            )
+            for idx, profile in enumerate(profiles):
+                profile_id, frame_names = _render_one_profile(
                     profile,
                     idx,
                     convoy_profile=args.convoy_profile,
@@ -301,10 +334,6 @@ def main() -> None:
                     trail_antialiased=bool(args.trail_antialiased),
                     dpi=int(args.dpi),
                 )
-                for idx, profile in enumerate(profiles)
-            ]
-            for future in as_completed(futures):
-                profile_id, frame_names = future.result()
                 row = audit_by_id.get(profile_id)
                 label = row["suggested_label"] if row is not None else "n/a"
                 err = row["bearing_error_deg"] if row is not None else float("nan")

@@ -54,6 +54,7 @@ Attack Profile Tests (Notebook)
 - Notes:
   - Designed as plug-and-play for when `P01..P25` are updated in `convoy_sim/attack_profiles.py`.
   - Set `SELECT_PROFILE_IDS` in the notebook to preview a subset.
+  - Rendering now runs through `python -m experiments.render_attack_profile_previews` so notebook and CLI share one path.
   - Notebook now runs a fast geometry plausibility audit first and writes:
     - `results/diag/attack_profile_geometry_audit.csv`
     - `results/diag/attack_profile_geometry_audit.json`
@@ -83,6 +84,18 @@ Runtime Expectations (attack_profile_tests notebook)
   - Hit-tracking dt (`HIT_DT`) and total sim duration.
   - Number of saved frames per profile.
   - Matplotlib rendering + image write overhead.
+  - Process worker count (`PARALLEL_WORKERS`) and trail render settings.
+
+Parallel + Trail Tuning
+- For speed with strong verification:
+  - Keep `SIM_DURATION_S=600` and `HIT_DT=1/FPS` in verify mode.
+  - Increase `PARALLEL_WORKERS` to use CPU cores.
+  - Keep trails enabled but reduce cost:
+    - shorter trail horizon (`TRAIL_LENGTH_S`, default verify: 20s)
+    - thinner/lower-alpha lines (`TRAIL_LINEWIDTH`, `TRAIL_ALPHA`)
+    - disable anti-aliasing (`TRAIL_ANTIALIASED=False`)
+- CLI equivalent:
+  - `python -m experiments.render_attack_profile_previews --convoy-profile convoy_layout_1 --run-mode verify --workers 8 --trail-length-s 20 --trail-linewidth 0.8 --trail-alpha 0.6`
 
 Attack Profile Editing Workflow (Source of Truth)
 - Profile definitions are edited in:
