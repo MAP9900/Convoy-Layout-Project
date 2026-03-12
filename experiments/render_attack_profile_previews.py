@@ -72,6 +72,12 @@ def parse_args() -> argparse.Namespace:
         default=Path("results/diag/attack_profile_geometry_audit.json"),
         help="Audit JSON output path",
     )
+    parser.add_argument(
+        "--hit-report-csv",
+        type=Path,
+        default=Path("results/diag/attack_profile_hit_report.csv"),
+        help="Per-profile hit summary CSV output path",
+    )
     return parser.parse_args()
 
 
@@ -128,6 +134,23 @@ def _frame_indices(sim_duration_s: float, fps: int) -> list[int]:
     return [1, last_frame // 2, last_frame]
 
 
+def _write_hit_report_csv(path: Path, rows: list[dict[str, Any]]) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    fields = [
+        "profile_id",
+        "total_hits",
+        "ships_hit",
+        "torpedoes_that_hit",
+        "sim_duration_s",
+        "hit_dt",
+    ]
+    with path.open("w", newline="", encoding="utf-8") as f:
+        writer = csv.DictWriter(f, fieldnames=fields)
+        writer.writeheader()
+        for row in rows:
+            writer.writerow(row)
+
+
 def _render_one_profile(
     profile: AttackProfile,
     profile_index: int,
@@ -145,7 +168,7 @@ def _render_one_profile(
     trail_alpha: float,
     trail_antialiased: bool,
     dpi: int,
-) -> tuple[str, list[str]]:
+) -> tuple[str, list[str], dict[str, Any]]:
     # Ensure headless rendering in worker processes.
     import matplotlib
 
@@ -208,7 +231,21 @@ def _render_one_profile(
         plt.close(fig)
         written_frames.append(frame_name)
 
-    return profile.profile_id, written_frames
+    total_hits = int(sum(int(v) for v in hit_state.hit_counts.values()))
+    ships_hit = int(len(hit_state.hit_counts))
+    torpedoes_that_hit = int(len(hit_state.torpedo_hit_times))
+    return (
+        profile.profile_id,
+        written_frames,
+        {
+            "profile_id": profile.profile_id,
+            "total_hits": total_hits,
+            "ships_hit": ships_hit,
+            "torpedoes_that_hit": torpedoes_that_hit,
+            "sim_duration_s": float(sim_duration_s),
+            "hit_dt": float(hit_dt),
+        },
+    )
 
 
 def _iter_profiles(args: argparse.Namespace) -> list[AttackProfile]:
@@ -255,10 +292,11 @@ def main() -> None:
 
     print(f"Rendering {len(profiles)} profiles with workers={args.workers} ...")
     saved = 0
+    hit_rows: list[dict[str, Any]] = []
 
     if args.workers == 1:
         for idx, profile in enumerate(profiles):
-            profile_id, frame_names = _render_one_profile(
+            profile_id, frame_names, hit_row = _render_one_profile(
                 profile,
                 idx,
                 convoy_profile=args.convoy_profile,
@@ -278,8 +316,13 @@ def main() -> None:
             row = audit_by_id.get(profile_id)
             label = row["suggested_label"] if row is not None else "n/a"
             err = row["bearing_error_deg"] if row is not None else float("nan")
-            print(f"Completed {profile_id} [{label}, err={err:.1f}deg]: {', '.join(frame_names)}")
+            print(
+                f"Completed {profile_id} [{label}, err={err:.1f}deg, "
+                f"hits={hit_row['total_hits']}, ships_hit={hit_row['ships_hit']}]: "
+                f"{', '.join(frame_names)}"
+            )
             saved += len(frame_names)
+            hit_rows.append(hit_row)
     else:
         try:
             with ProcessPoolExecutor(max_workers=int(args.workers)) as pool:
@@ -305,19 +348,24 @@ def main() -> None:
                     for idx, profile in enumerate(profiles)
                 ]
                 for future in as_completed(futures):
-                    profile_id, frame_names = future.result()
+                    profile_id, frame_names, hit_row = future.result()
                     row = audit_by_id.get(profile_id)
                     label = row["suggested_label"] if row is not None else "n/a"
                     err = row["bearing_error_deg"] if row is not None else float("nan")
-                    print(f"Completed {profile_id} [{label}, err={err:.1f}deg]: {', '.join(frame_names)}")
+                    print(
+                        f"Completed {profile_id} [{label}, err={err:.1f}deg, "
+                        f"hits={hit_row['total_hits']}, ships_hit={hit_row['ships_hit']}]: "
+                        f"{', '.join(frame_names)}"
+                    )
                     saved += len(frame_names)
+                    hit_rows.append(hit_row)
         except (PermissionError, OSError) as exc:
             print(
                 "Parallel worker startup failed; falling back to serial rendering. "
                 f"Reason: {exc}"
             )
             for idx, profile in enumerate(profiles):
-                profile_id, frame_names = _render_one_profile(
+                profile_id, frame_names, hit_row = _render_one_profile(
                     profile,
                     idx,
                     convoy_profile=args.convoy_profile,
@@ -337,8 +385,13 @@ def main() -> None:
                 row = audit_by_id.get(profile_id)
                 label = row["suggested_label"] if row is not None else "n/a"
                 err = row["bearing_error_deg"] if row is not None else float("nan")
-                print(f"Completed {profile_id} [{label}, err={err:.1f}deg]: {', '.join(frame_names)}")
+                print(
+                    f"Completed {profile_id} [{label}, err={err:.1f}deg, "
+                    f"hits={hit_row['total_hits']}, ships_hit={hit_row['ships_hit']}]: "
+                    f"{', '.join(frame_names)}"
+                )
                 saved += len(frame_names)
+                hit_rows.append(hit_row)
 
     n_implausible = sum(1 for row in audit_rows if row["suggested_label"] == "implausible_geometry")
     n_near_miss = sum(1 for row in audit_rows if row["suggested_label"] == "credible_near_miss")
@@ -346,6 +399,8 @@ def main() -> None:
 
     print(f"Wrote CSV: {args.audit_csv}")
     print(f"Wrote JSON: {args.audit_json}")
+    _write_hit_report_csv(args.hit_report_csv, sorted(hit_rows, key=lambda row: row["profile_id"]))
+    print(f"Wrote hit report CSV: {args.hit_report_csv}")
     print(
         "Summary:",
         {

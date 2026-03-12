@@ -58,6 +58,7 @@ Attack Profile Tests (Notebook)
   - Notebook now runs a fast geometry plausibility audit first and writes:
     - `results/diag/attack_profile_geometry_audit.csv`
     - `results/diag/attack_profile_geometry_audit.json`
+    - `results/diag/attack_profile_hit_report.csv` (per-profile hits, ships hit, torpedoes that hit)
   - Runtime modes:
     - Fast mode: `RUN_MODE='fast'` (300s horizon, coarse hit dt, profile limit) for iteration.
     - Verify mode: `RUN_MODE='verify'` (600s horizon, fine hit dt, full set) for final validation.

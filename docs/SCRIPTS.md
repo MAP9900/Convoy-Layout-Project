@@ -202,6 +202,7 @@ Notebook runtime modes (`docs/notebooks/attack_profile_tests.ipynb`):
   - `results/frames/attack_profile_previews/<PROFILE_ID>/frame_<last>.png`
   - `results/diag/attack_profile_geometry_audit.csv`
   - `results/diag/attack_profile_geometry_audit.json`
+  - `results/diag/attack_profile_hit_report.csv` (per-profile hit totals)
 - Runtime knobs:
   - `--workers` parallel profiles (recommended for verify runs).
   - `--trail-length-s`, `--trail-linewidth`, `--trail-alpha`, `--trail-antialiased` for trail render cost/quality.
