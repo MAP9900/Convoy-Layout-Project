@@ -280,6 +280,9 @@ def render_attack_frame(
     rotate_by_heading: bool = False,
     use_hull_dimensions: bool = False,
     trail_color: str = "gray",
+    trail_linewidth: float = 1.0,
+    trail_alpha: float = 0.7,
+    trail_antialiased: bool = True,
     legend_bbox_to_anchor: tuple[float, float] | None = None,
     view_bounds: tuple[float, float, float, float] | None = None,
     hide_spines: bool = True,
@@ -395,8 +398,9 @@ def render_attack_frame(
             [p0[0], p1[0]],
             [p0[1], p1[1]],
             color=trail_color,
-            linewidth=1.0,
-            alpha=0.7,
+            linewidth=float(trail_linewidth),
+            alpha=float(trail_alpha),
+            antialiased=bool(trail_antialiased),
         )
 
     if show_u_boat and torpedoes:
