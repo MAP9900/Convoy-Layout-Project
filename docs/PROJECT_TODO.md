@@ -13,6 +13,7 @@ Use this as the single operational list and keep detailed references in linked d
   - Acceptance:
     - No unintended `implausible_geometry` profiles
     - Intentional misses documented and plausible
+    - FIX 3/12
 
 - [ ] Lock attack profile training/eval split + seeds manifest.
   - Owner: You
