@@ -77,41 +77,41 @@ Manual Checkable Items
 - [TODO] Confirm per-ship independent motion default for RL scenarios.
     -Whether or not ships move as one or individually 
 - [TODO] Create Starting Convoy Layout
-    -Scaffold added: `scenarios/convoy_profiles.py` with `rl_large` profile and class-map hook.
-    -TODO: set exact `rl_large` layout params (`n_rows`, `n_cols`, `spacing_along`, `spacing_across`, `speed`, `heading_rad`, `length`, `beam`).
-    -TODO: finalize per-cell class placement in `_ship_class_map_rl_large(...)` (tankers center, escorts perimeter, etc.).
-    -TODO: (optional) add `ship_overrides_map` for per-ship hull/value differences.
-    -TODO: validate class counts and center-of-mass visually with `--profile rl_large`.
+    - Scaffold added: `scenarios/convoy_profiles.py` with `rl_large` profile and class-map hook.
+    - TODO: set exact `rl_large` layout params (`n_rows`, `n_cols`, `spacing_along`, `spacing_across`, `speed`, `heading_rad`, `length`, `beam`).
+    - TODO: finalize per-cell class placement in `_ship_class_map_rl_large(...)` (tankers center, escorts perimeter, etc.).
+    - TODO: (optional) add `ship_overrides_map` for per-ship hull/value differences.
+    - TODO: validate class counts and center-of-mass visually with `--profile rl_large`.
 - [TODO] Create Layout Constraints 
 - [TODO] Build Attack Profiles
-    -Current code status:
+    - Current code status:
         - Flat attack profile schema implemented in `convoy_sim/attack_profiles.py`.
         - 25 explicit profile stubs scaffolded (`P01` to `P25`).
         - Profile fields are aligned with sampler args in `convoy_sim/attackers.py`.
-    -Attack profile schema (per profile, sim-native names):
+    - Attack profile schema (per profile, sim-native names):
         - `profile_id`, `name`, `weight`
         - `mode` (`fan` or `parallel`)
         - `u_pos`, `n`, `speed`, `max_run_time`
         - fan params: `base_bearing_rad`, `spread_rad`
         - parallel params: `bearing_rad`, `lateral_spacing`
         - launch timing: `launch_delay_s`, `salvo_interval_s`
-    -Build behavior:
+    - Build behavior:
         - Use `AttackProfile.build_torpedoes(...)` to convert profile directly into torpedoes.
         - `fan` mode launches from one origin (`u_pos`) with heading spread.
         - `parallel` mode uses laterally offset launch positions.
-    -Starter library (first 5 profiles):
+    - Starter library (first 5 profiles):
         - `P1_straight_bow_shot`: medium range, bow aspect, straight run, no decoy.
         - `P2_beam_snap_shot`: closer beam aspect, short launch delay, quick egress turn.
         - `P3_stern_shadow`: long trailing approach, slower closure, late salvo.
         - `P4_evasive_weave`: pre-launch zig-zag approach, moderate range, staggered fire.
         - `P5_decoy_first`: medium range, decoy/jammer first, delayed salvo, hard break-away.
-    -Sampling policy for RL episodes:
+    - Sampling policy for RL episodes:
         - Sample exactly one attack profile at `env.reset()` (not per step).
         - Use weighted random sampling via `AttackProfileLibrary.sample_profile(...)`.
         - Initial weights example: `P1=0.30, P2=0.20, P3=0.20, P4=0.15, P5=0.15`.
         - Keep RNG seeded for reproducibility and log selected `profile_id` each episode.
         - NOTE: RL wrapper is not yet auto-wired to sample profile library at reset; add this integration step in `convoy_sim/rl_wrapper.py`.
-    -Immediate profile setup tasks:
+    - Immediate profile setup tasks:
         - TODO: fill `P01` to `P25` in `convoy_sim/attack_profiles.py` (flat sim-native fields only).
         - TODO: set per-profile `weight` values for training distribution.
         - TODO: verify each profile builds torpedoes via `AttackProfile.build_torpedoes(...)`.

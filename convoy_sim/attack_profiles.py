@@ -4,13 +4,11 @@ Design goal: keep profile fields aligned with attacker sampler names so each pro
 can be read and edited without translation.
 """
 
+#Imports
 from __future__ import annotations
-
 from dataclasses import dataclass
 from typing import Any, Literal, Sequence
-
 import numpy as np
-
 from convoy_sim.attackers import fan_spread, parallel_spread
 from convoy_sim.entities import Ship, Torpedo
 from convoy_sim.feasibility import AttackConstraints, Environment
@@ -19,9 +17,9 @@ from convoy_sim.feasibility import AttackConstraints, Environment
 SpreadMode = Literal["fan", "parallel"]
 
 _MIN_TORPEDO_COUNT = 1
-_MAX_TORPEDO_COUNT = 32
+_MAX_TORPEDO_COUNT = 10
 _MIN_SPEED = 0.01
-_MAX_SPEED = 200.0
+_MAX_SPEED = 50
 _MIN_MAX_RUN_TIME = 0.01
 _MAX_MAX_RUN_TIME = 7200.0
 _MIN_BEARING_RAD = -2.0 * np.pi
@@ -82,6 +80,7 @@ class AttackProfile:
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "u_pos", _vec2_tuple(self.u_pos))
+        #Checks
         if self.mode not in ("fan", "parallel"):
             raise ValueError("mode must be 'fan' or 'parallel'")
         if self.weight < 0.0:
@@ -239,8 +238,7 @@ class AttackProfileLibrary:
     @classmethod
     def from_dict(cls, payload: dict[str, Any]) -> "AttackProfileLibrary":
         return cls(
-            profiles=[AttackProfile.from_dict(item) for item in payload.get("profiles", [])],
-        )
+            profiles=[AttackProfile.from_dict(item) for item in payload.get("profiles", [])],)
 
 
 def make_placeholder_profile(index: int, *, weight: float = 1.0) -> AttackProfile:
@@ -325,7 +323,7 @@ def build_scaffolded_attack_profile_library() -> AttackProfileLibrary:
         AttackProfile(profile_id="P23", name="profile_23", mode="fan", u_pos=(-3200.0, 900.0), n=4, speed=15.4333, max_run_time=486.0, base_bearing_rad=6.0090, spread_rad=0.0873, bearing_rad=0.0, lateral_spacing=120.0, launch_delay_s=0.5, salvo_interval_s=3.0),
         AttackProfile(profile_id="P24", name="profile_24", mode="fan", u_pos=(-3000.0, -900.0), n=4, speed=15.4333, max_run_time=486.0, base_bearing_rad=0.261799, spread_rad=0.08738, bearing_rad=0.0, lateral_spacing=120.0, launch_delay_s=1.9, salvo_interval_s=2.0),
         AttackProfile(profile_id="P25", name="profile_25", mode="fan", u_pos=(3600.0, -1100), n=4, speed=15.4333, max_run_time=486.0, base_bearing_rad=2.8450, spread_rad=0.0698, bearing_rad=0.0, lateral_spacing=120.0, launch_delay_s=2.0, salvo_interval_s=3.0),
-        # Intentional near-miss variants (plausible geometry with moderate bearing offset).
+        # Intentional near-miss variants (plausible geometry with moderate bearing offset). (Hits Can Still Occur!)
         AttackProfile(profile_id="P26", name="profile_26", mode="fan", u_pos=(350.0, -2100.0), n=4, speed=15.4333, max_run_time=486.0, base_bearing_rad=1.8931, spread_rad=0.2443, bearing_rad=0.0, lateral_spacing=120.0, launch_delay_s=1.9, salvo_interval_s=2.0),
         AttackProfile(profile_id="P27", name="profile_27", mode="fan", u_pos=(0.0, 1100.0), n=4, speed=15.4333, max_run_time=486.0, base_bearing_rad=4.8695, spread_rad=0.2443, bearing_rad=0.0, lateral_spacing=120.0, launch_delay_s=1.4, salvo_interval_s=2.0),
         AttackProfile(profile_id="P28", name="profile_28", mode="fan", u_pos=(-2800.0, 200.0), n=4, speed=15.4333, max_run_time=486.0, base_bearing_rad=0.0858, spread_rad=0.2443, bearing_rad=0.0, lateral_spacing=120.0, launch_delay_s=0.9, salvo_interval_s=3.0),
