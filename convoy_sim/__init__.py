@@ -53,7 +53,6 @@ from convoy_sim.simulation import (
     simulate_attack_once_scored,
     torpedo_hits_ship_dynamic,
 )
-from convoy_sim.minmax_loop import run_minmax_loop
 from convoy_sim.ship_catalog import SHIP_CATALOG, make_ship
 from convoy_sim.attack_profiles import (
     AttackProfile,
@@ -117,7 +116,6 @@ __all__ = [
     "sample_parallel_spread",
     "sample_torpedo_spread_fixed_origin",
     "sample_parallel_torpedoes",
-    "run_minmax_loop",
     "SHIP_CATALOG",
     "make_ship",
     "AttackProfile",

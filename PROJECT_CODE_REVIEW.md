@@ -4,6 +4,16 @@ Date: 2026-02-28
 Reviewer: Codex
 Scope: Full repository structure, dependency surface, script/workflow paths, and documentation consistency.
 
+## Update Note (2026-03-24)
+
+Phase 2–4 repo refocus has been executed since this review:
+- Canonical baseline entrypoint: `experiments/run_baseline_suite.py`
+- Canonical RL entrypoint: `experiments/run_rl_train.py`
+- Legacy sidecar workflows moved to `experiments/archive/`
+- Keep/archive/remove map documented in `docs/REORG_PHASE2_4_AUDIT.md`
+
+Use this file as historical context; current operational script index is `docs/SCRIPTS.md`.
+
 ## Executive Summary
 
 The codebase is well-organized around a clean split (`convoy_sim` core package, `scenarios` inputs, `experiments` entry points, `tests` validation). The largest source of confusion is not code layout itself, but documentation drift and missing dependency pinning.

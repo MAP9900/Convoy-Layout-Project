@@ -1,10 +1,8 @@
-"""Serialization round-trip tests for scenarios, noise, policies, and plans."""
+"""Serialization round-trip tests for scenarios, noise, and policies."""
 
 import numpy as np
 
-from convoy_sim.attacker_tactics import AttackerPlan, PassSpec, SalvoSpec
 from convoy_sim.defender_policy import DefenderPolicy, LayoutAction, ThreatType
-from convoy_sim.feasibility import ApproachMode
 from convoy_sim.layouts import make_rectangular_convoy
 from convoy_sim.noise import NoiseModel
 from scenarios.scenario_a import build_scenario_a
@@ -28,25 +26,6 @@ def test_scenario_roundtrip() -> None:
     )
     assert restored.name == scenario.name
     assert restored.layout_kwargs == scenario.layout_kwargs
-
-
-def test_attacker_plan_roundtrip() -> None:
-    plan = AttackerPlan(
-        passes=[
-            PassSpec(
-                launch_time=0.0,
-                u_boat_pos=np.array([-100.0, 0.0]),
-                bearing_rad=0.0,
-                approach_mode=ApproachMode.ABEAM,
-                salvo=SalvoSpec(n_torpedoes=2, pattern="fan", spread_rad=0.1),
-            )
-        ],
-        name="test",
-    )
-    payload = plan.to_dict()
-    restored = AttackerPlan.from_dict(payload)
-    assert restored.name == plan.name
-    assert len(restored.passes) == 1
 
 
 def test_defender_policy_roundtrip() -> None:

@@ -1,0 +1,33 @@
+[run]
+name = "baseline_default"
+output_root = "results/runs"
+
+[simulation]
+t_max = 400.0
+n_trials_per_seed = 40
+max_hits_per_torpedo = 1
+
+[splits]
+train_profiles = ["P01", "P02", "P03", "P04", "P05", "P06", "P07", "P08", "P09", "P10", "P11", "P12"]
+eval_profiles = ["P13", "P14", "P15", "P16", "P17", "P18", "P19", "P20", "P21", "P22", "P23", "P24", "P25"]
+train_seeds = [101, 102, 103]
+eval_seeds = [201, 202, 203]
+
+[baseline.static_layout]
+type = "rectangular"
+n_rows = 6
+n_cols = 7
+spacing_along = 457.2
+spacing_across = 1371.6
+speed = 5.0
+heading_rad = 0.0
+length = 150.0
+beam = 20.0
+origin = [0.0, 0.0]
+
+[baseline.heuristic_search]
+max_candidates = 18
+
+[baseline.heuristic_search.grid]
+spacing_along = [365.76, 457.2, 548.64]
+spacing_across = [914.4, 1143.0, 1371.6]

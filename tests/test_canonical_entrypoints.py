@@ -1,0 +1,123 @@
+"""Smoke tests for canonical baseline and RL entrypoints."""
+
+from __future__ import annotations
+
+import csv
+from pathlib import Path
+
+from experiments.run_baseline_suite import run_from_config as run_baseline_from_config
+from experiments.run_rl_train import run_from_config as run_rl_from_config
+
+
+REQUIRED_BASE_FILES = {
+    "config_resolved.yaml",
+    "metrics_summary.json",
+    "per_profile_metrics.csv",
+    "run_manifest.json",
+}
+
+
+def _read_csv_rows(path: Path) -> list[dict[str, str]]:
+    with path.open("r", newline="", encoding="utf-8") as handle:
+        return list(csv.DictReader(handle))
+
+
+def test_run_baseline_suite_writes_canonical_artifacts(tmp_path: Path) -> None:
+    cfg = {
+        "run": {"name": "smoke", "output_root": "runs"},
+        "simulation": {"t_max": 120.0, "n_trials_per_seed": 2, "max_hits_per_torpedo": 1},
+        "splits": {
+            "train_profiles": ["P01", "P02"],
+            "eval_profiles": ["P03", "P04"],
+            "train_seeds": [11],
+            "eval_seeds": [21],
+        },
+        "baseline": {
+            "static_layout": {
+                "type": "rectangular",
+                "n_rows": 1,
+                "n_cols": 2,
+                "spacing_along": 400.0,
+                "spacing_across": 300.0,
+                "speed": 5.0,
+                "heading_rad": 0.0,
+                "length": 120.0,
+                "beam": 18.0,
+                "origin": [0.0, 0.0],
+            },
+            "heuristic_search": {
+                "max_candidates": 2,
+                "grid": {
+                    "spacing_along": [350.0, 450.0],
+                },
+            },
+        },
+    }
+
+    run_dir = run_baseline_from_config(cfg, project_root=tmp_path)
+
+    assert REQUIRED_BASE_FILES.issubset({item.name for item in run_dir.iterdir()})
+    rows = _read_csv_rows(run_dir / "per_profile_metrics.csv")
+    assert rows
+    assert {row["model_name"] for row in rows} == {"static_baseline", "heuristic_baseline"}
+
+
+def test_run_rl_train_writes_canonical_artifacts_and_checkpoint(tmp_path: Path) -> None:
+    cfg = {
+        "run": {"name": "smoke", "output_root": "runs"},
+        "simulation": {"t_max": 120.0, "n_trials_per_seed": 2, "max_hits_per_torpedo": 1},
+        "splits": {
+            "train_profiles": ["P01", "P02"],
+            "eval_profiles": ["P03", "P04"],
+            "train_seeds": [31],
+            "eval_seeds": [41],
+        },
+        "training": {
+            "episodes": 8,
+            "epsilon": 0.2,
+            "epsilon_decay": 0.9,
+            "epsilon_min": 0.05,
+            "alpha": 0.3,
+            "seed": 5,
+        },
+        "rl": {
+            "actions": [
+                {
+                    "name": "rect_a",
+                    "type": "rectangular",
+                    "complexity_cost": 1.0,
+                    "n_rows": 1,
+                    "n_cols": 2,
+                    "spacing_along": 400.0,
+                    "spacing_across": 300.0,
+                    "speed": 5.0,
+                    "heading_rad": 0.0,
+                    "length": 120.0,
+                    "beam": 18.0,
+                    "origin": [0.0, 0.0],
+                },
+                {
+                    "name": "stagger_b",
+                    "type": "staggered",
+                    "complexity_cost": 1.2,
+                    "n_rows": 1,
+                    "n_cols": 2,
+                    "spacing_along": 420.0,
+                    "spacing_across": 280.0,
+                    "speed": 5.0,
+                    "heading_rad": 0.0,
+                    "length": 120.0,
+                    "beam": 18.0,
+                    "origin": [0.0, 0.0],
+                },
+            ]
+        },
+    }
+
+    run_dir = run_rl_from_config(cfg, project_root=tmp_path)
+
+    assert REQUIRED_BASE_FILES.issubset({item.name for item in run_dir.iterdir()})
+    assert (run_dir / "checkpoints" / "policy_latest.json").exists()
+    rows = _read_csv_rows(run_dir / "per_profile_metrics.csv")
+    assert rows
+    assert {row["model_name"] for row in rows} == {"rl_policy"}

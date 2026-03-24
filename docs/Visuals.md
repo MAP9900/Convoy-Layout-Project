@@ -33,7 +33,6 @@ Temporal Attack Frames (E2) FIXED (Can Edit Depending on What Example One is Loo
   -Uses the same logic for the simulation for continuity and proper verification.
   - MP4 export depends on matplotlib animation support.
   - If animation fails, the PNG frames still render. 
-  -Debug Version added which adds directional arrows to each ship. Point in the direction of the ship's heading. Used to verify ship movements. #TODO Make arrow a vector which arrow size decreasing when speed decreases. 
 
 Before/After Diagnostics (E3) FIXED
 - Script: `python -m experiments.run_diagnostics_before_after`

@@ -7,7 +7,6 @@ from typing import Any, Callable, Literal
 
 import numpy as np
 
-from convoy_sim.attacker_tactics import AttackerPlan, execute_attacker_plan
 from convoy_sim.defender_policy import DefenderPolicy, LayoutAction, ThreatPrior, ThreatType, compute_layout_metrics
 from convoy_sim.dynamics import ConvoyFormation, ConvoyKinematics
 from convoy_sim.entities import Ship, Torpedo
@@ -49,10 +48,10 @@ class DefenderStrategy:
 
 @dataclass(frozen=True)
 class AttackerStrategy:
-    """Strategy wrapper for torpedo samplers or attacker plans."""
+    """Strategy wrapper for torpedo samplers."""
 
     name: str
-    kind: Literal["torpedo_sampler", "attacker_plan"]
+    kind: Literal["torpedo_sampler"]
     payload: Any
 
     def execute(
@@ -77,25 +76,6 @@ class AttackerStrategy:
                 max_hits_per_torpedo=sim_params.get("max_hits_per_torpedo"),
             )
             return scored
-        if self.kind == "attacker_plan":
-            plan: AttackerPlan = self.payload
-            result = execute_attacker_plan(
-                ships_t0=ships_t0,
-                plan=plan,
-                constraints=constraints,
-                env=env,
-                dynamics=dynamics,
-                torpedo_params=sim_params.get("torpedo_params", {}),
-                t_max_global=float(sim_params.get("t_max", 0.0)),
-                rng=rng,
-                objective=sim_params.get("objective"),
-            )
-            totals = result["totals"]
-            return {
-                "n_hits": totals["total_hits"],
-                "total_value_destroyed": totals["total_value_destroyed"],
-                "hit_ship_ids": totals.get("unique_ships_hit", []),
-            }
         raise ValueError(f"Unknown attacker strategy kind: {self.kind}")
 
 
