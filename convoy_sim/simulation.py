@@ -519,6 +519,18 @@ class DynamicHitState:
     hit_counts: dict[str, int]
     torpedo_hit_times: dict[str, float]
     hit_time_by_ship: dict[str, float]
+    hit_events: list["HitEvent"]
+
+
+@dataclass(frozen=True)
+class HitEvent:
+    """Single torpedo-to-ship hit event captured during stepping."""
+
+    torpedo_id: str
+    ship_id: str
+    time_s: float
+    hit_x: float
+    hit_y: float
 
 
 @dataclass(frozen=True)
@@ -540,6 +552,7 @@ def init_dynamic_hit_state(start_time: float = 0.0) -> DynamicHitState:
         hit_counts={},
         torpedo_hit_times={},
         hit_time_by_ship={},
+        hit_events=[],
     )
 
 
@@ -584,6 +597,15 @@ def advance_dynamic_hit_state(
                     state.hit_counts[ship.id] = int(state.hit_counts.get(ship.id, 0)) + 1
                     state.torpedo_hit_times.setdefault(torpedo.id, time)
                     state.hit_time_by_ship.setdefault(ship.id, time)
+                    state.hit_events.append(
+                        HitEvent(
+                            torpedo_id=str(torpedo.id),
+                            ship_id=str(ship.id),
+                            time_s=float(time),
+                            hit_x=float(torp_pos[0]),
+                            hit_y=float(torp_pos[1]),
+                        )
+                    )
                     if max_hits_per_torpedo == 1:
                         state.torpedo_done.add(torp_idx)
                     break

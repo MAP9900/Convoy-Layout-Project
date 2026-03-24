@@ -78,6 +78,12 @@ def parse_args() -> argparse.Namespace:
         default=Path("results/diag/attack_profile_hit_report.csv"),
         help="Per-profile hit summary CSV output path",
     )
+    parser.add_argument(
+        "--hit-events-csv",
+        type=Path,
+        default=Path("results/diag/attack_profile_hit_events.csv"),
+        help="Per-hit event CSV output path",
+    )
     return parser.parse_args()
 
 
@@ -151,6 +157,24 @@ def _write_hit_report_csv(path: Path, rows: list[dict[str, Any]]) -> None:
             writer.writerow(row)
 
 
+def _write_hit_events_csv(path: Path, rows: list[dict[str, Any]]) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    fields = [
+        "profile_id",
+        "event_index",
+        "torpedo_id",
+        "ship_id",
+        "hit_time_s",
+        "hit_x",
+        "hit_y",
+    ]
+    with path.open("w", newline="", encoding="utf-8") as f:
+        writer = csv.DictWriter(f, fieldnames=fields)
+        writer.writeheader()
+        for row in rows:
+            writer.writerow(row)
+
+
 def _render_one_profile(
     profile: AttackProfile,
     profile_index: int,
@@ -168,7 +192,7 @@ def _render_one_profile(
     trail_alpha: float,
     trail_antialiased: bool,
     dpi: int,
-) -> tuple[str, list[str], dict[str, Any]]:
+) -> tuple[str, list[str], dict[str, Any], list[dict[str, Any]]]:
     # Ensure headless rendering in worker processes.
     import matplotlib
 
@@ -231,9 +255,22 @@ def _render_one_profile(
         plt.close(fig)
         written_frames.append(frame_name)
 
-    total_hits = int(sum(int(v) for v in hit_state.hit_counts.values()))
-    ships_hit = int(len(hit_state.hit_counts))
-    torpedoes_that_hit = int(len(hit_state.torpedo_hit_times))
+    hit_events = list(hit_state.hit_events)
+    total_hits = int(len(hit_events))
+    ships_hit = int(len({event.ship_id for event in hit_events}))
+    torpedoes_that_hit = int(len({event.torpedo_id for event in hit_events}))
+    hit_event_rows = [
+        {
+            "profile_id": profile.profile_id,
+            "event_index": int(idx + 1),
+            "torpedo_id": str(event.torpedo_id),
+            "ship_id": str(event.ship_id),
+            "hit_time_s": float(event.time_s),
+            "hit_x": float(event.hit_x),
+            "hit_y": float(event.hit_y),
+        }
+        for idx, event in enumerate(hit_events)
+    ]
     return (
         profile.profile_id,
         written_frames,
@@ -245,6 +282,7 @@ def _render_one_profile(
             "sim_duration_s": float(sim_duration_s),
             "hit_dt": float(hit_dt),
         },
+        hit_event_rows,
     )
 
 
@@ -293,10 +331,11 @@ def main() -> None:
     print(f"Rendering {len(profiles)} profiles with workers={args.workers} ...")
     saved = 0
     hit_rows: list[dict[str, Any]] = []
+    hit_event_rows: list[dict[str, Any]] = []
 
     if args.workers == 1:
         for idx, profile in enumerate(profiles):
-            profile_id, frame_names, hit_row = _render_one_profile(
+            profile_id, frame_names, hit_row, event_rows = _render_one_profile(
                 profile,
                 idx,
                 convoy_profile=args.convoy_profile,
@@ -323,6 +362,7 @@ def main() -> None:
             )
             saved += len(frame_names)
             hit_rows.append(hit_row)
+            hit_event_rows.extend(event_rows)
     else:
         try:
             with ProcessPoolExecutor(max_workers=int(args.workers)) as pool:
@@ -348,7 +388,7 @@ def main() -> None:
                     for idx, profile in enumerate(profiles)
                 ]
                 for future in as_completed(futures):
-                    profile_id, frame_names, hit_row = future.result()
+                    profile_id, frame_names, hit_row, event_rows = future.result()
                     row = audit_by_id.get(profile_id)
                     label = row["suggested_label"] if row is not None else "n/a"
                     err = row["bearing_error_deg"] if row is not None else float("nan")
@@ -359,13 +399,14 @@ def main() -> None:
                     )
                     saved += len(frame_names)
                     hit_rows.append(hit_row)
+                    hit_event_rows.extend(event_rows)
         except (PermissionError, OSError) as exc:
             print(
                 "Parallel worker startup failed; falling back to serial rendering. "
                 f"Reason: {exc}"
             )
             for idx, profile in enumerate(profiles):
-                profile_id, frame_names, hit_row = _render_one_profile(
+                profile_id, frame_names, hit_row, event_rows = _render_one_profile(
                     profile,
                     idx,
                     convoy_profile=args.convoy_profile,
@@ -392,6 +433,7 @@ def main() -> None:
                 )
                 saved += len(frame_names)
                 hit_rows.append(hit_row)
+                hit_event_rows.extend(event_rows)
 
     n_implausible = sum(1 for row in audit_rows if row["suggested_label"] == "implausible_geometry")
     n_near_miss = sum(1 for row in audit_rows if row["suggested_label"] == "credible_near_miss")
@@ -401,6 +443,14 @@ def main() -> None:
     print(f"Wrote JSON: {args.audit_json}")
     _write_hit_report_csv(args.hit_report_csv, sorted(hit_rows, key=lambda row: row["profile_id"]))
     print(f"Wrote hit report CSV: {args.hit_report_csv}")
+    _write_hit_events_csv(
+        args.hit_events_csv,
+        sorted(
+            hit_event_rows,
+            key=lambda row: (row["profile_id"], float(row["hit_time_s"]), int(row["event_index"])),
+        ),
+    )
+    print(f"Wrote hit events CSV: {args.hit_events_csv}")
     print(
         "Summary:",
         {

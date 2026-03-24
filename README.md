@@ -1,6 +1,6 @@
 # Optimal Convoy Layout Project
 
-A research‑focused simulator for WWII‑style convoys and straight‑running torpedoes on a 2D plane (meters). The current phases emphasize fast, interpretable geometry, baseline Monte Carlo evaluation, and coarse optimization loops for defender/attacker layouts.
+A research‑focused simulator for WWII convoys and straight‑running torpedoes on a 2D plane (meters). The current phases emphasize fast, interpretable geometry, baseline Monte Carlo evaluation, and coarse optimization loops for defender/attacker layouts.
 
 ## What It Does
 
@@ -11,13 +11,13 @@ A research‑focused simulator for WWII‑style convoys and straight‑running t
 - **Value-based scoring**: optional value-destroyed metrics for heterogeneous ship classes.
 - **Optimization**: brute‑force defender/attacker search and alternating best‑response loop.
 - **Feasibility constraints**: optional range, escort zones, approach cones, and detection risk.
-- **Defender policies (B1)**: randomized layout choice conditioned on threat priors.
+- **Defender policies**: randomized layout choice conditioned on threat priors.
 - **Policy optimization**: coarse deterministic/mixture search over policy tables.
-- **Attacker tactics (B2)**: multi-pass plans with delay/abort/commit and shaped salvos.
+- **Attacker tactics**: multi-pass plans with delay/abort/commit and shaped salvos.
 - **Attacker tactics search**: coarse grid search over multi-pass plan templates.
-- **Game layer (B3)**: payoff matrix estimation, best responses, and exploitability.
-- **Approximate Nash (B4)**: fictitious play/replicator solvers and double-oracle loop hooks.
-- **Visualization (E1)**: optional matplotlib plan-view layout plots.
+- **Game layer**: payoff matrix estimation, best responses, and exploitability.
+- **Approximate Nash**: fictitious play/replicator solvers and double-oracle loop hooks.
+- **Visualization**: optional matplotlib plan-view layout plots.
 - **RL wrapper**: minimal episode-style interface + observation schema for ML experiments.
 - **Scenarios & experiments**: scripted runs that save JSON/CSV results under `results/`.
 
