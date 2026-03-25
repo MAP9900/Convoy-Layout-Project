@@ -231,6 +231,7 @@ def _render_one_profile(
             trail_linewidth=float(trail_linewidth),
             trail_alpha=float(trail_alpha),
             trail_antialiased=bool(trail_antialiased),
+            clip_trails_at_hits=True,
             show_footprint=False,
             ship_marker="ship",
             rotate_by_heading=True,

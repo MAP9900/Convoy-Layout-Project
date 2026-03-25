@@ -283,6 +283,7 @@ def render_attack_frame(
     trail_linewidth: float = 1.0,
     trail_alpha: float = 0.7,
     trail_antialiased: bool = True,
+    clip_trails_at_hits: bool = True,
     legend_bbox_to_anchor: tuple[float, float] | None = None,
     view_bounds: tuple[float, float, float, float] | None = None,
     hide_spines: bool = True,
@@ -388,7 +389,7 @@ def render_attack_frame(
             continue
         t_end = min(float(t_max), float(t_global))
         t_start = max(0.0, t_end - float(trail_length_s)) if show_trails else t_end
-        if hit_state is not None and torpedo.id in hit_state.torpedo_hit_times:
+        if clip_trails_at_hits and hit_state is not None and torpedo.id in hit_state.torpedo_hit_times:
             t_end = min(t_end, float(hit_state.torpedo_hit_times[torpedo.id]))
             if t_end <= t_start:
                 continue
