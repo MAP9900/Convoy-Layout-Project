@@ -15,6 +15,9 @@ Status date: 2026-03-26
   - `python -m experiments.run_baseline_suite --config configs/baseline/default.toml`
 - RL:
   - `python -m experiments.run_rl_train --config configs/rl/default.toml`
+- Config generation (reproducible split):
+  - `python -m experiments.generate_run_config --template configs/templates/baseline.template.toml --output configs/baseline/default.toml --split-seed 42 --n-total 30 --n-train 20 --train-seeds 1939,1940,1941 --eval-seeds 1942,1943,1944`
+  - `python -m experiments.generate_run_config --template configs/templates/rl.template.toml --output configs/rl/default.toml --split-seed 42 --n-total 30 --n-train 20`
 
 ## Required Artifacts Per Run
 
@@ -55,8 +58,8 @@ Status date: 2026-03-26
 ## Action Board
 
 ### Now
-- [ ] Finalize official benchmark train/eval profile split.
-- [ ] Freeze official benchmark train/eval seed sets.
+- [x] Finalize official benchmark train/eval profile split.
+- [x] Freeze official benchmark train/eval seed sets.
 - [ ] Define RL promotion thresholds using `expected_hits` + `CVaR_90` guardrail.
 
 ### Next

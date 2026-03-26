@@ -108,45 +108,14 @@ def build_convoy_layout_2_profile() -> ConvoyLayoutProfile:
             "beam": 20.0,
             "origin": as_vec(0.0, 0.0),
         },
-        description="7x7 convoy layout with 800yd along-spacing and 1000yd across-spacing.",
+        description="7x7 convoy layout with 800yd along-spacing and 1000yd across-spacing. Different historical version of layout 1.",
     )
-
-
-def build_rl_large_profile_scaffold() -> ConvoyLayoutProfile:
-    """RL-focused large convoy scaffold profile.
-
-    TODO(RL_PROFILE): update all numeric values and class mapping as needed.
-    """
-
-    return ConvoyLayoutProfile(
-        name="rl_large",
-        layout_fn=make_rectangular_convoy,
-        layout_kwargs={
-            # TODO(RL_PROFILE): tune grid size and spacing.
-            "n_rows": 5,
-            "n_cols": 10,
-            "spacing_along": 700.0,
-            "spacing_across": 450.0,
-            # TODO(RL_PROFILE): tune convoy kinematics and hull defaults.
-            "speed": 5.0,
-            "heading_rad": 0.0,
-            "length": 150.0,
-            "beam": 20.0,
-            "origin": as_vec(0.0, 0.0),
-            # Key extension: per-cell class assignment hook.
-            "ship_class_map": _ship_class_map_rl_large,
-            # TODO(RL_PROFILE): optionally add ship_overrides_map for per-cell hull changes.
-        },
-        description="Large RL scaffold with per-cell ship class mapping.",
-    )
-
 
 def get_convoy_layout_profile_registry() -> dict[str, ConvoyLayoutProfile]:
     return {
         "small_demo": build_small_demo_profile(),
         "convoy_layout_1": build_convoy_layout_1_profile(),
         "convoy_layout_2": build_convoy_layout_2_profile(),
-        "rl_large": build_rl_large_profile_scaffold(),
     }
 
 

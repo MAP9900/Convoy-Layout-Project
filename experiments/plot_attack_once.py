@@ -13,31 +13,18 @@ from matplotlib.lines import Line2D  # type: ignore
 
 from convoy_sim.attackers import fan_spread
 from convoy_sim.viz_attack import plot_attack_planview, save_attack_debug_json, attack_debug_metrics
-from scenarios.scenario_a import build_scenario_a
-from scenarios.scenario_rl import build_scenario_rl
-
-
-SCENARIOS = {
-    "scenario_a": build_scenario_a,
-    "scenario_rl": build_scenario_rl,
-}
+from scenarios.convoy_profiles import build_small_demo_profile
 
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Render a static attack plan-view figure")
-    parser.add_argument(
-        "--scenario",
-        choices=SCENARIOS.keys(),
-        default="scenario_a",
-        help="Scenario selector (default keeps current small setup)",
-    )
     return parser.parse_args()
 
 
 def main() -> None:
-    args = parse_args()
-    scenario = SCENARIOS[args.scenario](n_trials=1, rng_seed=0)
-    ships = scenario.layout_fn(**scenario.layout_kwargs)
+    _args = parse_args()
+    profile = build_small_demo_profile()
+    ships = profile.build_ships()
     torpedoes = fan_spread(
         u_pos=np.array([-2000.0, 0.0]), #Submarine position
         base_bearing_rad=0.0, #Launch direction (radians)
@@ -46,7 +33,7 @@ def main() -> None:
         speed=25.0, #Torpedo Speed
         max_run_time=800.0, #Torpedo distance (TODO add units)
     )
-    t_max = float(scenario.t_max)
+    t_max = 400.0
 
     fig_dir = Path("results/figures")
     debug_dir = Path("results/debug")

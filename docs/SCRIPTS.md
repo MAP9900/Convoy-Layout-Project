@@ -13,10 +13,11 @@ Current complete index of files in the repository, grouped by purpose.
 |---|---|---|---|---|---|---|
 | `experiments/run_baseline_suite.py` | `python -m experiments.run_baseline_suite --config ...` | Baseline TOML config, scenario/profile refs | Baseline metrics/artifacts under `results/` | `convoy_sim.workflows`, scenarios, core sim modules | Medium | Baseline |
 | `experiments/run_rl_train.py` | `python -m experiments.run_rl_train --config ...` | RL TOML config | RL training/eval artifacts and checkpoints under `results/` | `convoy_sim.rl_env`, `convoy_sim.rl_wrapper`, workflows | Long | RL |
+| `experiments/generate_run_config.py` | `python -m experiments.generate_run_config --template ... --output ...` | Template TOML, split seed, split sizes, optional seed/run-name overrides | Full generated TOML with reproducible splits and `split_meta` | Python `tomllib`, local config templates | Short | Baseline + RL config generation |
 | `experiments/audit_attack_profiles.py` | `python -m experiments.audit_attack_profiles ...` | Convoy profile id(s), audit parameters | Audit CSV/JSON diagnostics | `convoy_sim.profile_audit`, `convoy_sim.attack_profiles` | Short-Medium | Diagnostic |
 | `experiments/render_attack_profile_previews.py` | `python -m experiments.render_attack_profile_previews ...` | Convoy profile id(s), run mode, rendering flags | Preview frames + geometry/hit diagnostics in `results/diag` and frame dirs | `convoy_sim.viz_attack`, profile audit helpers | Medium-Long | Manual verification |
 | `experiments/render_attack_animation.py` | `python -m experiments.render_attack_animation ...` | Scenario/profile and render args | Animation frames/video outputs in `results/` | `convoy_sim.viz_attack`, simulation modules | Medium | Manual verification |
-| `experiments/plot_attack_once.py` | `python -m experiments.plot_attack_once ...` | Single scenario/profile invocation | One static plot + debug JSON | `convoy_sim.viz_attack`, geometry/sim helpers | Short | Diagnostic |
+| `experiments/plot_attack_once.py` | `python -m experiments.plot_attack_once` | `small_demo` convoy profile + fixed fan spread | One static plot + debug JSON | `convoy_sim.viz_attack`, `scenarios.convoy_profiles` | Short | Diagnostic |
 | `experiments/plot_layout.py` | `python -m experiments.plot_layout ...` | Layout/scenario args | Static layout figures | `convoy_sim.layouts`, `convoy_sim.viz` | Short | Diagnostic |
 
 ## Root Files
@@ -31,13 +32,18 @@ Current complete index of files in the repository, grouped by purpose.
 
 ## Configs (All)
 
+- `configs/templates/baseline.template.toml` (`canonical`)
+- `configs/templates/rl.template.toml` (`canonical`)
 - `configs/baseline/default.toml` (`canonical`)
 - `configs/rl/default.toml` (`canonical`)
+- `configs/archive/baseline_default_pre_generator_20260326.toml` (`supporting`)
+- `configs/archive/rl_default_pre_generator_20260326.toml` (`supporting`)
 
 ## Experiment Scripts (All)
 
 - `experiments/run_baseline_suite.py`: Canonical baseline runner (config-first, artifact schema output). (`canonical`)
 - `experiments/run_rl_train.py`: Canonical RL runner (config-first train/eval + checkpoint output). (`canonical`)
+- `experiments/generate_run_config.py`: Reproducible full TOML generator for baseline/RL run configs and profile splits. (`canonical`)
 - `experiments/audit_attack_profiles.py`: Attack-profile geometry plausibility audit. (`diagnostic`)
 - `experiments/render_attack_profile_previews.py`: Profile frame rendering + audit/hit CSV outputs. (`diagnostic`)
 - `experiments/render_attack_animation.py`: Dynamic attack animation/frame generation demo. (`diagnostic`)
@@ -46,11 +52,8 @@ Current complete index of files in the repository, grouped by purpose.
 
 ## Scenarios (All)
 
-- `scenarios/scenario_base.py` (`canonical`)
-- `scenarios/scenario_a.py` (`canonical`)
-- `scenarios/scenario_a1_constraints.py` (`canonical`)
-- `scenarios/scenario_rl.py` (`canonical`)
 - `scenarios/convoy_profiles.py` (`canonical`)
+- `scenarios/scenario_base.py` (`supporting`)
 
 ## Core Python Modules (All)
 
@@ -97,6 +100,7 @@ Current complete index of files in the repository, grouped by purpose.
 - `tests/test_dynamic_hit_events.py` (`canonical`)
 - `tests/test_dynamics_models.py` (`canonical`)
 - `tests/test_entities.py` (`canonical`)
+- `tests/test_generate_run_config.py` (`canonical`)
 - `tests/test_feasibility_checks.py` (`canonical`)
 - `tests/test_feasibility_models.py` (`canonical`)
 - `tests/test_formation_motion.py` (`canonical`)
