@@ -16,6 +16,8 @@
 - Writes canonical artifacts: config_resolved.yaml, metrics_summary.json, per_profile_metrics.csv, run_manifest.json.
 
 
+3/26 Work:
+
 LOCK in default.toml Via:
 
 Baseline:
@@ -24,3 +26,13 @@ python -m experiments.generate_run_config --template configs/templates/baseline.
 
 RL
 python -m experiments.generate_run_config --template configs/templates/rl.template.toml --output configs/rl/default.toml --convoy-profile convoy_layout_1 --split-seed 1945 --n-total 30 --n-train 20
+
+Run baseline optimization
+
+python -m experiments.run_baseline_suite --config configs/baseline/default.toml
+
+Run Base RL optimization
+
+python -m experiments.run_rl_train --config configs/rl/default.toml
+
+
