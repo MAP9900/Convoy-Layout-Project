@@ -25,17 +25,11 @@ Canonical script index after Phase 2–4 reorg.
 
 ## Retained Core Utility Scripts
 
-- `python -m experiments.run_scenario <scenario_name>`
-- `python -m experiments.optimize_defender`
-- `python -m experiments.optimize_attacker`
-- `python -m experiments.sensitivity_oat`
 - `python -m experiments.audit_attack_profiles --convoy-profile convoy_layout_1`
 - `python -m experiments.plot_layout`
-- `python -m experiments.plot_historical_vs_optimized`
 - `python -m experiments.plot_attack_once`
 - `python -m experiments.render_attack_animation`
 - `python -m experiments.render_attack_profile_previews --convoy-profile convoy_layout_1 --run-mode verify --workers 8`
-- `python -m experiments.run_diagnostics_before_after`
 
 ## Scenario Definitions
 

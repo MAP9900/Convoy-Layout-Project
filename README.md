@@ -27,7 +27,6 @@ Default output root:
 - `convoy_sim/`: simulation engine, RL wrapper, risk/objective utilities, workflow helpers.
 - `scenarios/`: scenario/profile definitions.
 - `experiments/`: canonical entrypoints + retained core utilities.
-- `experiments/archive/`: preserved legacy/sidecar workflows not on the V1 critical path.
 - `configs/`: baseline and RL canonical configs.
 - `tests/`: pytest regression/smoke coverage.
 - `docs/`: workflow docs and planning references.

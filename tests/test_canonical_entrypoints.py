@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import csv
+import json
 from pathlib import Path
 
 from experiments.run_baseline_suite import run_from_config as run_baseline_from_config
@@ -20,6 +21,38 @@ REQUIRED_BASE_FILES = {
 def _read_csv_rows(path: Path) -> list[dict[str, str]]:
     with path.open("r", newline="", encoding="utf-8") as handle:
         return list(csv.DictReader(handle))
+
+
+def _read_json(path: Path) -> dict:
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
+REQUIRED_PROFILE_CSV_COLUMNS = {
+    "model_name",
+    "profile_id",
+    "samples",
+    "expected_hits",
+    "CVaR_90",
+    "p_hit_ge_1",
+    "value_lost",
+}
+
+
+REQUIRED_SUMMARY_KEYS = {
+    "profiles",
+    "samples",
+    "expected_hits",
+    "CVaR_90",
+    "VaR_90",
+    "p_hit_ge_1",
+    "value_lost",
+}
+
+
+def _assert_manifest_common(manifest: dict) -> None:
+    assert {"workflow", "git_sha", "profile_splits", "seed_sets", "n_trials_per_seed", "t_max"} <= set(manifest)
+    assert {"train", "eval"} <= set(manifest["profile_splits"])
+    assert {"train", "eval"} <= set(manifest["seed_sets"])
 
 
 def test_run_baseline_suite_writes_canonical_artifacts(tmp_path: Path) -> None:
@@ -57,9 +90,21 @@ def test_run_baseline_suite_writes_canonical_artifacts(tmp_path: Path) -> None:
     run_dir = run_baseline_from_config(cfg, project_root=tmp_path)
 
     assert REQUIRED_BASE_FILES.issubset({item.name for item in run_dir.iterdir()})
-    rows = _read_csv_rows(run_dir / "per_profile_metrics.csv")
+    rows_path = run_dir / "per_profile_metrics.csv"
+    rows = _read_csv_rows(rows_path)
     assert rows
+    assert REQUIRED_PROFILE_CSV_COLUMNS <= set(rows[0].keys())
     assert {row["model_name"] for row in rows} == {"static_baseline", "heuristic_baseline"}
+
+    metrics = _read_json(run_dir / "metrics_summary.json")
+    assert {"static_baseline", "heuristic_baseline", "winner"} <= set(metrics)
+    assert metrics["winner"] in {"static_baseline", "heuristic_baseline"}
+    assert REQUIRED_SUMMARY_KEYS <= set(metrics["static_baseline"])
+    assert REQUIRED_SUMMARY_KEYS <= set(metrics["heuristic_baseline"])
+
+    manifest = _read_json(run_dir / "run_manifest.json")
+    _assert_manifest_common(manifest)
+    assert manifest["workflow"] == "baseline"
 
 
 def test_run_rl_train_writes_canonical_artifacts_and_checkpoint(tmp_path: Path) -> None:
@@ -120,4 +165,15 @@ def test_run_rl_train_writes_canonical_artifacts_and_checkpoint(tmp_path: Path) 
     assert (run_dir / "checkpoints" / "policy_latest.json").exists()
     rows = _read_csv_rows(run_dir / "per_profile_metrics.csv")
     assert rows
+    assert REQUIRED_PROFILE_CSV_COLUMNS <= set(rows[0].keys())
     assert {row["model_name"] for row in rows} == {"rl_policy"}
+
+    metrics = _read_json(run_dir / "metrics_summary.json")
+    assert {"training", "evaluation"} <= set(metrics)
+    assert {"episodes", "epsilon_final", "avg_reward_last_50", "selected_action"} <= set(metrics["training"])
+    assert REQUIRED_SUMMARY_KEYS <= set(metrics["evaluation"])
+
+    manifest = _read_json(run_dir / "run_manifest.json")
+    _assert_manifest_common(manifest)
+    assert manifest["workflow"] == "rl"
+    assert "episodes" in manifest

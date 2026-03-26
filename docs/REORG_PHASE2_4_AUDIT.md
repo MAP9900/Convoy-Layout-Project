@@ -36,17 +36,11 @@ Primary finding:
 - `scenarios/convoy_profiles.py`
 - `experiments/run_baseline_suite.py` (new canonical baseline runner)
 - `experiments/run_rl_train.py` (new canonical RL runner)
-- `experiments/run_scenario.py` (legacy-compatible scenario runner retained)
-- `experiments/optimize_defender.py` (baseline primitive retained)
-- `experiments/optimize_attacker.py` (baseline primitive retained)
-- `experiments/sensitivity_oat.py` (retained; test dependency)
 - `experiments/audit_attack_profiles.py`
 - `experiments/plot_layout.py`
-- `experiments/plot_historical_vs_optimized.py`
 - `experiments/plot_attack_once.py`
 - `experiments/render_attack_animation.py`
 - `experiments/render_attack_profile_previews.py`
-- `experiments/run_diagnostics_before_after.py`
 
 ### Remove (Legacy workflow scripts)
 
@@ -76,6 +70,8 @@ Rationale:
 
 Notes:
 - Additional non-canonical Python modules and scenarios were removed in follow-up cleanup.
+- `experiments/optimize_defender.py` and `experiments/optimize_attacker.py` were removed in follow-up cleanup.
+- `experiments/run_scenario.py`, `experiments/sensitivity_oat.py`, `experiments/plot_historical_vs_optimized.py`, and `experiments/run_diagnostics_before_after.py` were removed in follow-up cleanup.
 - Historical result artifacts under `results/` are preserved.
 
 ## Canonical Baseline and RL Entrypoints (Phase 4 Targets)
@@ -95,7 +91,7 @@ Additional RL artifact:
 ## Migration Map (Old -> New Primary Usage)
 
 - Baseline comparisons:
-  - old: `run_scenario.py` + `optimize_defender.py` + ad hoc scripts
+  - old: ad hoc scripts (`run_scenario.py` + optimization helpers)
   - new: `run_baseline_suite.py`
 
 - RL train/eval:

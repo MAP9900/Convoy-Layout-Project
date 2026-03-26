@@ -61,6 +61,9 @@ Status date: 2026-03-26
 
 ### Next
 - [ ] Replace tabular learner in `experiments/run_rl_train.py`.
+- [ ] Expand baseline suite search space (additional bounded layout families/knobs).
+- [ ] Add baseline repeated-seed confidence intervals to `metrics_summary.json`.
+- [ ] Add baseline robustness slices (noise/constraint variants) while keeping artifact schema fixed.
 - [ ] Add run-to-run comparator utility for baseline vs RL manifests.
 - [ ] Add CI smoke checks for canonical baseline and RL entrypoints.
 
