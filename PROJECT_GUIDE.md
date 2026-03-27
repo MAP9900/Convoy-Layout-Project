@@ -1,6 +1,6 @@
 # PROJECT_GUIDE
 
-Last updated: 2026-03-24
+Last updated: 2026-03-27
 
 
 ## Main Goal
@@ -21,16 +21,30 @@ Guardrail metric: `CVaR_90` (avoid policies that only optimize mean outcomes).
 ### In Scope (V2)
 - Attacker RL against scripted defender.
 - Alternating/bilevel training workflow.
+- GenAI synthetic attack-profile dataset generation pipeline (simulation-backed, reproducible).
+- Conditional generative adversary baseline (VAE) for attack-profile sampling.
 
 ### In Scope (V3)
 - Multi-agent training and robustness suite.
 - Domain randomization with controlled scenario distributions.
+- Generative scenario/threat modeling extensions (e.g., diffusion variant, latent-space diagnostics).
 
 ### Out of Scope for Now
 - Escort combat modeling.
 - Full moving U-boat behavior in V1.
-- Generative AI scenario/threat models (deferred until RL workflow is stable).
 - New non-RL feature expansion not required for baseline comparisons.
+
+### GenAI Final Project Scope (Planned)
+- Goal: add a generative adversary path that complements (not replaces) canonical RL and baseline workflows.
+- Data source: synthetic but simulation-grounded attack-profile datasets built with fixed seeds, feasibility checks, and manifest metadata.
+- Core deliverable: conditional VAE that samples diverse, feasible attack profiles for robustness evaluation.
+- Evaluation requirement: compare scripted/baseline vs generated attacks using shared metrics:
+  - `expected_hits`
+  - `CVaR_90`
+  - `p_hit_ge_1`
+- Stretch goals (time permitting):
+  - latent-space exploration of vulnerability regions
+  - diffusion-based generator variant
 
 ## Canonical Workflows
 
