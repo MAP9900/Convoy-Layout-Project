@@ -17,6 +17,7 @@ from convoy_sim.workflows import (
     load_config,
     resolve_run_dir,
     summarize_profile_rows,
+    write_layout_plot,
     write_json,
     write_profile_rows_csv,
     write_yaml,
@@ -57,6 +58,7 @@ def run_from_config(config: dict[str, Any], *, project_root: Path) -> Path:
     sim_cfg = dict(config.get("simulation", {}))
     split_cfg = dict(config.get("splits", {}))
     baseline_cfg = dict(config.get("baseline", {}))
+    plot_cfg = dict(config.get("plot", {}))
 
     output_root = project_root / str(run_cfg.get("output_root", "results/runs"))
     run_dir = resolve_run_dir(output_root, "baseline", run_cfg.get("name"))
@@ -152,6 +154,34 @@ def run_from_config(config: dict[str, Any], *, project_root: Path) -> Path:
         "winner": winner,
     }
 
+    plot_xlim = tuple(float(x) for x in plot_cfg["xlim"]) if "xlim" in plot_cfg else (-5000.0, 5000.0)
+    plot_ylim = tuple(float(y) for y in plot_cfg["ylim"]) if "ylim" in plot_cfg else (-5000.0, 5000.0)
+    plot_dpi = int(plot_cfg.get("dpi", 150))
+    show_plot = bool(plot_cfg.get("show", True))
+    figures_dir = run_dir / "figures"
+    static_ships = static_layout_fn(**static_layout_kwargs)
+    heuristic_ships = static_layout_fn(**best_kwargs)
+    static_plot_path = figures_dir / "layout_static.png"
+    heuristic_plot_path = figures_dir / "layout_heuristic_best.png"
+    static_plot_written = write_layout_plot(
+        ships=static_ships,
+        output_path=static_plot_path,
+        title="Baseline Static Layout",
+        xlim=plot_xlim,
+        ylim=plot_ylim,
+        dpi=plot_dpi,
+        show_plot=show_plot,
+    )
+    heuristic_plot_written = write_layout_plot(
+        ships=heuristic_ships,
+        output_path=heuristic_plot_path,
+        title="Baseline Heuristic Best Layout",
+        xlim=plot_xlim,
+        ylim=plot_ylim,
+        dpi=plot_dpi,
+        show_plot=show_plot,
+    )
+
     manifest = {
         "workflow": "baseline",
         "git_sha": git_sha(project_root),
@@ -165,6 +195,10 @@ def run_from_config(config: dict[str, Any], *, project_root: Path) -> Path:
         },
         "n_trials_per_seed": n_trials_per_seed,
         "t_max": t_max,
+        "layout_plots": {
+            "static": str(static_plot_path.relative_to(project_root)) if static_plot_written else None,
+            "heuristic_best": str(heuristic_plot_path.relative_to(project_root)) if heuristic_plot_written else None,
+        },
     }
 
     write_yaml(run_dir / "config_resolved.yaml", resolved)

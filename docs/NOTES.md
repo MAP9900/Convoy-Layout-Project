@@ -36,3 +36,9 @@ Run Base RL optimization
 python -m experiments.run_rl_train --config configs/rl/default.toml
 
 
+3/30
+
+Re Ran With Seed Fix and Added Final Layout Plotting. Overides prevoius Test 1
+
+python -m experiments.run_baseline_suite --config configs/baseline/default.toml
+python -m experiments.run_rl_train --config configs/rl/default.toml

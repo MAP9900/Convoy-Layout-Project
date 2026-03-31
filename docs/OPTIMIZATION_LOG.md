@@ -2,12 +2,12 @@
 
 Tracks *how* each test was produced (not just outcomes), including optimization method, objective, search space, and reproducibility details.
 
-## Test 1 - Baseline vs RL (2026-03-26)
+## Test 1 - Baseline vs RL (2026-03-31)
 
 ### Run References
 
-- Baseline run dir: `results/runs/baseline/20260326_213112_baseline_default`
-- RL run dir: `results/runs/rl/20260326_213338_rl_default`
+- Baseline run dir: `results/runs/baseline/20260331_005947_baseline_test1`
+- RL run dir: `results/runs/rl/20260331_005922_rl_test1`
 - Results summary: see `docs/RESULTS_LOG.md` (Test 1)
 
 ### Baseline Optimization (Heuristic Grid Search)
@@ -65,5 +65,7 @@ Tracks *how* each test was produced (not just outcomes), including optimization 
   - `configs/rl/default.toml`
 - Split generation method:
   - Deterministic random partition via `experiments.generate_run_config`
-- Known comparability caveat:
-  - Eval seeds differed between baseline and RL in Test 1, so next strict comparison should align eval seeds.
+- Comparability status:
+  - Train/eval profile splits matched across baseline and RL.
+  - Train/eval seeds matched across baseline and RL.
+  - Test 1 is an apples-to-apples comparison.

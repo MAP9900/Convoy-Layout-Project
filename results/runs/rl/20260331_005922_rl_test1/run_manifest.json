@@ -1,6 +1,6 @@
 {
   "workflow": "rl",
-  "git_sha": "053400ff86f61e48ed7b2a8fd3eebcbf8496e59f",
+  "git_sha": "ad6d979448df4776007609e5fa8f2401709b3bfd",
   "profile_splits": {
     "train": [
       "P01",
@@ -39,17 +39,20 @@
   },
   "seed_sets": {
     "train": [
-      301,
-      302,
-      303
+      1939,
+      1940,
+      1941
     ],
     "eval": [
-      401,
-      402,
-      403
+      1942,
+      1943,
+      1944
     ]
   },
   "n_trials_per_seed": 40,
   "t_max": 400.0,
-  "episodes": 300
+  "episodes": 300,
+  "layout_plots": {
+    "selected_policy": "results/runs/rl/20260331_005922_rl_test1/figures/layout_selected_policy.png"
+  }
 }

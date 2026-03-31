@@ -2,8 +2,8 @@
   "training": {
     "episodes": 300,
     "epsilon_final": 0.055573049960186756,
-    "avg_reward_last_50": -2.84,
-    "selected_action": "rect_standard"
+    "avg_reward_last_50": -2.86,
+    "selected_action": "staggered_mid"
   },
   "evaluation": {
     "profiles": 10,

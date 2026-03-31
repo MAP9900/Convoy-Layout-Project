@@ -1,5 +1,5 @@
 [run]
-name = "baseline_default"
+name = "baseline_test1"
 output_root = "results/runs"
 
 [simulation]
@@ -40,6 +40,6 @@ split_seed = 1945
 n_total = 30
 n_train = 20
 n_eval = 10
-generated_utc = "2026-03-26T21:28:09Z"
+generated_utc = "2026-03-31T00:01:02Z"
 profile_prefix = "P"
 profile_width = 2

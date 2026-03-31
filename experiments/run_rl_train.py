@@ -21,6 +21,7 @@ from convoy_sim.workflows import (
     load_config,
     resolve_run_dir,
     summarize_profile_rows,
+    write_layout_plot,
     write_json,
     write_profile_rows_csv,
     write_yaml,
@@ -73,6 +74,7 @@ def run_from_config(config: dict[str, Any], *, project_root: Path) -> Path:
     split_cfg = dict(config.get("splits", {}))
     train_cfg = dict(config.get("training", {}))
     rl_cfg = dict(config.get("rl", {}))
+    plot_cfg = dict(config.get("plot", {}))
 
     output_root = project_root / str(run_cfg.get("output_root", "results/runs"))
     run_dir = resolve_run_dir(output_root, "rl", run_cfg.get("name"))
@@ -207,6 +209,23 @@ def run_from_config(config: dict[str, Any], *, project_root: Path) -> Path:
         "evaluation": eval_summary,
     }
 
+    plot_xlim = tuple(float(x) for x in plot_cfg["xlim"]) if "xlim" in plot_cfg else (-5000.0, 5000.0)
+    plot_ylim = tuple(float(y) for y in plot_cfg["ylim"]) if "ylim" in plot_cfg else (-5000.0, 5000.0)
+    plot_dpi = int(plot_cfg.get("dpi", 150))
+    show_plot = bool(plot_cfg.get("show", True))
+    figures_dir = run_dir / "figures"
+    selected_ships = best_action.layout_fn(**best_action.layout_kwargs)
+    selected_plot_path = figures_dir / "layout_selected_policy.png"
+    selected_plot_written = write_layout_plot(
+        ships=selected_ships,
+        output_path=selected_plot_path,
+        title=f"RL Selected Layout: {best_action.name}",
+        xlim=plot_xlim,
+        ylim=plot_ylim,
+        dpi=plot_dpi,
+        show_plot=show_plot,
+    )
+
     manifest = {
         "workflow": "rl",
         "git_sha": git_sha(project_root),
@@ -221,6 +240,9 @@ def run_from_config(config: dict[str, Any], *, project_root: Path) -> Path:
         "n_trials_per_seed": n_trials_per_seed,
         "t_max": t_max,
         "episodes": episodes,
+        "layout_plots": {
+            "selected_policy": str(selected_plot_path.relative_to(project_root)) if selected_plot_written else None,
+        },
     }
 
     write_yaml(run_dir / "config_resolved.yaml", resolved)

@@ -1,0 +1,19 @@
+{
+  "selected_action": "staggered_mid",
+  "q_values": {
+    "rect_standard": -3.4875934022133412,
+    "rect_compact": -3.852535210629269,
+    "staggered_mid": -2.337014503801059
+  },
+  "action_counts": {
+    "rect_standard": 51,
+    "rect_compact": 132,
+    "staggered_mid": 117
+  },
+  "training_summary": {
+    "episodes": 300,
+    "epsilon_final": 0.055573049960186756,
+    "avg_reward_last_50": -2.86,
+    "selected_action": "staggered_mid"
+  }
+}

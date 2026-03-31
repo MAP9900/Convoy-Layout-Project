@@ -1,6 +1,6 @@
 {
   "workflow": "baseline",
-  "git_sha": "33d515884e0e0551388e70ad213d34c48d177476",
+  "git_sha": "ad6d979448df4776007609e5fa8f2401709b3bfd",
   "profile_splits": {
     "train": [
       "P01",
@@ -50,5 +50,9 @@
     ]
   },
   "n_trials_per_seed": 40,
-  "t_max": 400.0
+  "t_max": 400.0,
+  "layout_plots": {
+    "static": "results/runs/baseline/20260331_005947_baseline_test1/figures/layout_static.png",
+    "heuristic_best": "results/runs/baseline/20260331_005947_baseline_test1/figures/layout_heuristic_best.png"
+  }
 }

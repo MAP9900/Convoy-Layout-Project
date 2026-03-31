@@ -145,9 +145,11 @@ Current complete index of files in the repository, grouped by purpose.
 
 ## Reference Docs
 
-- `docs/EXECUTION_PLAN.md` (`canonical`)
+- `docs/TODO.md` (`canonical`)
+- `docs/RL_PLAN.md` (`canonical`)
 - `docs/Visuals.md` (`supporting`)
-- `docs/REORG_PHASE2_4_AUDIT.md` (`supporting`)
+- `docs/RESULTS_LOG.md` (`canonical`)
+- `docs/OPTIMIZATION_LOG.md` (`canonical`)
 - `docs/SCRIPTS.md` (`canonical`)
 
 ## Lifecycle Tag Legend

@@ -1,5 +1,5 @@
 [run]
-name = "rl_default"
+name = "rl_test1"
 output_root = "results/runs"
 
 [simulation]
@@ -10,8 +10,8 @@ max_hits_per_torpedo = 1
 [splits]
 train_profiles = ["P01", "P02", "P04", "P05", "P06", "P07", "P09", "P11", "P15", "P16", "P17", "P18", "P19", "P21", "P22", "P24", "P25", "P27", "P28", "P30"]
 eval_profiles = ["P03", "P08", "P10", "P12", "P13", "P14", "P20", "P23", "P26", "P29"]
-train_seeds = [301, 302, 303]
-eval_seeds = [401, 402, 403]
+train_seeds = [1939, 1940, 1941]
+eval_seeds = [1942, 1943, 1944]
 
 [training]
 episodes = 300
@@ -71,6 +71,6 @@ split_seed = 1945
 n_total = 30
 n_train = 20
 n_eval = 10
-generated_utc = "2026-03-26T21:29:52Z"
+generated_utc = "2026-03-31T00:01:09Z"
 profile_prefix = "P"
 profile_width = 2

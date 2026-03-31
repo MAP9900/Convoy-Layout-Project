@@ -26,6 +26,13 @@ Last updated: 2026-03-30
 ## Next
 
 - [ ] Replace tabular RL selector with stronger learner while preserving artifact schema.
+- [ ] Add constrained RL layout-builder action space:
+  - row pattern vectors (e.g., `4,5,5,4`)
+  - spacing controls
+  - ship-class placement controls
+  - convoy speed and zig-zag controls
+- [ ] Define and enforce hard layout boundaries in config (separation, footprint, class counts, feasibility).
+- [ ] Add value-weighted objective support (e.g., tanker > freighter) with risk guardrail.
 - [ ] Expand baseline search space beyond spacing-only (bounded, interpretable knobs).
 - [ ] Add confidence intervals or repeated-seed summaries to run metrics.
 - [ ] Add run-to-run comparator script for baseline vs RL outputs.
@@ -38,7 +45,11 @@ Last updated: 2026-03-30
 ## Later
 
 - [ ] Attacker RL and alternating training protocol.
+- [ ] Add limited per-ship override controls for high-value/escort ships (bounded offsets/swap rules only).
 - [ ] Multi-agent robustness and domain-randomization matrix.
 - [ ] Add latent-space diagnostics/visualization for generated attack-profile families and failure regions.
 - [ ] Add diffusion-model variant as optional stretch after VAE baseline is stable.
 
+## RL Design Docs
+
+- [ ] Keep `docs/RL_PLAN.md` updated whenever RL state/action/reward/constraint design changes.

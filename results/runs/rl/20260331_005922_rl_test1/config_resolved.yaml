@@ -1,6 +1,6 @@
 config:
   run:
-    name: "rl_default"
+    name: "rl_test1"
     output_root: "results/runs"
   simulation:
     t_max: 400.0
@@ -40,13 +40,13 @@ config:
       - "P26"
       - "P29"
     train_seeds:
-      - 301
-      - 302
-      - 303
+      - 1939
+      - 1940
+      - 1941
     eval_seeds:
-      - 401
-      - 402
-      - 403
+      - 1942
+      - 1943
+      - 1944
   training:
     episodes: 300
     epsilon: 0.25
@@ -107,11 +107,11 @@ config:
     n_total: 30
     n_train: 20
     n_eval: 10
-    generated_utc: "2026-03-26T21:29:52Z"
+    generated_utc: "2026-03-31T00:01:09Z"
     profile_prefix: "P"
     profile_width: 2
 resolved:
-  selected_action: "rect_standard"
+  selected_action: "staggered_mid"
   selected_layout_fn: "make_rectangular_convoy"
   selected_layout_kwargs:
     n_rows: 6

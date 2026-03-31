@@ -240,3 +240,63 @@ def iter_param_overrides(grid: dict[str, list[Any]], *, max_candidates: int | No
             break
         rows.append(dict(zip(keys, combo)))
     return rows
+
+
+def write_layout_plot(
+    *,
+    ships: list[Any],
+    output_path: Path,
+    title: str,
+    xlim: tuple[float, float] | None = None,
+    ylim: tuple[float, float] | None = None,
+    dpi: int = 150,
+    show_plot: bool = False,
+) -> bool:
+    """Render and save a convoy layout plot with canonical styling.
+
+    Returns True when saved, False when matplotlib is unavailable.
+    """
+
+    try:
+        import matplotlib.pyplot as plt  # type: ignore
+        from convoy_sim.viz import plot_convoy_planview
+    except Exception:
+        return False
+
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    fig, ax = plt.subplots(figsize=(9, 9), facecolor="lightgrey")
+    plot_convoy_planview(
+        ships,
+        ax=ax,
+        title=title,
+        color_by="class",
+        show_footprint=False,
+        ship_marker="ship",
+        rotate_by_heading=True,
+        use_hull_dimensions=True,
+        axes_facecolor="#06768d",
+    )
+
+    if xlim is not None:
+        ax.set_xlim(*xlim)
+    if ylim is not None:
+        ax.set_ylim(*ylim)
+
+    leg = ax.get_legend()
+    if leg is not None:
+        leg.set_bbox_to_anchor((0.5, -0.20))
+
+    for spine in ax.spines.values():
+        spine.set_visible(False)
+
+    ax.set_aspect("equal", adjustable="box")
+    fig.subplots_adjust(left=0.08, right=0.98, top=0.93, bottom=0.17)
+    fig.savefig(output_path, dpi=int(dpi))
+
+    if show_plot:
+        try:
+            plt.show(block=False)
+        except Exception:
+            pass
+    plt.close(fig)
+    return True
