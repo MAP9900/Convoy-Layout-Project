@@ -22,4 +22,4 @@
 - Train/eval seeds matched across runs:
   - Train seeds: `[1939, 1940, 1941]`
   - Eval seeds: `[1942, 1943, 1944]`
-- This Test 1 result is a valid apples-to-apples comparison.
+- This Test 1 result is a valid 1 to 1 comparison.

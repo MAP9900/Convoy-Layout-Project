@@ -15,6 +15,22 @@ Last updated: 2026-03-30
 
 ## Now
 
+- [ ] Protocol v2 foundation: freeze current stack as V1 baseline/RL reference and start V2 realism track.
+- [ ] Add moving U-boat support (deterministic motion first) with config toggle:
+  - `u_boat_mode = static | moving`
+  - maintain backward compatibility for static profiles.
+- [ ] Define U-boat motion schema in attack profiles:
+  - initial position/heading/speed
+  - leg/waypoint plan
+  - launch timing/window fields
+  - optional turn-rate / kinematic bounds
+- [ ] Integrate U-boat motion into attack proposal + simulation paths (not just plotting).
+- [ ] Add diagnostics/visuals for U-boat track and launch geometry in canonical debug outputs.
+- [ ] Add tests for motion realism:
+  - deterministic replay under fixed seeds
+  - kinematic-feasibility checks
+  - regression vs static mode when `u_boat_mode=static`
+- [ ] Re-lock benchmark protocol for V2 after movement integration (new seed/split stamp).
 - [ ] Align eval seeds between baseline and RL for strict apples-to-apples comparison.
 - [ ] Run baseline + RL pair with matched eval seeds.
 - [ ] Record Test 2 in `docs/RESULTS_LOG.md` and `docs/OPTIMIZATION_LOG.md`.
@@ -53,3 +69,70 @@ Last updated: 2026-03-30
 ## RL Design Docs
 
 - [ ] Keep `docs/RL_PLAN.md` updated whenever RL state/action/reward/constraint design changes.
+
+## Historical Realism Backlog
+
+- [ ] Add bounded station-keeping randomness:
+  - per-ship positional jitter
+  - heading jitter
+  - class-dependent cohesion (escort tighter than freighter)
+- [ ] Add torpedo imperfection model:
+  - heading error / drift over time (bend-like behavior via controlled error, not arbitrary curves)
+  - speed variance
+  - dud probability
+  - depth/fuze error proxy
+- [ ] Add ship-movement realism progression:
+  - formation-level motion as primary control
+  - limited per-ship deviation overlays (bounded offsets/swap rules)
+  - avoid unconstrained fully independent ship control by default
+- [ ] Add command/response latency:
+  - delayed execution of heading/zig-zag orders
+  - class-dependent response lag
+- [ ] Add environment-driven observability:
+  - visibility, sea state, time-of-day effects on detection and attack setup quality
+- [ ] Add hard realism envelopes:
+  - separation floors
+  - turn-rate limits
+  - class-based speed bounds
+  - convoy footprint caps
+- [ ] Add attack timing doctrine:
+  - night surface approach vs day submerged approach modes
+  - mode-specific speed/detection constraints
+- [ ] Add approach-geometry doctrine:
+  - abeam/intercept preference
+  - stern-chase effectiveness penalties where historically appropriate
+- [ ] Add salvo doctrine realism:
+  - bow/stern tube limits
+  - reload delays
+  - partial-salvo decisions
+  - abort behavior
+- [ ] Add weapon-era configuration variants:
+  - straight-run
+  - pattern-running
+  - acoustic torpedoes (era-gated config)
+- [ ] Add escort behavior model:
+  - sector screen assignment
+  - sweep/search behavior
+  - reaction delay after contact
+  - disruption windows after counterattack
+- [ ] Add detection stack model:
+  - visual / radar / sonar / HF-DF probability components
+  - range/weather/light conditioning
+- [ ] Add convoy discipline factors:
+  - blackout/radio-silence effects
+  - zig-zag compliance variability
+  - signaling delays
+- [ ] Add straggler dynamics:
+  - damage/slowdown induced formation dropouts
+  - elevated vulnerability for stragglers
+- [ ] Add sea-room and routing constraints:
+  - lane width / route corridor limits
+  - hazard/chokepoint effects
+- [ ] Add proficiency variability:
+  - attacker and escort skill distributions
+  - aiming/detection/coordination variance
+- [ ] Add persistence/fatigue limits:
+  - battery/fuel/attack-window constraints over long engagements
+- [ ] Add intelligence uncertainty model:
+  - attacker decisions based on partial/noisy belief state
+  - no direct use of full true convoy state for attacker/generative conditioning

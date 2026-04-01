@@ -69,3 +69,4 @@ Tracks *how* each test was produced (not just outcomes), including optimization 
   - Train/eval profile splits matched across baseline and RL.
   - Train/eval seeds matched across baseline and RL.
   - Test 1 is an apples-to-apples comparison.
+
