@@ -9,7 +9,9 @@ from typing import Any
 import numpy as np
 
 from convoy_sim.attack_profiles import DEFAULT_ATTACK_PROFILE_LIBRARY
+from convoy_sim.feasibility import Environment
 from convoy_sim.layouts import make_rectangular_convoy, make_staggered_convoy
+from convoy_sim.noise import NoiseModel
 from convoy_sim.workflows import (
     evaluate_layout_over_profiles,
     git_sha,
@@ -53,6 +55,10 @@ def _layout_from_config(layout_cfg: dict[str, Any]) -> tuple[Any, dict[str, Any]
     return layout_fn, kwargs
 
 
+def _render_layout_kwargs(layout_kwargs: dict[str, Any]) -> dict[str, Any]:
+    return {k: v for k, v in layout_kwargs.items() if k != "ship_movement_realism"}
+
+
 def run_from_config(config: dict[str, Any], *, project_root: Path) -> Path:
     run_cfg = dict(config.get("run", {}))
     sim_cfg = dict(config.get("simulation", {}))
@@ -73,6 +79,17 @@ def run_from_config(config: dict[str, Any], *, project_root: Path) -> Path:
 
     n_trials_per_seed = int(sim_cfg.get("n_trials_per_seed", 50))
     t_max = float(sim_cfg.get("t_max", 400.0))
+    noise_model = NoiseModel.from_dict(dict(sim_cfg.get("noise", {})))
+    env_cfg = dict(sim_cfg.get("environment", {}))
+    env = Environment(
+        time_of_day=str(env_cfg.get("time_of_day", "night")),
+        visibility_m=float(env_cfg.get("visibility_m", 3500.0)),
+        sea_state=int(env_cfg.get("sea_state", 4)),
+        detection_risk_scale=float(env_cfg.get("detection_risk_scale", 1.0)),
+    )
+    ship_movement_realism = dict(sim_cfg.get("ship_movement_realism", {}))
+    if ship_movement_realism:
+        static_layout_kwargs["ship_movement_realism"] = ship_movement_realism
     max_hits_per_torpedo = sim_cfg.get("max_hits_per_torpedo")
     max_hits_per_torpedo = None if max_hits_per_torpedo is None else int(max_hits_per_torpedo)
 
@@ -85,6 +102,8 @@ def run_from_config(config: dict[str, Any], *, project_root: Path) -> Path:
         seeds=eval_seeds,
         n_trials_per_seed=n_trials_per_seed,
         t_max=t_max,
+        noise_model=noise_model,
+        env=env,
         max_hits_per_torpedo=max_hits_per_torpedo,
     )
 
@@ -108,6 +127,8 @@ def run_from_config(config: dict[str, Any], *, project_root: Path) -> Path:
             seeds=train_seeds,
             n_trials_per_seed=n_trials_per_seed,
             t_max=t_max,
+            noise_model=noise_model,
+            env=env,
             max_hits_per_torpedo=max_hits_per_torpedo,
         )
         candidate_summary = summarize_profile_rows(candidate_rows)
@@ -125,6 +146,8 @@ def run_from_config(config: dict[str, Any], *, project_root: Path) -> Path:
         seeds=eval_seeds,
         n_trials_per_seed=n_trials_per_seed,
         t_max=t_max,
+        noise_model=noise_model,
+        env=env,
         max_hits_per_torpedo=max_hits_per_torpedo,
     )
 
@@ -159,8 +182,8 @@ def run_from_config(config: dict[str, Any], *, project_root: Path) -> Path:
     plot_dpi = int(plot_cfg.get("dpi", 150))
     show_plot = bool(plot_cfg.get("show", True))
     figures_dir = run_dir / "figures"
-    static_ships = static_layout_fn(**static_layout_kwargs)
-    heuristic_ships = static_layout_fn(**best_kwargs)
+    static_ships = static_layout_fn(**_render_layout_kwargs(static_layout_kwargs))
+    heuristic_ships = static_layout_fn(**_render_layout_kwargs(best_kwargs))
     static_plot_path = figures_dir / "layout_static.png"
     heuristic_plot_path = figures_dir / "layout_heuristic_best.png"
     static_plot_written = write_layout_plot(
@@ -195,6 +218,17 @@ def run_from_config(config: dict[str, Any], *, project_root: Path) -> Path:
         },
         "n_trials_per_seed": n_trials_per_seed,
         "t_max": t_max,
+        "realism": {
+            "u_boat_mode_default": "moving",
+            "noise_model": noise_model.to_dict(),
+            "environment": {
+                "time_of_day": env.time_of_day,
+                "visibility_m": env.visibility_m,
+                "sea_state": env.sea_state,
+                "detection_risk_scale": env.detection_risk_scale,
+            },
+            "ship_movement_realism_enabled": bool(ship_movement_realism),
+        },
         "layout_plots": {
             "static": str(static_plot_path.relative_to(project_root)) if static_plot_written else None,
             "heuristic_best": str(heuristic_plot_path.relative_to(project_root)) if heuristic_plot_written else None,

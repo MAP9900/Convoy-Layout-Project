@@ -1,6 +1,6 @@
 # TODO
 
-Last updated: 2026-03-30
+Last updated: 2026-04-01
 
 ## Current Workflow (Canonical)
 
@@ -15,25 +15,25 @@ Last updated: 2026-03-30
 
 ## Now
 
-- [ ] Protocol v2 foundation: freeze current stack as V1 baseline/RL reference and start V2 realism track.
-- [ ] Add moving U-boat support (deterministic motion first) with config toggle:
+- [x] Protocol v2 foundation: freeze current stack as V1 baseline/RL reference and start V2 realism track.
+- [x] Add moving U-boat support (deterministic motion first) with config toggle:
   - `u_boat_mode = static | moving`
   - maintain backward compatibility for static profiles.
-- [ ] Define U-boat motion schema in attack profiles:
+- [x] Define U-boat motion schema in attack profiles:
   - initial position/heading/speed
   - leg/waypoint plan
   - launch timing/window fields
   - optional turn-rate / kinematic bounds
-- [ ] Integrate U-boat motion into attack proposal + simulation paths (not just plotting).
-- [ ] Add diagnostics/visuals for U-boat track and launch geometry in canonical debug outputs.
-- [ ] Add tests for motion realism:
+- [x] Integrate U-boat motion into attack proposal + simulation paths (not just plotting).
+- [x] Add diagnostics/visuals for U-boat launch context in canonical run manifests.
+- [x] Add tests for motion realism:
   - deterministic replay under fixed seeds
   - kinematic-feasibility checks
   - regression vs static mode when `u_boat_mode=static`
-- [ ] Re-lock benchmark protocol for V2 after movement integration (new seed/split stamp).
-- [ ] Align eval seeds between baseline and RL for strict apples-to-apples comparison.
-- [ ] Run baseline + RL pair with matched eval seeds.
-- [ ] Record Test 2 in `docs/RESULTS_LOG.md` and `docs/OPTIMIZATION_LOG.md`.
+- [x] Re-lock benchmark protocol for V2 after movement integration (new seed/split stamp).
+- [x] Align eval seeds between baseline and RL for strict apples-to-apples comparison.
+- [x] Run baseline + RL pair with matched eval seeds.
+- [x] Record V2-Realism Test 1 in `docs/RESULTS_LOG.md` and `docs/OPTIMIZATION_LOG.md`.
 - [ ] Define RL promotion threshold (`expected_hits` primary, `CVaR_90` guardrail).
 - [ ] Define GenAI attack-profile dataset schema (context + attack vector + outcomes).
 - [ ] Add reproducible synthetic attack-dataset generation config/script (fixed seeds + manifest metadata).
@@ -72,23 +72,23 @@ Last updated: 2026-03-30
 
 ## Historical Realism Backlog
 
-- [ ] Add bounded station-keeping randomness:
+- [x] Add bounded station-keeping randomness:
   - per-ship positional jitter
   - heading jitter
   - class-dependent cohesion (escort tighter than freighter)
-- [ ] Add torpedo imperfection model:
+- [x] Add torpedo imperfection model:
   - heading error / drift over time (bend-like behavior via controlled error, not arbitrary curves)
   - speed variance
   - dud probability
-  - depth/fuze error proxy
-- [ ] Add ship-movement realism progression:
+  - depth/fuze error proxy (deferred)
+- [x] Add ship-movement realism progression:
   - formation-level motion as primary control
   - limited per-ship deviation overlays (bounded offsets/swap rules)
   - avoid unconstrained fully independent ship control by default
-- [ ] Add command/response latency:
+- [x] Add command/response latency:
   - delayed execution of heading/zig-zag orders
-  - class-dependent response lag
-- [ ] Add environment-driven observability:
+  - class-dependent response lag (future refinement)
+- [x] Add environment-driven observability:
   - visibility, sea state, time-of-day effects on detection and attack setup quality
 - [ ] Add hard realism envelopes:
   - separation floors
@@ -133,6 +133,6 @@ Last updated: 2026-03-30
   - aiming/detection/coordination variance
 - [ ] Add persistence/fatigue limits:
   - battery/fuel/attack-window constraints over long engagements
-- [ ] Add intelligence uncertainty model:
+- [x] Add intelligence uncertainty model:
   - attacker decisions based on partial/noisy belief state
   - no direct use of full true convoy state for attacker/generative conditioning

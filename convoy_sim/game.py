@@ -12,6 +12,7 @@ from convoy_sim.dynamics import ConvoyFormation, ConvoyKinematics
 from convoy_sim.entities import Ship, Torpedo
 from convoy_sim.feasibility import AttackConstraints, Environment
 from convoy_sim.objectives import ObjectiveSpec, defender_loss_from_outcome
+from convoy_sim.realism import ShipMovementRealismConfig, apply_ship_movement_realism
 from convoy_sim.simulation import apply_noise_to_torpedoes, simulate_attack_once_scored
 
 
@@ -28,9 +29,17 @@ class DefenderStrategy:
         threat: ThreatType | None,
         rng: np.random.Generator,
     ) -> tuple[list[Ship], dict[str, Any]]:
+        def _build_ships(action: LayoutAction) -> list[Ship]:
+            realism_cfg = ShipMovementRealismConfig.from_dict(action.layout_kwargs.get("ship_movement_realism"))
+            layout_kwargs = {k: v for k, v in action.layout_kwargs.items() if k != "ship_movement_realism"}
+            ships_local = action.layout_fn(**layout_kwargs)
+            if not realism_cfg.inactive():
+                ships_local = apply_ship_movement_realism(ships_local, rng=rng, cfg=realism_cfg)
+            return ships_local
+
         if self.kind == "layout_action":
             action: LayoutAction = self.payload
-            ships = action.layout_fn(**action.layout_kwargs)
+            ships = _build_ships(action)
             metrics = compute_layout_metrics(ships)
             metrics["complexity_cost"] = float(action.complexity_cost)
             return ships, metrics
@@ -39,7 +48,7 @@ class DefenderStrategy:
             if threat is None:
                 raise ValueError("Threat must be provided for policy strategies")
             action = policy.sample_action(threat, rng)
-            ships = action.layout_fn(**action.layout_kwargs)
+            ships = _build_ships(action)
             metrics = compute_layout_metrics(ships)
             metrics["complexity_cost"] = float(action.complexity_cost)
             return ships, metrics

@@ -11,12 +11,14 @@ class NoiseModel:
 
     sigma_heading_rad: float = 0.0
     sigma_launch_delay: float = 0.0
+    sigma_speed_mps: float = 0.0
     p_dud: float = 0.0
 
     def is_inactive(self) -> bool:
         return (
             self.sigma_heading_rad == 0.0
             and self.sigma_launch_delay == 0.0
+            and self.sigma_speed_mps == 0.0
             and self.p_dud == 0.0
         )
 
@@ -26,6 +28,7 @@ class NoiseModel:
         return {
             "sigma_heading_rad": float(self.sigma_heading_rad),
             "sigma_launch_delay": float(self.sigma_launch_delay),
+            "sigma_speed_mps": float(self.sigma_speed_mps),
             "p_dud": float(self.p_dud),
         }
 
@@ -36,5 +39,6 @@ class NoiseModel:
         return cls(
             sigma_heading_rad=float(payload.get("sigma_heading_rad", 0.0)),
             sigma_launch_delay=float(payload.get("sigma_launch_delay", 0.0)),
+            sigma_speed_mps=float(payload.get("sigma_speed_mps", 0.0)),
             p_dud=float(payload.get("p_dud", 0.0)),
         )

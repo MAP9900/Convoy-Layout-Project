@@ -70,3 +70,32 @@ Tracks *how* each test was produced (not just outcomes), including optimization 
   - Train/eval seeds matched across baseline and RL.
   - Test 1 is an apples-to-apples comparison.
 
+## V2-Realism Test 1 - Baseline vs RL (2026-04-01)
+
+### Run References
+
+- Baseline run dir: `results/runs/baseline/20260401_203150_baseline_test1`
+- RL run dir: `results/runs/rl/20260401_203331_rl_test1`
+- Results summary: see `docs/RESULTS_LOG.md` (V2-Realism Test 1)
+
+### Protocol/Realism Stamp
+
+- Protocol track: `V2-Realism` active; `V1` frozen as historical reference.
+- `u_boat_mode` default: `moving` (static retained for compatibility checks only).
+- Torpedo realism enabled: heading noise, launch-delay noise, speed variance, dud probability.
+- Included movement realism: bounded station-keeping jitter + class-dependent cohesion + bounded per-ship deviation overlay.
+- Included attacker input realism: partial observability (noisy bearing/range/course/speed/contact estimate + environment context).
+- Explicitly excluded in this phase: depth-fuze proxy.
+
+### Config Stamp (from run manifests)
+
+- Noise: `sigma_heading_rad=0.01`, `sigma_launch_delay=0.05`, `sigma_speed_mps=0.25`, `p_dud=0.02`
+- Environment: `time_of_day=night`, `visibility_m=3500`, `sea_state=4`, `detection_risk_scale=1.0`
+- Ship movement realism enabled: `true`
+- Train seeds: `[1939, 1940, 1941]`
+- Eval seeds: `[1942, 1943, 1944]`
+
+### Compatibility Check
+
+- Static U-boat compatibility verified in test coverage:
+  - `tests/test_realism_v2.py::test_static_mode_profile_compatibility_in_workflow_eval`

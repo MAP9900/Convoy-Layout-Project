@@ -105,6 +105,8 @@ def test_run_baseline_suite_writes_canonical_artifacts(tmp_path: Path) -> None:
     manifest = _read_json(run_dir / "run_manifest.json")
     _assert_manifest_common(manifest)
     assert manifest["workflow"] == "baseline"
+    assert "realism" in manifest
+    assert manifest["realism"]["u_boat_mode_default"] == "moving"
 
 
 def test_run_rl_train_writes_canonical_artifacts_and_checkpoint(tmp_path: Path) -> None:
@@ -177,3 +179,5 @@ def test_run_rl_train_writes_canonical_artifacts_and_checkpoint(tmp_path: Path) 
     _assert_manifest_common(manifest)
     assert manifest["workflow"] == "rl"
     assert "episodes" in manifest
+    assert "realism" in manifest
+    assert manifest["realism"]["u_boat_mode_default"] == "moving"

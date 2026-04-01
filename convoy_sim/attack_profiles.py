@@ -12,6 +12,7 @@ import numpy as np
 from convoy_sim.attackers import fan_spread, parallel_spread
 from convoy_sim.entities import Ship, Torpedo
 from convoy_sim.feasibility import AttackConstraints, Environment
+from convoy_sim.realism import AttackerObservationConfig, UBoatMotionPlan, build_attacker_observation
 
 
 SpreadMode = Literal["fan", "parallel"]
@@ -78,6 +79,22 @@ class AttackProfile:
     launch_delay_s: float = 0.0
     salvo_interval_s: float = 0.0
 
+    # V2 realism: moving U-boat is default.
+    u_boat_mode: Literal["moving", "static"] = "moving"
+    u_boat_initial_heading_rad: float = 0.0
+    u_boat_initial_speed_mps: float = 2.0
+    u_boat_launch_time_s: float = 0.0
+    u_boat_turn_rate_limit_rad_s: float | None = None
+    u_boat_accel_limit_mps2: float | None = None
+    u_boat_motion_legs: tuple[tuple[float, float, float], ...] = ()
+
+    # Partial-observability noise (attacker-facing context only).
+    obs_bearing_sigma_rad: float = 0.04
+    obs_range_sigma_m: float = 120.0
+    obs_heading_sigma_rad: float = 0.06
+    obs_speed_sigma_mps: float = 0.5
+    obs_contact_count_sigma: float = 0.4
+
     def __post_init__(self) -> None:
         object.__setattr__(self, "u_pos", _vec2_tuple(self.u_pos))
         #Checks
@@ -105,6 +122,10 @@ class AttackProfile:
             raise ValueError(
                 f"salvo_interval_s must be finite and in [{_MIN_SALVO_INTERVAL}, {_MAX_SALVO_INTERVAL}]"
             )
+        if self.u_boat_mode not in {"moving", "static"}:
+            raise ValueError("u_boat_mode must be 'moving' or 'static'")
+        if self.u_boat_launch_time_s < 0.0:
+            raise ValueError("u_boat_launch_time_s must be >= 0")
         if self.mode == "fan":
             if not np.isfinite(self.base_bearing_rad) or not _MIN_BEARING_RAD <= self.base_bearing_rad <= _MAX_BEARING_RAD:
                 raise ValueError(
@@ -133,37 +154,87 @@ class AttackProfile:
     ) -> list[Torpedo]:
         """Instantiate torpedoes from this profile using sim-native samplers."""
 
+        motion_plan = UBoatMotionPlan(
+            initial_position=np.asarray(self.u_pos, dtype=float),
+            initial_heading_rad=float(self.u_boat_initial_heading_rad),
+            initial_speed_mps=float(self.u_boat_initial_speed_mps),
+            mode=str(self.u_boat_mode),
+            legs=(),
+            launch_time_s=float(self.u_boat_launch_time_s),
+            turn_rate_limit_rad_s=self.u_boat_turn_rate_limit_rad_s,
+            accel_limit_mps2=self.u_boat_accel_limit_mps2,
+        )
+        if self.u_boat_motion_legs:
+            motion_payload = {
+                "mode": self.u_boat_mode,
+                "initial_position": list(self.u_pos),
+                "initial_heading_rad": self.u_boat_initial_heading_rad,
+                "initial_speed_mps": self.u_boat_initial_speed_mps,
+                "launch_time_s": self.u_boat_launch_time_s,
+                "turn_rate_limit_rad_s": self.u_boat_turn_rate_limit_rad_s,
+                "accel_limit_mps2": self.u_boat_accel_limit_mps2,
+                "legs": [
+                    {"duration_s": float(a), "heading_rad": float(b), "speed_mps": float(c)}
+                    for (a, b, c) in self.u_boat_motion_legs
+                ],
+            }
+            motion_plan = UBoatMotionPlan.from_dict(motion_payload, fallback_u_pos=self.u_pos)
+
+        observed_context = None
+        if ships is not None:
+            obs_cfg = AttackerObservationConfig(
+                bearing_sigma_rad=float(self.obs_bearing_sigma_rad),
+                range_sigma_m=float(self.obs_range_sigma_m),
+                heading_sigma_rad=float(self.obs_heading_sigma_rad),
+                speed_sigma_mps=float(self.obs_speed_sigma_mps),
+                contact_count_sigma=float(self.obs_contact_count_sigma),
+            )
+            observed_context = build_attacker_observation(
+                ships=ships,
+                u_boat_pos=motion_plan.launch_position(),
+                env=env,
+                rng=rng,
+                cfg=obs_cfg,
+            )
+        observed_bearing = (
+            float(observed_context["estimated_bearing_rad"])
+            if isinstance(observed_context, dict) and "estimated_bearing_rad" in observed_context
+            else None
+        )
+
         if self.mode == "fan":
             torpedoes = fan_spread(
-                u_pos=np.asarray(self.u_pos, dtype=float),
-                base_bearing_rad=float(self.base_bearing_rad),
+                u_pos=motion_plan.launch_position(),
+                base_bearing_rad=float(self.base_bearing_rad if observed_bearing is None else observed_bearing),
                 n=int(self.n),
                 spread_rad=float(self.spread_rad),
                 speed=float(self.speed),
                 max_run_time=float(self.max_run_time),
                 ships=ships,
-                proposal_cfg=proposal_cfg,
+                proposal_cfg=_proposal_with_observation(proposal_cfg, observed_context),
                 constraints=constraints,
                 env=env,
                 rng=rng,
             )
         else:
             torpedoes = parallel_spread(
-                u_pos=np.asarray(self.u_pos, dtype=float),
-                bearing_rad=float(self.bearing_rad),
+                u_pos=motion_plan.launch_position(),
+                bearing_rad=float(self.bearing_rad if observed_bearing is None else observed_bearing),
                 n=int(self.n),
                 lateral_spacing=float(self.lateral_spacing),
                 speed=float(self.speed),
                 max_run_time=float(self.max_run_time),
                 ships=ships,
-                proposal_cfg=proposal_cfg,
+                proposal_cfg=_proposal_with_observation(proposal_cfg, observed_context),
                 constraints=constraints,
                 env=env,
                 rng=rng,
             )
 
         for idx, torpedo in enumerate(torpedoes):
-            torpedo.launch_delay = float(self.launch_delay_s + idx * self.salvo_interval_s)
+            torpedo.launch_delay = float(
+                self.u_boat_launch_time_s + self.launch_delay_s + idx * self.salvo_interval_s
+            )
         return torpedoes
 
     def to_dict(self) -> dict[str, Any]:
@@ -182,6 +253,24 @@ class AttackProfile:
             "lateral_spacing": float(self.lateral_spacing),
             "launch_delay_s": float(self.launch_delay_s),
             "salvo_interval_s": float(self.salvo_interval_s),
+            "u_boat_mode": self.u_boat_mode,
+            "u_boat_initial_heading_rad": float(self.u_boat_initial_heading_rad),
+            "u_boat_initial_speed_mps": float(self.u_boat_initial_speed_mps),
+            "u_boat_launch_time_s": float(self.u_boat_launch_time_s),
+            "u_boat_turn_rate_limit_rad_s": (
+                None if self.u_boat_turn_rate_limit_rad_s is None else float(self.u_boat_turn_rate_limit_rad_s)
+            ),
+            "u_boat_accel_limit_mps2": (
+                None if self.u_boat_accel_limit_mps2 is None else float(self.u_boat_accel_limit_mps2)
+            ),
+            "u_boat_motion_legs": [
+                [float(a), float(b), float(c)] for (a, b, c) in self.u_boat_motion_legs
+            ],
+            "obs_bearing_sigma_rad": float(self.obs_bearing_sigma_rad),
+            "obs_range_sigma_m": float(self.obs_range_sigma_m),
+            "obs_heading_sigma_rad": float(self.obs_heading_sigma_rad),
+            "obs_speed_sigma_mps": float(self.obs_speed_sigma_mps),
+            "obs_contact_count_sigma": float(self.obs_contact_count_sigma),
         }
 
     @classmethod
@@ -201,7 +290,48 @@ class AttackProfile:
             lateral_spacing=float(payload.get("lateral_spacing", 0.0)),
             launch_delay_s=float(payload.get("launch_delay_s", 0.0)),
             salvo_interval_s=float(payload.get("salvo_interval_s", 0.0)),
+            u_boat_mode=str(payload.get("u_boat_mode", "moving")),
+            u_boat_initial_heading_rad=float(payload.get("u_boat_initial_heading_rad", 0.0)),
+            u_boat_initial_speed_mps=float(payload.get("u_boat_initial_speed_mps", 2.0)),
+            u_boat_launch_time_s=float(payload.get("u_boat_launch_time_s", 0.0)),
+            u_boat_turn_rate_limit_rad_s=(
+                None
+                if payload.get("u_boat_turn_rate_limit_rad_s") is None
+                else float(payload.get("u_boat_turn_rate_limit_rad_s"))
+            ),
+            u_boat_accel_limit_mps2=(
+                None
+                if payload.get("u_boat_accel_limit_mps2") is None
+                else float(payload.get("u_boat_accel_limit_mps2"))
+            ),
+            u_boat_motion_legs=tuple(
+                (
+                    float(item[0]),
+                    float(item[1]),
+                    float(item[2]),
+                )
+                for item in payload.get("u_boat_motion_legs", [])
+            ),
+            obs_bearing_sigma_rad=float(payload.get("obs_bearing_sigma_rad", 0.04)),
+            obs_range_sigma_m=float(payload.get("obs_range_sigma_m", 120.0)),
+            obs_heading_sigma_rad=float(payload.get("obs_heading_sigma_rad", 0.06)),
+            obs_speed_sigma_mps=float(payload.get("obs_speed_sigma_mps", 0.5)),
+            obs_contact_count_sigma=float(payload.get("obs_contact_count_sigma", 0.4)),
         )
+
+
+def _proposal_with_observation(
+    proposal_cfg: dict[str, Any] | None,
+    observed_context: dict[str, Any] | None,
+) -> dict[str, Any] | None:
+    if proposal_cfg is None and observed_context is None:
+        return None
+    cfg = dict(proposal_cfg or {})
+    if observed_context is not None:
+        metadata = dict(cfg.get("metadata", {}))
+        metadata["attacker_observation"] = observed_context
+        cfg["metadata"] = metadata
+    return cfg
 
 
 @dataclass(frozen=True)

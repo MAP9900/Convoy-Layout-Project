@@ -12,8 +12,10 @@ import numpy as np
 from convoy_sim.attack_profiles import DEFAULT_ATTACK_PROFILE_LIBRARY, AttackProfileLibrary
 from convoy_sim.attackers import fan_spread
 from convoy_sim.defender_policy import LayoutAction, ThreatPrior, ThreatType
+from convoy_sim.feasibility import Environment
 from convoy_sim.game import AttackerStrategy, DefenderStrategy
 from convoy_sim.layouts import make_rectangular_convoy, make_staggered_convoy
+from convoy_sim.noise import NoiseModel
 from convoy_sim.rl_wrapper import RLEpisode
 from convoy_sim.workflows import (
     evaluate_layout_over_profiles,
@@ -61,6 +63,10 @@ def _layout_action_from_cfg(cfg: dict[str, Any]) -> LayoutAction:
     )
 
 
+def _render_layout_kwargs(layout_kwargs: dict[str, Any]) -> dict[str, Any]:
+    return {k: v for k, v in layout_kwargs.items() if k != "ship_movement_realism"}
+
+
 def _train_library(default_library: AttackProfileLibrary, train_ids: list[str]) -> AttackProfileLibrary:
     keep = [profile for profile in default_library.profiles if profile.profile_id in set(train_ids)]
     if not keep:
@@ -86,6 +92,14 @@ def run_from_config(config: dict[str, Any], *, project_root: Path) -> Path:
 
     n_trials_per_seed = int(sim_cfg.get("n_trials_per_seed", 50))
     t_max = float(sim_cfg.get("t_max", 400.0))
+    noise_model = NoiseModel.from_dict(dict(sim_cfg.get("noise", {})))
+    env_cfg = dict(sim_cfg.get("environment", {}))
+    env_profile = Environment(
+        time_of_day=str(env_cfg.get("time_of_day", "night")),
+        visibility_m=float(env_cfg.get("visibility_m", 3500.0)),
+        sea_state=int(env_cfg.get("sea_state", 4)),
+        detection_risk_scale=float(env_cfg.get("detection_risk_scale", 1.0)),
+    )
     max_hits_per_torpedo = sim_cfg.get("max_hits_per_torpedo")
     max_hits_per_torpedo = None if max_hits_per_torpedo is None else int(max_hits_per_torpedo)
 
@@ -93,6 +107,10 @@ def run_from_config(config: dict[str, Any], *, project_root: Path) -> Path:
     actions = [_layout_action_from_cfg(item) for item in action_cfgs]
     if not actions:
         raise ValueError("Config must define at least one RL action")
+    ship_movement_realism = dict(sim_cfg.get("ship_movement_realism", {}))
+    if ship_movement_realism:
+        for action in actions:
+            action.layout_kwargs["ship_movement_realism"] = ship_movement_realism
 
     defenders = [
         DefenderStrategy(name=action.name, kind="layout_action", payload=action)
@@ -121,7 +139,7 @@ def run_from_config(config: dict[str, Any], *, project_root: Path) -> Path:
 
     profile_lib = _train_library(DEFAULT_ATTACK_PROFILE_LIBRARY, train_profile_ids)
 
-    env = RLEpisode(
+    rl_episode = RLEpisode(
         defenders=defenders,
         attackers=[attacker],
         prior=ThreatPrior(probs={ThreatType.ABEAM_FAN: 1.0}),
@@ -131,6 +149,7 @@ def run_from_config(config: dict[str, Any], *, project_root: Path) -> Path:
         sim_params={
             "t_max": t_max,
             "max_hits_per_torpedo": max_hits_per_torpedo,
+            "noise_model": noise_model,
         },
         max_steps=1,
         reward_perspective="defender",
@@ -147,13 +166,13 @@ def run_from_config(config: dict[str, Any], *, project_root: Path) -> Path:
 
     for episode in range(episodes):
         reset_seed = int(train_seeds[episode % len(train_seeds)] + episode)
-        env.reset(seed=reset_seed)
+        rl_episode.reset(seed=reset_seed)
         if choose_rng.random() < epsilon:
             action_idx = int(choose_rng.integers(len(actions)))
         else:
             action_idx = int(np.argmax(q_values))
 
-        _obs, reward, _done, _info = env.step(action_idx, 0)
+        _obs, reward, _done, _info = rl_episode.step(action_idx, 0)
         q_values[action_idx] = q_values[action_idx] + alpha * (float(reward) - q_values[action_idx])
         action_counts[action_idx] += 1
         reward_history.append(float(reward))
@@ -171,6 +190,8 @@ def run_from_config(config: dict[str, Any], *, project_root: Path) -> Path:
         seeds=eval_seeds,
         n_trials_per_seed=n_trials_per_seed,
         t_max=t_max,
+        noise_model=noise_model,
+        env=env_profile,
         max_hits_per_torpedo=max_hits_per_torpedo,
     )
 
@@ -214,7 +235,7 @@ def run_from_config(config: dict[str, Any], *, project_root: Path) -> Path:
     plot_dpi = int(plot_cfg.get("dpi", 150))
     show_plot = bool(plot_cfg.get("show", True))
     figures_dir = run_dir / "figures"
-    selected_ships = best_action.layout_fn(**best_action.layout_kwargs)
+    selected_ships = best_action.layout_fn(**_render_layout_kwargs(best_action.layout_kwargs))
     selected_plot_path = figures_dir / "layout_selected_policy.png"
     selected_plot_written = write_layout_plot(
         ships=selected_ships,
@@ -240,6 +261,17 @@ def run_from_config(config: dict[str, Any], *, project_root: Path) -> Path:
         "n_trials_per_seed": n_trials_per_seed,
         "t_max": t_max,
         "episodes": episodes,
+        "realism": {
+            "u_boat_mode_default": "moving",
+            "noise_model": noise_model.to_dict(),
+            "environment": {
+                "time_of_day": env_profile.time_of_day,
+                "visibility_m": env_profile.visibility_m,
+                "sea_state": env_profile.sea_state,
+                "detection_risk_scale": env_profile.detection_risk_scale,
+            },
+            "ship_movement_realism_enabled": bool(ship_movement_realism),
+        },
         "layout_plots": {
             "selected_policy": str(selected_plot_path.relative_to(project_root)) if selected_plot_written else None,
         },

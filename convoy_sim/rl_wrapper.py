@@ -168,6 +168,7 @@ class RLEpisode:
                 self._rng,
                 constraints=self.constraints,
                 env=self.env,
+                ships=ships,
             )
             noise_model = self.sim_params.get("noise_model")
             if noise_model and not noise_model.is_inactive():

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, replace
+import inspect
 import math
 from typing import Any, Callable, Sequence
 
@@ -14,6 +15,7 @@ from convoy_sim.entities import Ship, ShipClass, Torpedo, torpedo_hits_ship
 from convoy_sim.feasibility import AttackProposal
 from convoy_sim.geometry import Vec2, as_vec, closest_approach_time, distance
 from convoy_sim.noise import NoiseModel
+from convoy_sim.realism import ShipMovementRealismConfig, apply_ship_movement_realism
 from convoy_sim.risk import empirical_cvar, empirical_var
 
 LayoutFn = Callable[..., list[Ship]]
@@ -245,10 +247,17 @@ def run_monte_carlo_attack(
     if n_trials <= 0:
         raise ValueError("n_trials must be positive")
     generator = rng or np.random.default_rng()
+    realism_cfg = ShipMovementRealismConfig.from_dict(layout_kwargs.get("ship_movement_realism"))
+    layout_kwargs_base = {k: v for k, v in layout_kwargs.items() if k != "ship_movement_realism"}
+    sampler_arity = len(inspect.signature(torpedo_sampler).parameters)
     hits = np.zeros(n_trials, dtype=float)
     for idx in range(n_trials):
-        ships = layout_fn(**layout_kwargs)
-        torpedoes = list(torpedo_sampler(generator))
+        ships = layout_fn(**layout_kwargs_base)
+        ships = apply_ship_movement_realism(ships, rng=generator, cfg=realism_cfg)
+        if sampler_arity >= 2:
+            torpedoes = list(torpedo_sampler(generator, ships))
+        else:
+            torpedoes = list(torpedo_sampler(generator))
         if noise_model and not noise_model.is_inactive():
             torpedoes = _apply_noise(torpedoes, noise_model, generator)
         hits[idx] = simulate_attack_once(
@@ -354,11 +363,18 @@ def run_monte_carlo_attack_scored(
     if n_trials <= 0:
         raise ValueError("n_trials must be positive")
     generator = rng or np.random.default_rng()
+    realism_cfg = ShipMovementRealismConfig.from_dict(layout_kwargs.get("ship_movement_realism"))
+    layout_kwargs_base = {k: v for k, v in layout_kwargs.items() if k != "ship_movement_realism"}
+    sampler_arity = len(inspect.signature(torpedo_sampler).parameters)
     hits = np.zeros(n_trials, dtype=float)
     values = np.zeros(n_trials, dtype=float)
     for idx in range(n_trials):
-        ships = layout_fn(**layout_kwargs)
-        torpedoes = list(torpedo_sampler(generator))
+        ships = layout_fn(**layout_kwargs_base)
+        ships = apply_ship_movement_realism(ships, rng=generator, cfg=realism_cfg)
+        if sampler_arity >= 2:
+            torpedoes = list(torpedo_sampler(generator, ships))
+        else:
+            torpedoes = list(torpedo_sampler(generator))
         if noise_model and not noise_model.is_inactive():
             torpedoes = _apply_noise(torpedoes, noise_model, generator)
         scored = simulate_attack_once_scored(
@@ -441,6 +457,9 @@ def apply_noise_to_torpedoes(
         heading = torpedo.heading_rad
         if noise_model.sigma_heading_rad > 0.0:
             heading += rng.normal(0.0, noise_model.sigma_heading_rad)
+        speed = float(torpedo.speed)
+        if noise_model.sigma_speed_mps > 0.0:
+            speed = max(0.01, speed + rng.normal(0.0, noise_model.sigma_speed_mps))
         delay = torpedo.launch_delay
         if noise_model.sigma_launch_delay > 0.0:
             delay = max(0.0, delay + rng.normal(0.0, noise_model.sigma_launch_delay))
@@ -451,6 +470,7 @@ def apply_noise_to_torpedoes(
             replace(
                 torpedo,
                 heading_rad=heading,
+                speed=speed,
                 launch_delay=delay,
                 is_dud=is_dud,
             )

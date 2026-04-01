@@ -72,6 +72,11 @@ def _sample_approach_mode(cfg: dict[str, Any], rng: np.random.Generator) -> Appr
 def _resolve_bearing(cfg: dict[str, Any], u_boat_pos: np.ndarray, target_point: np.ndarray, convoy_heading: float) -> float:
     if "bearing_rad" in cfg:
         return float(cfg["bearing_rad"])
+    metadata = cfg.get("metadata", {})
+    if isinstance(metadata, dict):
+        obs = metadata.get("attacker_observation")
+        if isinstance(obs, dict) and "estimated_bearing_rad" in obs:
+            return float(obs["estimated_bearing_rad"])
     if "bearing_offset_rad" in cfg:
         return float(convoy_heading + cfg["bearing_offset_rad"])
     dx, dy = target_point - u_boat_pos

@@ -62,6 +62,14 @@ from convoy_sim.attack_profiles import (
     make_placeholder_profile_library,
     DEFAULT_ATTACK_PROFILE_LIBRARY,
 )
+from convoy_sim.realism import (
+    AttackerObservationConfig,
+    ShipMovementRealismConfig,
+    UBoatLeg,
+    UBoatMotionPlan,
+    apply_ship_movement_realism,
+    build_attacker_observation,
+)
 
 __all__ = [
     "Vec2",
@@ -124,4 +132,10 @@ __all__ = [
     "make_placeholder_profile",
     "make_placeholder_profile_library",
     "DEFAULT_ATTACK_PROFILE_LIBRARY",
+    "UBoatLeg",
+    "UBoatMotionPlan",
+    "AttackerObservationConfig",
+    "ShipMovementRealismConfig",
+    "build_attacker_observation",
+    "apply_ship_movement_realism",
 ]

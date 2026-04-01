@@ -117,20 +117,23 @@ class ConvoyKinematics:
 
     route: RoutePlan | None = None
     zigzag: ZigZagPlan | None = None
+    command_latency_s: float = 0.0
 
     def convoy_heading_at(self, t: float, base_heading: float) -> float:
         """Return the convoy heading at time ``t`` (rad)."""
 
-        heading = self.route.heading_at(t) if self.route else float(base_heading)
+        t_effective = max(0.0, float(t) - float(self.command_latency_s))
+        heading = self.route.heading_at(t_effective) if self.route else float(base_heading)
         if self.zigzag:
-            heading += self.zigzag.delta_heading_at(t)
+            heading += self.zigzag.delta_heading_at(t_effective)
         return float(heading)
 
     def convoy_speed_at(self, t: float, base_speed: float) -> float:
         """Return the convoy speed at time ``t``."""
 
+        t_effective = max(0.0, float(t) - float(self.command_latency_s))
         if self.route:
-            return self.route.speed_at(t, base_speed)
+            return self.route.speed_at(t_effective, base_speed)
         return float(base_speed)
 
 

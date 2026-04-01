@@ -14,6 +14,8 @@ from typing import Any, Callable
 import numpy as np
 
 from convoy_sim.attack_profiles import AttackProfileLibrary
+from convoy_sim.feasibility import Environment
+from convoy_sim.noise import NoiseModel
 from convoy_sim.risk import empirical_cvar, empirical_var
 from convoy_sim.simulation import run_monte_carlo_attack
 
@@ -142,7 +144,9 @@ def evaluate_layout_over_profiles(
     seeds: list[int],
     n_trials_per_seed: int,
     t_max: float,
-    noise_model: Any | None = None,
+    noise_model: NoiseModel | None = None,
+    env: Environment | None = None,
+    proposal_cfg: dict[str, Any] | None = None,
     max_hits_per_torpedo: int | None = None,
 ) -> list[ProfileEvalRow]:
     lookup = profile_lookup(library)
@@ -156,8 +160,13 @@ def evaluate_layout_over_profiles(
         for seed in seeds:
             rng = np.random.default_rng(int(seed))
 
-            def sampler(generator: np.random.Generator):
-                return profile.build_torpedoes(generator)
+            def sampler(generator: np.random.Generator, ships: list[Any]):
+                return profile.build_torpedoes(
+                    generator,
+                    ships=ships,
+                    proposal_cfg=proposal_cfg,
+                    env=env,
+                )
 
             result = run_monte_carlo_attack(
                 layout_fn=layout_fn,
