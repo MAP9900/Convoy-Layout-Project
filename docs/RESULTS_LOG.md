@@ -27,11 +27,11 @@
 ## V2-Realism Test 1 - Baseline vs RL (2026-04-01)
 
 - Baseline run:
-  - `results/runs/baseline/20260401_203150_baseline_test1`
+  - `results/runs/baseline/20260401_210338_baseline_test1`
   - `static_baseline.expected_hits = 2.5225`
   - `heuristic_baseline.expected_hits = 2.495833333333333` (winner)
 - RL run:
-  - `results/runs/rl/20260401_203331_rl_test1`
+  - `results/runs/rl/20260401_210544_rl_test1`
   - `evaluation.expected_hits = 2.5225`
   - `training.selected_action = staggered_mid`
 

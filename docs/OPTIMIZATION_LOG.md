@@ -74,8 +74,8 @@ Tracks *how* each test was produced (not just outcomes), including optimization 
 
 ### Run References
 
-- Baseline run dir: `results/runs/baseline/20260401_203150_baseline_test1`
-- RL run dir: `results/runs/rl/20260401_203331_rl_test1`
+- Baseline run dir: `results/runs/baseline/20260401_210338_baseline_test1`
+- RL run dir: `results/runs/rl/20260401_210544_rl_test1`
 - Results summary: see `docs/RESULTS_LOG.md` (V2-Realism Test 1)
 
 ### Protocol/Realism Stamp

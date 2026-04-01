@@ -1,6 +1,6 @@
 {
-  "workflow": "baseline",
-  "git_sha": "03fd3013f8a739aceb6cca71da4cd9b2649845ee",
+  "workflow": "rl",
+  "git_sha": "f7282ef2be5933e1c8c081cc8373c6e390e3e87e",
   "profile_splits": {
     "train": [
       "P01",
@@ -51,6 +51,7 @@
   },
   "n_trials_per_seed": 40,
   "t_max": 400.0,
+  "episodes": 300,
   "realism": {
     "u_boat_mode_default": "moving",
     "noise_model": {
@@ -68,7 +69,6 @@
     "ship_movement_realism_enabled": true
   },
   "layout_plots": {
-    "static": null,
-    "heuristic_best": null
+    "selected_policy": "results/runs/rl/20260401_210544_rl_test1/figures/layout_selected_policy.png"
   }
 }
