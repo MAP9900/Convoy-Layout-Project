@@ -23,6 +23,10 @@ Status: active as of 2026-04-01.
 
 - Deterministic U-boat motion plan with optional turn-rate/acceleration bounds.
 - Time-aware launch geometry integration for moving U-boat.
+- Bow-fire launch constraint:
+  - launch direction tied to submarine heading at each torpedo launch time
+  - configurable bow tube arc limit (`max_bow_offset_deg`)
+  - launch point configurable (`center` or `bow`), defaulting to bow-point realism
 - Attacker partial-observability layer (noisy estimated bearing/range/course/speed/contacts + environment).
 - Ship movement realism overlay:
   - bounded position/heading jitter

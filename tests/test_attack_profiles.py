@@ -100,7 +100,9 @@ def test_profile_build_torpedoes_uses_sim_named_fields() -> None:
     rng = np.random.default_rng(0)
     torpedoes = profile.build_torpedoes(rng)
     assert len(torpedoes) == 3
-    assert np.allclose(torpedoes[0].launch_position, np.array([-500.0, 100.0]))
+    # Bow-launch default: launch point is at submarine bow, not center.
+    expected_x = -500.0 + profile.u_boat_initial_speed_mps * profile.launch_delay_s + profile.sub_length_m * 0.5
+    assert np.allclose(torpedoes[0].launch_position, np.array([expected_x, 100.0]))
     assert torpedoes[0].launch_delay == 5.0
     assert torpedoes[1].launch_delay == 7.0
     assert torpedoes[2].launch_delay == 9.0

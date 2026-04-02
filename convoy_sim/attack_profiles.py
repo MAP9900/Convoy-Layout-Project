@@ -42,6 +42,12 @@ def _vec2_tuple(value: Sequence[float] | np.ndarray) -> tuple[float, float]:
     return (float(arr[0]), float(arr[1]))
 
 
+def _wrap_angle_rad(angle: float) -> float:
+    """Wrap angle to [-pi, pi)."""
+
+    return float(np.arctan2(np.sin(angle), np.cos(angle)))
+
+
 @dataclass(frozen=True)
 class AttackProfile:
     """Flat attack profile with parameter names matching the sim samplers.
@@ -87,6 +93,10 @@ class AttackProfile:
     u_boat_turn_rate_limit_rad_s: float | None = None
     u_boat_accel_limit_mps2: float | None = None
     u_boat_motion_legs: tuple[tuple[float, float, float], ...] = ()
+    sub_length_m: float = 67.0
+    sub_beam_m: float = 6.5
+    launch_from: Literal["bow", "center"] = "bow"
+    max_bow_offset_deg: float = 15.0
 
     # Partial-observability noise (attacker-facing context only).
     obs_bearing_sigma_rad: float = 0.04
@@ -126,6 +136,14 @@ class AttackProfile:
             raise ValueError("u_boat_mode must be 'moving' or 'static'")
         if self.u_boat_launch_time_s < 0.0:
             raise ValueError("u_boat_launch_time_s must be >= 0")
+        if self.sub_length_m <= 0.0:
+            raise ValueError("sub_length_m must be > 0")
+        if self.sub_beam_m <= 0.0:
+            raise ValueError("sub_beam_m must be > 0")
+        if self.launch_from not in {"bow", "center"}:
+            raise ValueError("launch_from must be 'bow' or 'center'")
+        if self.max_bow_offset_deg < 0.0:
+            raise ValueError("max_bow_offset_deg must be >= 0")
         if self.mode == "fan":
             if not np.isfinite(self.base_bearing_rad) or not _MIN_BEARING_RAD <= self.base_bearing_rad <= _MAX_BEARING_RAD:
                 raise ValueError(
@@ -199,42 +217,96 @@ class AttackProfile:
                 cfg=obs_cfg,
             )
 
-        # Historical constraint: U-boat fires from bow direction.
-        # Torpedo centerline is tied to submarine heading at launch time.
-        fire_heading_rad = float(launch_heading_rad)
-
+        n_torp = int(self.n)
+        if n_torp <= 0:
+            return []
+        max_bow_offset_rad = float(np.deg2rad(self.max_bow_offset_deg))
         if self.mode == "fan":
-            torpedoes = fan_spread(
-                u_pos=np.asarray(launch_pos, dtype=float),
-                base_bearing_rad=fire_heading_rad,
-                n=int(self.n),
-                spread_rad=float(self.spread_rad),
-                speed=float(self.speed),
-                max_run_time=float(self.max_run_time),
-                ships=ships,
-                proposal_cfg=_proposal_with_observation(proposal_cfg, observed_context),
-                constraints=constraints,
-                env=env,
-                rng=rng,
-            )
+            requested_half_spread = float(self.spread_rad) * 0.5
+            if requested_half_spread > max_bow_offset_rad + 1e-12:
+                raise ValueError(
+                    "spread_rad exceeds bow tube arc limit; lower spread_rad or increase max_bow_offset_deg"
+                )
+            if n_torp == 1 or self.spread_rad == 0.0:
+                rel_offsets = [0.0]
+            else:
+                rel_offsets = [
+                    float(-requested_half_spread + (float(self.spread_rad) * i / (n_torp - 1)))
+                    for i in range(n_torp)
+                ]
         else:
-            torpedoes = parallel_spread(
-                u_pos=np.asarray(launch_pos, dtype=float),
-                bearing_rad=fire_heading_rad,
-                n=int(self.n),
-                lateral_spacing=float(self.lateral_spacing),
-                speed=float(self.speed),
-                max_run_time=float(self.max_run_time),
-                ships=ships,
-                proposal_cfg=_proposal_with_observation(proposal_cfg, observed_context),
-                constraints=constraints,
-                env=env,
-                rng=rng,
-            )
+            rel_offsets = [0.0 for _ in range(n_torp)]
 
-        for idx, torpedo in enumerate(torpedoes):
-            torpedo.launch_delay = float(
-                self.u_boat_launch_time_s + self.launch_delay_s + idx * self.salvo_interval_s
+        proposal_cfg_local = _proposal_with_observation(proposal_cfg, observed_context)
+        if constraints is not None:
+            # Run feasibility proposal once for compatibility, but launch geometry remains
+            # constrained to bow-direction realism below.
+            if self.mode == "fan":
+                _ = fan_spread(
+                    u_pos=np.asarray(launch_pos, dtype=float),
+                    base_bearing_rad=float(launch_heading_rad),
+                    n=n_torp,
+                    spread_rad=float(self.spread_rad),
+                    speed=float(self.speed),
+                    max_run_time=float(self.max_run_time),
+                    ships=ships,
+                    proposal_cfg=proposal_cfg_local,
+                    constraints=constraints,
+                    env=env,
+                    rng=rng,
+                )
+            else:
+                _ = parallel_spread(
+                    u_pos=np.asarray(launch_pos, dtype=float),
+                    bearing_rad=float(launch_heading_rad),
+                    n=n_torp,
+                    lateral_spacing=float(self.lateral_spacing),
+                    speed=float(self.speed),
+                    max_run_time=float(self.max_run_time),
+                    ships=ships,
+                    proposal_cfg=proposal_cfg_local,
+                    constraints=constraints,
+                    env=env,
+                    rng=rng,
+                )
+
+        torpedoes: list[Torpedo] = []
+        for idx in range(n_torp):
+            launch_t = float(self.u_boat_launch_time_s + self.launch_delay_s + idx * self.salvo_interval_s)
+            center_pos, sub_heading, _sub_speed = motion_plan.state_at(launch_t)
+            center_pos = np.asarray(center_pos, dtype=float)
+            sub_heading = float(sub_heading)
+
+            if self.launch_from == "bow":
+                bow_offset = np.asarray([np.cos(sub_heading), np.sin(sub_heading)], dtype=float) * float(self.sub_length_m * 0.5)
+                launch_origin = center_pos + bow_offset
+            else:
+                launch_origin = center_pos
+
+            if self.mode == "fan":
+                rel = float(rel_offsets[idx])
+                rel = float(np.clip(rel, -max_bow_offset_rad, max_bow_offset_rad))
+                torp_heading = _wrap_angle_rad(sub_heading + rel)
+                torp_launch = launch_origin
+                torp_id = f"F{idx + 1:02d}"
+            else:
+                rel = 0.0
+                torp_heading = _wrap_angle_rad(sub_heading)
+                # Keep parallel spacing by offsetting launch points perpendicular to heading.
+                perp = np.asarray([-np.sin(sub_heading), np.cos(sub_heading)], dtype=float)
+                center = (n_torp - 1) / 2.0
+                torp_launch = launch_origin + perp * ((idx - center) * float(self.lateral_spacing))
+                torp_id = f"P{idx + 1:02d}"
+
+            torpedoes.append(
+                Torpedo(
+                    id=torp_id,
+                    launch_position=np.asarray(torp_launch, dtype=float),
+                    speed=float(self.speed),
+                    heading_rad=float(torp_heading),
+                    max_run_time=float(self.max_run_time),
+                    launch_delay=float(launch_t),
+                )
             )
         return torpedoes
 
@@ -267,6 +339,10 @@ class AttackProfile:
             "u_boat_motion_legs": [
                 [float(a), float(b), float(c)] for (a, b, c) in self.u_boat_motion_legs
             ],
+            "sub_length_m": float(self.sub_length_m),
+            "sub_beam_m": float(self.sub_beam_m),
+            "launch_from": self.launch_from,
+            "max_bow_offset_deg": float(self.max_bow_offset_deg),
             "obs_bearing_sigma_rad": float(self.obs_bearing_sigma_rad),
             "obs_range_sigma_m": float(self.obs_range_sigma_m),
             "obs_heading_sigma_rad": float(self.obs_heading_sigma_rad),
@@ -313,6 +389,10 @@ class AttackProfile:
                 )
                 for item in payload.get("u_boat_motion_legs", [])
             ),
+            sub_length_m=float(payload.get("sub_length_m", 67.0)),
+            sub_beam_m=float(payload.get("sub_beam_m", 6.5)),
+            launch_from=str(payload.get("launch_from", "bow")),
+            max_bow_offset_deg=float(payload.get("max_bow_offset_deg", 15.0)),
             obs_bearing_sigma_rad=float(payload.get("obs_bearing_sigma_rad", 0.04)),
             obs_range_sigma_m=float(payload.get("obs_range_sigma_m", 120.0)),
             obs_heading_sigma_rad=float(payload.get("obs_heading_sigma_rad", 0.06)),

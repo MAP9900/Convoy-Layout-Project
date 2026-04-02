@@ -102,7 +102,7 @@ Last updated: 2026-04-01
   - abeam/intercept preference
   - stern-chase effectiveness penalties where historically appropriate
 - [ ] Add salvo doctrine realism:
-  - bow/stern tube limits
+  - bow/stern tube limits (bow-only launch + bow-arc constraint implemented; stern/reload doctrine pending)
   - reload delays
   - partial-salvo decisions
   - abort behavior
