@@ -2,6 +2,8 @@
 
 Status: active as of 2026-04-01.
 
+Primary technical reference: `docs/SIM_FEATURES.md`.
+
 ## Boundary
 
 - `Protocol V1` is frozen as reference behavior.

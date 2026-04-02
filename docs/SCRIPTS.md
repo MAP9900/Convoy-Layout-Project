@@ -2,6 +2,9 @@
 
 Current complete index of files in the repository, grouped by purpose.
 
+Primary simulation feature reference:
+- `docs/SIM_FEATURES.md`
+
 ## Canonical Workflows
 
 - Baseline: `python -m experiments.run_baseline_suite --config configs/baseline/default.toml`
@@ -23,9 +26,6 @@ Current complete index of files in the repository, grouped by purpose.
 ## Root Files
 
 - `README.md` (`canonical`)
-- `PROJECT_GUIDE.md` (`canonical`)
-- `NOTES.md` (`supporting`)
-- `IDEAS.md` (`supporting`)
 - `requirements.txt` (`canonical`)
 - `requirements-dev.txt` (`canonical`)
 - `requirements-ml.txt` (`canonical`)
@@ -36,8 +36,6 @@ Current complete index of files in the repository, grouped by purpose.
 - `configs/templates/rl.template.toml` (`canonical`)
 - `configs/baseline/default.toml` (`canonical`)
 - `configs/rl/default.toml` (`canonical`)
-- `configs/archive/baseline_default_pre_generator_20260326.toml` (`supporting`)
-- `configs/archive/rl_default_pre_generator_20260326.toml` (`supporting`)
 
 ## Experiment Scripts (All)
 
@@ -133,6 +131,7 @@ Current complete index of files in the repository, grouped by purpose.
 ## Notebooks (All)
 
 - `notebooks/attack_profile_tests.ipynb` (`diagnostic`)
+- `notebooks/attack_manual_verification.ipynb` (`diagnostic`)
 
 ## Results Files (Tracked)
 
@@ -148,6 +147,9 @@ Current complete index of files in the repository, grouped by purpose.
 ## Reference Docs
 
 - `docs/TODO.md` (`canonical`)
+- `docs/SIM_FEATURES.md` (`canonical`)
+- `docs/PROTOCOL_V2_REALISM.md` (`canonical`)
+- `docs/NOTES.md` (`supporting`)
 - `docs/RL_PLAN.md` (`canonical`)
 - `docs/Visuals.md` (`supporting`)
 - `docs/RESULTS_LOG.md` (`canonical`)
