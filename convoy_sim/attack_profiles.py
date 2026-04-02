@@ -180,6 +180,8 @@ class AttackProfile:
             }
             motion_plan = UBoatMotionPlan.from_dict(motion_payload, fallback_u_pos=self.u_pos)
 
+        launch_pos, launch_heading_rad, _launch_speed = motion_plan.state_at(float(self.u_boat_launch_time_s))
+
         observed_context = None
         if ships is not None:
             obs_cfg = AttackerObservationConfig(
@@ -191,21 +193,20 @@ class AttackProfile:
             )
             observed_context = build_attacker_observation(
                 ships=ships,
-                u_boat_pos=motion_plan.launch_position(),
+                u_boat_pos=np.asarray(launch_pos, dtype=float),
                 env=env,
                 rng=rng,
                 cfg=obs_cfg,
             )
-        observed_bearing = (
-            float(observed_context["estimated_bearing_rad"])
-            if isinstance(observed_context, dict) and "estimated_bearing_rad" in observed_context
-            else None
-        )
+
+        # Historical constraint: U-boat fires from bow direction.
+        # Torpedo centerline is tied to submarine heading at launch time.
+        fire_heading_rad = float(launch_heading_rad)
 
         if self.mode == "fan":
             torpedoes = fan_spread(
-                u_pos=motion_plan.launch_position(),
-                base_bearing_rad=float(self.base_bearing_rad if observed_bearing is None else observed_bearing),
+                u_pos=np.asarray(launch_pos, dtype=float),
+                base_bearing_rad=fire_heading_rad,
                 n=int(self.n),
                 spread_rad=float(self.spread_rad),
                 speed=float(self.speed),
@@ -218,8 +219,8 @@ class AttackProfile:
             )
         else:
             torpedoes = parallel_spread(
-                u_pos=motion_plan.launch_position(),
-                bearing_rad=float(self.bearing_rad if observed_bearing is None else observed_bearing),
+                u_pos=np.asarray(launch_pos, dtype=float),
+                bearing_rad=fire_heading_rad,
                 n=int(self.n),
                 lateral_spacing=float(self.lateral_spacing),
                 speed=float(self.speed),

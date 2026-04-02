@@ -105,6 +105,35 @@ def test_attack_profile_moving_default_and_static_fallback() -> None:
     assert np.isclose(torp_moving.launch_delay, 100.0)
 
 
+def test_attack_profile_enforces_bow_fire_direction() -> None:
+    profile = AttackProfile(
+        profile_id="PX3",
+        name="bow_fire",
+        mode="fan",
+        u_pos=(-2000.0, 0.0),
+        n=3,
+        speed=15.0,
+        max_run_time=200.0,
+        base_bearing_rad=2.5,  # should be ignored by bow-fire constraint
+        spread_rad=0.1,
+        u_boat_mode="moving",
+        u_boat_initial_heading_rad=0.4,
+        u_boat_initial_speed_mps=2.0,
+        u_boat_launch_time_s=50.0,
+    )
+    plan = UBoatMotionPlan(
+        initial_position=np.array(profile.u_pos, dtype=float),
+        initial_heading_rad=profile.u_boat_initial_heading_rad,
+        initial_speed_mps=profile.u_boat_initial_speed_mps,
+        mode=profile.u_boat_mode,
+        launch_time_s=profile.u_boat_launch_time_s,
+    )
+    _pos, launch_heading, _speed = plan.state_at(profile.u_boat_launch_time_s)
+    torps = profile.build_torpedoes(np.random.default_rng(1), ships=_ships(), env=Environment("night", 3000.0, 4))
+    headings = np.array([t.heading_rad for t in torps], dtype=float)
+    assert np.isclose(np.mean(headings), launch_heading, atol=1e-6)
+
+
 def test_partial_observation_is_reproducible() -> None:
     env = Environment(time_of_day="night", visibility_m=3500.0, sea_state=4)
     cfg = AttackerObservationConfig()
