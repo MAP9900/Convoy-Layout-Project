@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import json
-from typing import Any, Literal
+from typing import Any, Callable, Literal
 
 import numpy as np
 from pathlib import Path
@@ -294,6 +294,7 @@ def render_attack_frame(
     figure_facecolor: str | None = None,
     show_u_boat: bool = False,
     u_boat_position: np.ndarray | None = None,
+    u_boat_position_fn: Callable[[float], np.ndarray] | None = None,
     u_boat_marker: str = "o",
     u_boat_color: str = "#111111",
     u_boat_size: float = 45.0,
@@ -405,7 +406,11 @@ def render_attack_frame(
         )
 
     if show_u_boat and torpedoes:
-        if u_boat_position is None:
+        if u_boat_position_fn is not None:
+            u_pos = np.asarray(u_boat_position_fn(float(t_global)), dtype=float)
+            if u_pos.shape != (2,):
+                raise ValueError("u_boat_position_fn(t) must return shape (2,)")
+        elif u_boat_position is None:
             inferred = np.array([torpedo.launch_position for torpedo in torpedoes], dtype=float)
             u_pos = np.mean(inferred, axis=0)
         else:
