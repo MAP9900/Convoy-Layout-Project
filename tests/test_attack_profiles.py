@@ -1,5 +1,6 @@
 """Tests for attack profile schema and library sampling."""
 
+import math
 import numpy as np
 import pytest
 
@@ -100,9 +101,33 @@ def test_profile_build_torpedoes_uses_sim_named_fields() -> None:
     rng = np.random.default_rng(0)
     torpedoes = profile.build_torpedoes(rng)
     assert len(torpedoes) == 3
-    # Bow-launch default: launch point is at submarine bow, not center.
-    expected_x = -500.0 + profile.u_boat_initial_speed_mps * profile.launch_delay_s + profile.sub_length_m * 0.5
-    assert np.allclose(torpedoes[0].launch_position, np.array([expected_x, 100.0]))
+    # Legacy-bearing compatibility: absent explicit sub heading, the profile's
+    # requested bearing becomes the U-boat heading used for bow-origin launch.
+    launch_t = profile.launch_delay_s
+    launch_center = np.array(profile.u_pos, dtype=float) + np.array(
+        [
+            math.cos(profile.base_bearing_rad) * profile.u_boat_initial_speed_mps * launch_t,
+            math.sin(profile.base_bearing_rad) * profile.u_boat_initial_speed_mps * launch_t,
+        ]
+    )
+    bow_offset = np.array(
+        [
+            math.cos(profile.base_bearing_rad) * profile.sub_length_m * 0.5,
+            math.sin(profile.base_bearing_rad) * profile.sub_length_m * 0.5,
+        ]
+    )
+    assert np.allclose(torpedoes[0].launch_position, launch_center + bow_offset)
     assert torpedoes[0].launch_delay == 5.0
     assert torpedoes[1].launch_delay == 7.0
     assert torpedoes[2].launch_delay == 9.0
+    headings = np.array([torp.heading_rad for torp in torpedoes], dtype=float)
+    assert np.isclose(np.mean(headings), profile.base_bearing_rad, atol=1e-6)
+
+
+def test_default_library_p01_uses_profile_bearing_as_attack_intent() -> None:
+    profile = next(p for p in DEFAULT_ATTACK_PROFILE_LIBRARY.profiles if p.profile_id == "P01")
+    torpedoes = profile.build_torpedoes(np.random.default_rng(0))
+    headings = np.array([torp.heading_rad for torp in torpedoes], dtype=float)
+    mean_heading = float(np.arctan2(np.mean(np.sin(headings)), np.mean(np.cos(headings))))
+    expected = float(np.arctan2(np.sin(profile.base_bearing_rad), np.cos(profile.base_bearing_rad)))
+    assert np.isclose(mean_heading, expected, atol=1e-3)

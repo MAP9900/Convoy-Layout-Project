@@ -161,6 +161,27 @@ class AttackProfile:
                     f"lateral_spacing must be finite and in [{_MIN_LATERAL_SPACING}, {_MAX_LATERAL_SPACING}]"
                 )
 
+    def requested_attack_bearing_rad(self) -> float:
+        """Return the profile's intended shot axis in world coordinates."""
+
+        if self.mode == "fan":
+            return float(self.base_bearing_rad)
+        return float(self.bearing_rad)
+
+    def uses_legacy_bearing_compat(self) -> bool:
+        """Return whether the profile should auto-align the sub to legacy bearing intent.
+
+        Older profiles encoded attack geometry primarily through `base_bearing_rad`
+        / `bearing_rad` and often left the U-boat heading at the default `0.0`.
+        Treat those profiles as legacy and derive a coherent heading from the
+        intended attack axis unless explicit motion/heading data is present.
+        """
+
+        return (
+            not self.u_boat_motion_legs
+            and abs(_wrap_angle_rad(float(self.u_boat_initial_heading_rad))) <= 1e-12
+        )
+
     def build_torpedoes(
         self,
         rng: np.random.Generator,
@@ -172,9 +193,14 @@ class AttackProfile:
     ) -> list[Torpedo]:
         """Instantiate torpedoes from this profile using sim-native samplers."""
 
+        requested_bearing_rad = self.requested_attack_bearing_rad()
+        initial_heading_rad = float(self.u_boat_initial_heading_rad)
+        if self.uses_legacy_bearing_compat():
+            initial_heading_rad = requested_bearing_rad
+
         motion_plan = UBoatMotionPlan(
             initial_position=np.asarray(self.u_pos, dtype=float),
-            initial_heading_rad=float(self.u_boat_initial_heading_rad),
+            initial_heading_rad=initial_heading_rad,
             initial_speed_mps=float(self.u_boat_initial_speed_mps),
             mode=str(self.u_boat_mode),
             legs=(),
@@ -186,7 +212,7 @@ class AttackProfile:
             motion_payload = {
                 "mode": self.u_boat_mode,
                 "initial_position": list(self.u_pos),
-                "initial_heading_rad": self.u_boat_initial_heading_rad,
+                "initial_heading_rad": initial_heading_rad,
                 "initial_speed_mps": self.u_boat_initial_speed_mps,
                 "launch_time_s": self.u_boat_launch_time_s,
                 "turn_rate_limit_rad_s": self.u_boat_turn_rate_limit_rad_s,
@@ -223,10 +249,6 @@ class AttackProfile:
         max_bow_offset_rad = float(np.deg2rad(self.max_bow_offset_deg))
         if self.mode == "fan":
             requested_half_spread = float(self.spread_rad) * 0.5
-            if requested_half_spread > max_bow_offset_rad + 1e-12:
-                raise ValueError(
-                    "spread_rad exceeds bow tube arc limit; lower spread_rad or increase max_bow_offset_deg"
-                )
             if n_torp == 1 or self.spread_rad == 0.0:
                 rel_offsets = [0.0]
             else:
@@ -244,7 +266,7 @@ class AttackProfile:
             if self.mode == "fan":
                 _ = fan_spread(
                     u_pos=np.asarray(launch_pos, dtype=float),
-                    base_bearing_rad=float(launch_heading_rad),
+                    base_bearing_rad=float(requested_bearing_rad),
                     n=n_torp,
                     spread_rad=float(self.spread_rad),
                     speed=float(self.speed),
@@ -258,7 +280,7 @@ class AttackProfile:
             else:
                 _ = parallel_spread(
                     u_pos=np.asarray(launch_pos, dtype=float),
-                    bearing_rad=float(launch_heading_rad),
+                    bearing_rad=float(requested_bearing_rad),
                     n=n_torp,
                     lateral_spacing=float(self.lateral_spacing),
                     speed=float(self.speed),
@@ -276,6 +298,7 @@ class AttackProfile:
             center_pos, sub_heading, _sub_speed = motion_plan.state_at(launch_t)
             center_pos = np.asarray(center_pos, dtype=float)
             sub_heading = float(sub_heading)
+            centerline_rel = _wrap_angle_rad(float(requested_bearing_rad) - sub_heading)
 
             if self.launch_from == "bow":
                 bow_offset = np.asarray([np.cos(sub_heading), np.sin(sub_heading)], dtype=float) * float(self.sub_length_m * 0.5)
@@ -284,14 +307,20 @@ class AttackProfile:
                 launch_origin = center_pos
 
             if self.mode == "fan":
-                rel = float(rel_offsets[idx])
-                rel = float(np.clip(rel, -max_bow_offset_rad, max_bow_offset_rad))
+                rel = float(centerline_rel + rel_offsets[idx])
+                if abs(rel) > max_bow_offset_rad + 1e-12:
+                    raise ValueError(
+                        "requested fan bearing exceeds bow tube arc limit; adjust sub heading/motion or widen max_bow_offset_deg"
+                    )
                 torp_heading = _wrap_angle_rad(sub_heading + rel)
                 torp_launch = launch_origin
                 torp_id = f"F{idx + 1:02d}"
             else:
-                rel = 0.0
-                torp_heading = _wrap_angle_rad(sub_heading)
+                if abs(centerline_rel) > max_bow_offset_rad + 1e-12:
+                    raise ValueError(
+                        "requested parallel bearing exceeds bow tube arc limit; adjust sub heading/motion or widen max_bow_offset_deg"
+                    )
+                torp_heading = _wrap_angle_rad(sub_heading + centerline_rel)
                 # Keep parallel spacing by offsetting launch points perpendicular to heading.
                 perp = np.asarray([-np.sin(sub_heading), np.cos(sub_heading)], dtype=float)
                 center = (n_torp - 1) / 2.0

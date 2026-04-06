@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import numpy as np
+import pytest
 
 from convoy_sim.attack_profiles import AttackProfile
 from convoy_sim.attack_profiles import AttackProfileLibrary
@@ -114,7 +115,7 @@ def test_attack_profile_enforces_bow_fire_direction() -> None:
         n=3,
         speed=15.0,
         max_run_time=200.0,
-        base_bearing_rad=2.5,  # should be ignored by bow-fire constraint
+        base_bearing_rad=0.45,
         spread_rad=0.1,
         u_boat_mode="moving",
         u_boat_initial_heading_rad=0.4,
@@ -131,7 +132,28 @@ def test_attack_profile_enforces_bow_fire_direction() -> None:
     _pos, launch_heading, _speed = plan.state_at(profile.u_boat_launch_time_s)
     torps = profile.build_torpedoes(np.random.default_rng(1), ships=_ships(), env=Environment("night", 3000.0, 4))
     headings = np.array([t.heading_rad for t in torps], dtype=float)
-    assert np.isclose(np.mean(headings), launch_heading, atol=1e-6)
+    assert np.isclose(np.mean(headings), profile.base_bearing_rad, atol=1e-6)
+    assert np.all(np.abs(headings - launch_heading) <= np.deg2rad(profile.max_bow_offset_deg) + 1e-6)
+
+
+def test_attack_profile_rejects_requested_bearing_outside_bow_arc() -> None:
+    profile = AttackProfile(
+        profile_id="PX3B",
+        name="bow_fire_invalid",
+        mode="fan",
+        u_pos=(-2000.0, 0.0),
+        n=3,
+        speed=15.0,
+        max_run_time=200.0,
+        base_bearing_rad=2.5,
+        spread_rad=0.1,
+        u_boat_mode="moving",
+        u_boat_initial_heading_rad=0.4,
+        u_boat_initial_speed_mps=2.0,
+        u_boat_launch_time_s=50.0,
+    )
+    with pytest.raises(ValueError, match="bow tube arc limit"):
+        profile.build_torpedoes(np.random.default_rng(1), ships=_ships(), env=Environment("night", 3000.0, 4))
 
 
 def test_attack_profile_bow_launch_point_and_per_shot_heading_updates() -> None:
@@ -143,6 +165,7 @@ def test_attack_profile_bow_launch_point_and_per_shot_heading_updates() -> None:
         n=3,
         speed=15.0,
         max_run_time=200.0,
+        base_bearing_rad=0.2,
         spread_rad=0.2,
         launch_delay_s=0.0,
         salvo_interval_s=10.0,
