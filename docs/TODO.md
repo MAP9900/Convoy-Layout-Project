@@ -1,6 +1,6 @@
 # TODO
 
-Last updated: 2026-04-01
+Last updated: 2026-04-06
 
 ## Current Workflow (Canonical)
 
@@ -90,6 +90,13 @@ Last updated: 2026-04-01
   - class-dependent response lag (future refinement)
 - [x] Add environment-driven observability:
   - visibility, sea state, time-of-day effects on detection and attack setup quality
+- [x] Add U-boat firing discipline realism:
+  - default salvo rejection while the boat is materially turning
+  - explicit override available for controlled counterfactual scenarios
+- [x] Add gyro-angle torpedo spread model:
+  - torpedo exits on bow heading
+  - short straight run before gyro deflection
+  - fan spread preserved as per-torpedo final-course setting
 - [ ] Add hard realism envelopes:
   - separation floors
   - turn-rate limits

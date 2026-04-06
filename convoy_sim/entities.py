@@ -99,7 +99,7 @@ class Ship:
 
 @dataclass
 class Torpedo:
-    """Straight-running torpedo simplified to a 2D kinematic track."""
+    """Torpedo track with optional gyro deflection after tube exit."""
 
     id: str
     launch_position: Vec2
@@ -108,16 +108,56 @@ class Torpedo:
     max_run_time: float
     launch_delay: float = 0.0
     is_dud: bool = False
+    launch_heading_rad: float | None = None
+    gyro_turn_distance_m: float = 0.0
 
     def __post_init__(self) -> None:
         self.launch_position = _vec(self.launch_position)
         self.launch_delay = max(0.0, float(self.launch_delay))
+        if self.launch_heading_rad is not None:
+            self.launch_heading_rad = float(self.launch_heading_rad)
+        self.gyro_turn_distance_m = max(0.0, float(self.gyro_turn_distance_m))
 
-    def velocity_vec(self) -> Vec2:
-        """Return the constant torpedo velocity vector."""
+    def initial_heading_rad(self) -> float:
+        """Return the heading used as the torpedo leaves the tube."""
 
-        vx = math.cos(self.heading_rad) * self.speed
-        vy = math.sin(self.heading_rad) * self.speed
+        if self.launch_heading_rad is None:
+            return float(self.heading_rad)
+        return float(self.launch_heading_rad)
+
+    def uses_gyro_turn(self) -> bool:
+        """Return whether this torpedo follows a two-segment gyro path."""
+
+        if self.launch_heading_rad is None or self.gyro_turn_distance_m <= 0.0:
+            return False
+        delta = math.atan2(
+            math.sin(float(self.heading_rad) - float(self.launch_heading_rad)),
+            math.cos(float(self.heading_rad) - float(self.launch_heading_rad)),
+        )
+        return abs(delta) > 1e-12
+
+    def active_run_duration_s(self) -> float:
+        """Return time available for post-launch motion under current semantics."""
+
+        return max(0.0, float(self.max_run_time) - float(self.launch_delay))
+
+    def gyro_turn_time_s(self) -> float:
+        """Return absolute time when the gyro deflection is applied."""
+
+        if not self.uses_gyro_turn() or self.speed <= 0.0:
+            return float(self.launch_delay)
+        straight_run_s = float(self.gyro_turn_distance_m) / float(self.speed)
+        straight_run_s = min(straight_run_s, self.active_run_duration_s())
+        return float(self.launch_delay + straight_run_s)
+
+    def velocity_vec(self, time_s: float | None = None) -> Vec2:
+        """Return the torpedo velocity vector for the requested phase."""
+
+        heading = float(self.heading_rad)
+        if time_s is not None and self.uses_gyro_turn() and time_s < self.gyro_turn_time_s():
+            heading = self.initial_heading_rad()
+        vx = math.cos(heading) * self.speed
+        vy = math.sin(heading) * self.speed
         return as_vec(vx, vy)
 
     def position_at(self, time_s: float) -> Vec2:
@@ -125,8 +165,74 @@ class Torpedo:
 
         if time_s <= self.launch_delay:
             return self.launch_position
-        effective_t = min(time_s - self.launch_delay, max(0.0, self.max_run_time - self.launch_delay))
-        return step_position(self.launch_position, self.velocity_vec(), effective_t)
+        effective_t = min(time_s - self.launch_delay, self.active_run_duration_s())
+        if not self.uses_gyro_turn():
+            return step_position(self.launch_position, self.velocity_vec(), effective_t)
+
+        straight_run_s = min(
+            float(self.gyro_turn_distance_m) / max(float(self.speed), 1e-12),
+            self.active_run_duration_s(),
+        )
+        if effective_t <= straight_run_s:
+            return step_position(self.launch_position, self.velocity_vec(self.launch_delay), effective_t)
+
+        turn_position = step_position(
+            self.launch_position,
+            self.velocity_vec(self.launch_delay),
+            straight_run_s,
+        )
+        return step_position(turn_position, self.velocity_vec(self.gyro_turn_time_s()), effective_t - straight_run_s)
+
+    def motion_segments(self, t_end: float) -> list[tuple[float, float, Vec2, Vec2]]:
+        """Return absolute-time motion segments up to ``t_end``.
+
+        Each segment is `(start_t, end_t, start_pos, velocity_vec)`.
+        """
+
+        window_end = min(float(t_end), float(self.max_run_time))
+        if window_end <= 0.0:
+            return []
+
+        segments: list[tuple[float, float, Vec2, Vec2]] = []
+        delay_end = min(window_end, float(self.launch_delay))
+        if delay_end > 0.0:
+            segments.append((0.0, delay_end, self.launch_position, as_vec(0.0, 0.0)))
+        if window_end <= float(self.launch_delay):
+            return segments
+
+        if not self.uses_gyro_turn():
+            segments.append(
+                (
+                    float(self.launch_delay),
+                    window_end,
+                    self.launch_position,
+                    self.velocity_vec(),
+                )
+            )
+            return segments
+
+        turn_time = min(self.gyro_turn_time_s(), window_end)
+        launch_velocity = self.velocity_vec(self.launch_delay)
+        if turn_time > float(self.launch_delay):
+            segments.append(
+                (
+                    float(self.launch_delay),
+                    float(turn_time),
+                    self.launch_position,
+                    launch_velocity,
+                )
+            )
+        if window_end > turn_time:
+            turn_position = self.position_at(turn_time)
+            segments.append(
+                (
+                    float(turn_time),
+                    window_end,
+                    turn_position,
+                    self.velocity_vec(turn_time),
+                )
+            )
+        return segments
 
     def time_to_intercept(self, ship: Ship) -> float:
         """Return time-to-intercept with ``ship`` if on a collision course."""
@@ -182,45 +288,53 @@ class Convoy:
         }
 
 
-def torpedo_hits_ship(ship: Ship, torpedo: Torpedo, t_max: float, safety_margin: float = 0.0) -> bool:
-    """Return True if the torpedo track intersects the ship footprint within ``t_max`` seconds.
+def _earliest_entry_time(
+    relative_pos: Vec2,
+    relative_vel: Vec2,
+    radius: float,
+    duration_s: float,
+) -> float | None:
+    """Return earliest local time when distance falls within ``radius``."""
 
-    The ship is approximated as a circle whose radius equals half the greater
-    of ``length`` and ``beam`` plus an optional ``safety_margin`` in meters.
-    """
+    radius_sq = float(radius) * float(radius)
+    c = float(np.dot(relative_pos, relative_pos) - radius_sq)
+    if c <= 0.0:
+        return 0.0
+    a = float(np.dot(relative_vel, relative_vel))
+    if a <= 1e-12:
+        return None
+    b = 2.0 * float(np.dot(relative_pos, relative_vel))
+    disc = b * b - 4.0 * a * c
+    if disc < 0.0:
+        return None
+    sqrt_disc = math.sqrt(disc)
+    t0 = (-b - sqrt_disc) / (2.0 * a)
+    t1 = (-b + sqrt_disc) / (2.0 * a)
+    if t1 < 0.0 or t0 > duration_s:
+        return None
+    return float(max(0.0, t0))
 
-    if t_max <= 0 or torpedo.is_dud:
-        return False
-    window = min(float(t_max), float(torpedo.max_run_time))
+
+def torpedo_hit_time(ship: Ship, torpedo: Torpedo, t_max: float, safety_margin: float = 0.0) -> float | None:
+    """Return earliest hit time if torpedo track intersects ship within ``t_max``."""
+
+    if t_max <= 0.0 or torpedo.is_dud:
+        return None
     ship_radius = ship.effective_hit_radius() + float(safety_margin)
-    segments = []
-    delay = min(torpedo.launch_delay, window)
-    if delay > 0.0:
-        segments.append(
-            min_distance_over_interval(
-                ship.position,
-                ship.velocity_vec(),
-                torpedo.launch_position,
-                as_vec(0.0, 0.0),
-                0.0,
-                delay,
-            )
-        )
-    remaining = max(0.0, window - torpedo.launch_delay)
-    if remaining > 0.0:
-        ship_start = ship.position_at(torpedo.launch_delay)
-        torp_start = torpedo.position_at(torpedo.launch_delay)
-        segments.append(
-            min_distance_over_interval(
-                ship_start,
-                ship.velocity_vec(),
-                torp_start,
-                torpedo.velocity_vec(),
-                0.0,
-                remaining,
-            )
-        )
-    if not segments:
-        return False
-    min_dist = min(segments)
-    return min_dist <= ship_radius
+    for start_t, end_t, torp_start, torp_velocity in torpedo.motion_segments(float(t_max)):
+        duration = float(end_t - start_t)
+        if duration <= 0.0:
+            continue
+        ship_start = ship.position_at(start_t)
+        rel_pos = np.asarray(torp_start, dtype=float) - np.asarray(ship_start, dtype=float)
+        rel_vel = np.asarray(torp_velocity, dtype=float) - np.asarray(ship.velocity_vec(), dtype=float)
+        hit_local_t = _earliest_entry_time(rel_pos, rel_vel, ship_radius, duration)
+        if hit_local_t is not None:
+            return float(start_t + hit_local_t)
+    return None
+
+
+def torpedo_hits_ship(ship: Ship, torpedo: Torpedo, t_max: float, safety_margin: float = 0.0) -> bool:
+    """Return True if the torpedo track intersects the ship footprint within ``t_max`` seconds."""
+
+    return torpedo_hit_time(ship, torpedo, t_max, safety_margin=safety_margin) is not None

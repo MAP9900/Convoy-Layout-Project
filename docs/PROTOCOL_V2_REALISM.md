@@ -26,9 +26,16 @@ Primary technical reference: `docs/SIM_FEATURES.md`.
 - Deterministic U-boat motion plan with optional turn-rate/acceleration bounds.
 - Time-aware launch geometry integration for moving U-boat.
 - Bow-fire launch constraint:
-  - launch direction tied to submarine heading at each torpedo launch time
+  - launch position tied to submarine heading at each torpedo launch time
   - configurable bow tube arc limit (`max_bow_offset_deg`)
   - launch point configurable (`center` or `bow`), defaulting to bow-point realism
+- Gyro-angle torpedo logic:
+  - torpedo exits along the submarine bow heading
+  - after a short straight run, it turns to a preset final course
+  - fan spread is now produced by per-torpedo gyro deflection rather than forcing the submarine to yaw through the spread
+- Firing-stability constraint:
+  - U-boat salvos are rejected by default if the boat is materially turning during the firing window
+  - opt-out remains available for explicit what-if or backward-compatibility scenarios
 - Attacker partial-observability layer (noisy estimated bearing/range/course/speed/contacts + environment).
 - Ship movement realism overlay:
   - bounded position/heading jitter

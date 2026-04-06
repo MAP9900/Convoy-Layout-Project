@@ -132,8 +132,10 @@ def test_attack_profile_enforces_bow_fire_direction() -> None:
     _pos, launch_heading, _speed = plan.state_at(profile.u_boat_launch_time_s)
     torps = profile.build_torpedoes(np.random.default_rng(1), ships=_ships(), env=Environment("night", 3000.0, 4))
     headings = np.array([t.heading_rad for t in torps], dtype=float)
+    launch_headings = np.array([t.initial_heading_rad() for t in torps], dtype=float)
     assert np.isclose(np.mean(headings), profile.base_bearing_rad, atol=1e-6)
-    assert np.all(np.abs(headings - launch_heading) <= np.deg2rad(profile.max_bow_offset_deg) + 1e-6)
+    assert np.allclose(launch_headings, launch_heading)
+    assert np.all(np.abs(launch_headings - launch_heading) <= np.deg2rad(profile.max_bow_offset_deg) + 1e-6)
 
 
 def test_attack_profile_rejects_requested_bearing_outside_bow_arc() -> None:
@@ -197,8 +199,34 @@ def test_attack_profile_bow_launch_point_and_per_shot_heading_updates() -> None:
         center_pos, heading, _speed = plan.state_at(launch_t)
         bow = center_pos + np.array([np.cos(heading), np.sin(heading)], dtype=float) * (profile.sub_length_m * 0.5)
         assert np.allclose(np.asarray(torp.launch_position, dtype=float), bow, atol=1e-6)
-        rel = np.arctan2(np.sin(torp.heading_rad - heading), np.cos(torp.heading_rad - heading))
-        assert abs(float(np.degrees(rel))) <= profile.max_bow_offset_deg + 1e-6
+        assert np.isclose(torp.initial_heading_rad(), heading, atol=1e-6)
+        rel = np.arctan2(np.sin(torp.heading_rad - profile.base_bearing_rad), np.cos(torp.heading_rad - profile.base_bearing_rad))
+        assert abs(float(np.degrees(rel))) <= np.degrees(profile.spread_rad * 0.5) + 1e-6
+
+
+def test_attack_profile_allows_turning_salvo_when_stability_constraint_disabled() -> None:
+    profile = AttackProfile(
+        profile_id="PX4B",
+        name="turning_salvo_allowed",
+        mode="fan",
+        u_pos=(-1000.0, 0.0),
+        n=2,
+        speed=15.0,
+        max_run_time=200.0,
+        base_bearing_rad=0.3,
+        spread_rad=0.0,
+        salvo_interval_s=5.0,
+        u_boat_mode="moving",
+        u_boat_initial_heading_rad=0.0,
+        u_boat_initial_speed_mps=2.0,
+        u_boat_launch_time_s=20.0,
+        u_boat_turn_rate_limit_rad_s=0.02,
+        u_boat_motion_legs=((100.0, 0.5, 2.0),),
+        require_stable_u_boat_during_salvo=False,
+    )
+    torps = profile.build_torpedoes(np.random.default_rng(3), ships=_ships(), env=Environment("night", 3000.0, 4))
+    launch_headings = [torp.initial_heading_rad() for torp in torps]
+    assert launch_headings[1] > launch_headings[0]
 
 
 def test_partial_observation_is_reproducible() -> None:

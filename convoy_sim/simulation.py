@@ -11,7 +11,7 @@ import numpy as np
 
 from convoy_sim.attackers import fan_spread, parallel_spread
 from convoy_sim.dynamics import ConvoyFormation, ConvoyKinematics, ship_positions_at, validate_dt
-from convoy_sim.entities import Ship, ShipClass, Torpedo, torpedo_hits_ship
+from convoy_sim.entities import Ship, ShipClass, Torpedo, torpedo_hit_time, torpedo_hits_ship
 from convoy_sim.feasibility import AttackProposal
 from convoy_sim.geometry import Vec2, as_vec, closest_approach_time, distance
 from convoy_sim.noise import NoiseModel
@@ -487,46 +487,9 @@ def _apply_noise(
 
 
 def _earliest_hit_time(ship: Ship, torpedo: Torpedo, t_max: float) -> float | None:
-    """Return the earliest time-of-closest-approach within range, or None."""
+    """Return the earliest hit time within range, or None."""
 
-    if t_max <= 0.0 or torpedo.is_dud:
-        return None
-    window = min(float(t_max), float(torpedo.max_run_time))
-    ship_radius = max(ship.length, ship.beam) * 0.5
-
-    delay = min(torpedo.launch_delay, window)
-    earliest: float | None = None
-
-    if delay > 0.0:
-        t_closest = closest_approach_time(
-            ship.position,
-            ship.velocity_vec(),
-            torpedo.launch_position,
-            as_vec(0.0, 0.0),
-        )
-        t_closest = float(np.clip(t_closest, 0.0, delay))
-        ship_pos = ship.position_at(t_closest)
-        if distance(ship_pos, torpedo.launch_position) <= ship_radius:
-            earliest = t_closest
-
-    remaining = max(0.0, window - torpedo.launch_delay)
-    if remaining > 0.0:
-        ship_start = ship.position_at(torpedo.launch_delay)
-        torp_start = torpedo.position_at(torpedo.launch_delay)
-        t_closest = closest_approach_time(
-            ship_start,
-            ship.velocity_vec(),
-            torp_start,
-            torpedo.velocity_vec(),
-        )
-        t_closest = float(np.clip(t_closest, 0.0, remaining))
-        ship_pos = ship.position_at(torpedo.launch_delay + t_closest)
-        torp_pos = torpedo.position_at(torpedo.launch_delay + t_closest)
-        if distance(ship_pos, torp_pos) <= ship_radius:
-            candidate = torpedo.launch_delay + t_closest
-            earliest = candidate if earliest is None else min(earliest, candidate)
-
-    return earliest
+    return torpedo_hit_time(ship, torpedo, t_max)
 
 
 @dataclass

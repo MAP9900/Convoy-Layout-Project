@@ -121,13 +121,66 @@ def test_profile_build_torpedoes_uses_sim_named_fields() -> None:
     assert torpedoes[1].launch_delay == 7.0
     assert torpedoes[2].launch_delay == 9.0
     headings = np.array([torp.heading_rad for torp in torpedoes], dtype=float)
+    launch_headings = np.array([torp.initial_heading_rad() for torp in torpedoes], dtype=float)
     assert np.isclose(np.mean(headings), profile.base_bearing_rad, atol=1e-6)
+    assert np.allclose(launch_headings, profile.base_bearing_rad)
+    assert all(np.isclose(torp.gyro_turn_distance_m, profile.gyro_straight_run_m) for torp in torpedoes)
 
 
 def test_default_library_p01_uses_profile_bearing_as_attack_intent() -> None:
     profile = next(p for p in DEFAULT_ATTACK_PROFILE_LIBRARY.profiles if p.profile_id == "P01")
     torpedoes = profile.build_torpedoes(np.random.default_rng(0))
     headings = np.array([torp.heading_rad for torp in torpedoes], dtype=float)
+    launch_headings = np.array([torp.initial_heading_rad() for torp in torpedoes], dtype=float)
     mean_heading = float(np.arctan2(np.mean(np.sin(headings)), np.mean(np.cos(headings))))
     expected = float(np.arctan2(np.sin(profile.base_bearing_rad), np.cos(profile.base_bearing_rad)))
     assert np.isclose(mean_heading, expected, atol=1e-3)
+    assert np.allclose(launch_headings, profile.u_boat_initial_heading_rad)
+
+
+def test_default_library_profiles_no_longer_depend_on_legacy_bearing_compat() -> None:
+    assert all(not profile.uses_legacy_bearing_compat() for profile in DEFAULT_ATTACK_PROFILE_LIBRARY.profiles)
+
+
+def test_profile_rejects_turning_u_boat_during_salvo_by_default() -> None:
+    profile = AttackProfile(
+        profile_id="PTURN",
+        name="turning_salvo",
+        mode="fan",
+        u_pos=(-1000.0, 0.0),
+        n=2,
+        speed=15.0,
+        max_run_time=200.0,
+        base_bearing_rad=0.3,
+        spread_rad=0.1,
+        salvo_interval_s=5.0,
+        u_boat_mode="moving",
+        u_boat_initial_heading_rad=0.0,
+        u_boat_initial_speed_mps=2.0,
+        u_boat_launch_time_s=20.0,
+        u_boat_turn_rate_limit_rad_s=0.02,
+        u_boat_motion_legs=((100.0, 0.5, 2.0),),
+    )
+    with pytest.raises(ValueError, match="turning during torpedo launch|heading changes during the firing window"):
+        profile.build_torpedoes(np.random.default_rng(1))
+
+
+def test_fan_spread_width_is_preserved_as_final_gyro_deflection() -> None:
+    profile = AttackProfile(
+        profile_id="PGYRO",
+        name="gyro_spread",
+        mode="fan",
+        u_pos=(-1000.0, 0.0),
+        n=4,
+        speed=15.0,
+        max_run_time=200.0,
+        base_bearing_rad=0.3,
+        spread_rad=0.24,
+        u_boat_initial_heading_rad=0.3,
+    )
+    torpedoes = profile.build_torpedoes(np.random.default_rng(4))
+    final_headings = np.array([torpedo.heading_rad for torpedo in torpedoes], dtype=float)
+    launch_headings = np.array([torpedo.initial_heading_rad() for torpedo in torpedoes], dtype=float)
+    width = float(final_headings.max() - final_headings.min())
+    assert np.isclose(width, profile.spread_rad, atol=1e-9)
+    assert np.allclose(launch_headings, profile.u_boat_initial_heading_rad)

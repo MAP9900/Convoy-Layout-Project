@@ -1,6 +1,6 @@
 # Simulation Features Reference
 
-Last updated: 2026-04-02
+Last updated: 2026-04-06
 
 This is the central technical reference for the convoy simulation stack.
 It is intended to be the single place to answer:
@@ -21,7 +21,7 @@ The project models WWII-style convoy defense against torpedo attacks on a 2D Euc
 - Coordinates: meters
 - Time: seconds
 - Heading: radians (unless explicitly converted to degrees for reporting)
-- Kinematics: deterministic straight-line torpedoes + convoy-level route/zig-zag motion abstractions
+- Kinematics: deterministic torpedoes with optional gyro-deflection two-segment tracks + convoy-level route/zig-zag motion abstractions
 
 ### 1.2 Design Priorities
 
@@ -113,10 +113,14 @@ Each torpedo includes:
 - `id`, `launch_position`, `speed`, `heading_rad`, `max_run_time`
 - `launch_delay`
 - `is_dud`
+- optional `launch_heading_rad`
+- optional `gyro_turn_distance_m`
 
 Behavior:
-- straight-running after launch delay
-- fixed heading/speed after launch (no active guidance model yet)
+- waits at `launch_position` until `launch_delay`
+- leaves the tube on `launch_heading_rad` when provided, otherwise on `heading_rad`
+- after `gyro_turn_distance_m`, snaps to final `heading_rad`
+- remains fixed-speed/fixed-course after the gyro deflection (no active guidance model)
 
 ## 4.3 Ship Class Catalog
 
@@ -240,16 +244,42 @@ Fields include:
 ## 8.3 Bow-Launch Realism (Current)
 
 Current launch geometry behavior:
-- launch direction is tied to sub heading at each torpedo’s launch time
+- launch position is tied to sub heading at each torpedo’s launch time
 - launch origin defaults to bow point (`launch_from="bow"`)
-- bow tube arc constrained by `max_bow_offset_deg`
-- if fan spread exceeds arc, profile build raises error
-- per-torpedo launch time updates heading/position when sub maneuvers between shots
+- centerline attack intent must remain within `max_bow_offset_deg` of the submarine heading
+- per-torpedo launch time updates launch position and bow heading when the submarine maneuvers between shots
+- fan spread is now expressed through torpedo gyro deflection, not by rotating the submarine between shots
 
 Additional launch geometry fields:
 - `sub_length_m`, `sub_beam_m`
 - `launch_from = bow|center`
 - `max_bow_offset_deg`
+- `gyro_straight_run_m`
+
+## 8.4 U-Boat Firing Stability And Gyro Logic
+
+The simulator now separates three distinct concepts:
+- U-boat pose and bow heading at launch time
+- intended attack centerline in world coordinates
+- each torpedo's final post-gyro course
+
+Source-of-truth order:
+1. `UBoatMotionPlan.state_at(t)` determines the submarine center position and bow heading at each torpedo launch time.
+2. `launch_from` determines whether torpedoes originate from the submarine center or bow point.
+3. `base_bearing_rad` / `bearing_rad` defines the intended attack centerline.
+4. `spread_rad` defines final torpedo fan width around that centerline.
+5. Each torpedo leaves on the bow heading, travels straight for `gyro_straight_run_m`, then turns to its own final heading.
+
+Firing-stability doctrine:
+- `require_stable_u_boat_during_salvo = true` by default
+- the submarine is rejected if heading drifts materially across the salvo window
+- the submarine is rejected if finite-difference turn rate at launch exceeds `max_u_boat_turn_rate_at_fire_rad_s`
+- this models the doctrine assumption that torpedoes are fired while the boat is steady, not while the boat is actively swinging through a turn
+
+Implication for profile authoring:
+- `u_boat_initial_heading_rad` and any motion plan should describe how the submarine is pointed when firing starts
+- `spread_rad` no longer requires rotating the submarine or consuming bow-tube arc across the full fan
+- default-library profiles keep their numeric spread values; those values now map to post-launch gyro deflection
 
 ---
 
@@ -286,6 +316,9 @@ Applied in simulation and strategy sampling paths after base layout generation.
 - optional bounded transitions (turn/accel limits)
 - `state_at(t)` and `position_at(t)`
 
+It does not model hydrodynamic turn circles or tube-training mechanics.
+Instead, it provides a deterministic heading/speed/position state that the attack-profile builder samples at each launch time.
+
 ---
 
 ## 10) Noise And Weapon Imperfection
@@ -305,7 +338,7 @@ Applied via `apply_noise_to_torpedoes(...)`:
 Not currently modeled:
 - depth-fuze proxy
 - wake-following/guided behavior
-- torpedo path curvature beyond fixed heading
+- continuous curved torpedo steering beyond a single gyro deflection
 
 ---
 
@@ -418,6 +451,7 @@ Realism integration in RL path:
 `viz_attack.py` supports:
 - frame rendering
 - MP4 export (ffmpeg required)
+- bent torpedo trails when gyro deflection is active
 - trails, hit clipping, marker styling
 - dynamic hit-state overlays
 - optional U-boat rendering

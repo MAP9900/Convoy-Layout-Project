@@ -1,7 +1,8 @@
 """Core package for the Optimal Convoy Layout Project.
 
 The package surfaces a geometry-based simulator for WWII-style convoys and
-straight-running torpedoes on a 2D plane measured in meters.
+torpedoes on a 2D plane measured in meters, including optional gyro deflection
+after launch.
 """
 
 from convoy_sim.geometry import (

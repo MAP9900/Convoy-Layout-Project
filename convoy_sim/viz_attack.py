@@ -8,8 +8,8 @@ from typing import Any, Callable, Literal
 import numpy as np
 from pathlib import Path
 
-from convoy_sim.entities import Ship, ShipClass, Torpedo
-from convoy_sim.geometry import as_vec, closest_approach_time, distance, step_position
+from convoy_sim.entities import Ship, ShipClass, Torpedo, torpedo_hit_time
+from convoy_sim.geometry import as_vec, distance, min_distance_over_interval
 from convoy_sim.viz import plot_convoy_planview
 from convoy_sim.dynamics import ConvoyFormation, ConvoyKinematics, ship_positions_at
 from convoy_sim.simulation import (
@@ -32,6 +32,25 @@ def torpedo_segment(
     p_start = torpedo.position_at(start_t)
     p_end = torpedo.position_at(end_t)
     return p_start, p_end
+
+
+def torpedo_path_points(
+    torpedo: Torpedo,
+    t0: float = 0.0,
+    t1: float | None = None,
+) -> np.ndarray:
+    """Return polyline points for the torpedo path over the requested window."""
+
+    start_t = float(max(0.0, t0))
+    end_t = float(torpedo.max_run_time if t1 is None else min(t1, torpedo.max_run_time))
+    if end_t < start_t:
+        return np.empty((0, 2), dtype=float)
+    sample_times = [start_t, end_t]
+    turn_t = torpedo.gyro_turn_time_s()
+    if torpedo.uses_gyro_turn() and start_t < turn_t < end_t:
+        sample_times.insert(1, float(turn_t))
+    points = [np.asarray(torpedo.position_at(t), dtype=float) for t in dict.fromkeys(sample_times)]
+    return np.asarray(points, dtype=float)
 
 
 def torpedo_position_at_global_time(torpedo: Torpedo, t_global: float) -> np.ndarray:
@@ -84,43 +103,28 @@ def min_miss_distance_ship_torpedo(
         positions = np.array([torpedo.position_at(t) for t in times], dtype=float)
         dists = np.linalg.norm(positions - ship.position, axis=1)
         return float(np.min(dists))
-    t_star = closest_approach_time(
-        ship.position,
-        as_vec(0.0, 0.0),
-        torpedo.launch_position,
-        torpedo.velocity_vec(),
-    )
-    t_star = float(np.clip(t_star, 0.0, window))
-    torp_pos = torpedo.position_at(t_star)
-    return distance(ship.position, torp_pos)
+    min_dist = float("inf")
+    for start_t, end_t, torp_start, torp_velocity in torpedo.motion_segments(window):
+        duration = float(end_t - start_t)
+        if duration <= 0.0:
+            continue
+        ship_start = ship.position_at(start_t)
+        dist = min_distance_over_interval(
+            ship_start,
+            ship.velocity_vec(),
+            torp_start,
+            torp_velocity,
+            0.0,
+            duration,
+        )
+        min_dist = min(min_dist, float(dist))
+    return min_dist
 
 
 def _earliest_static_hit_time(ship: Ship, torpedo: Torpedo, t_max: float) -> float | None:
     """Return earliest hit time for a stationary ship, or None."""
 
-    if t_max <= 0.0 or torpedo.is_dud:
-        return None
-    window = min(float(t_max), float(torpedo.max_run_time) + float(torpedo.launch_delay))
-    if window <= float(torpedo.launch_delay):
-        return None
-    ship_pos = ship.position
-    ship_radius = ship.effective_hit_radius()
-    launch_time = float(torpedo.launch_delay)
-    torp_start = torpedo.position_at(launch_time)
-    if distance(ship_pos, torp_start) <= ship_radius:
-        return launch_time
-    remaining = window - launch_time
-    t_closest = closest_approach_time(
-        ship_pos,
-        as_vec(0.0, 0.0),
-        torp_start,
-        torpedo.velocity_vec(),
-    )
-    t_closest = float(np.clip(t_closest, 0.0, remaining))
-    torp_pos = torpedo.position_at(launch_time + t_closest)
-    if distance(ship_pos, torp_pos) <= ship_radius:
-        return launch_time + t_closest
-    return None
+    return torpedo_hit_time(ship, torpedo, t_max)
 
 
 def attack_debug_metrics(
@@ -227,11 +231,13 @@ def plot_attack_planview(
         info = hit_info.get(torpedo.id, {})
         hit_time = info.get("hit_time")
         t_end = float(t_max) if hit_time is None else float(hit_time)
-        p0, p1 = torpedo_segment(torpedo, t0=0.0, t1=t_end)
+        path = torpedo_path_points(torpedo, t0=0.0, t1=t_end)
+        if path.size == 0:
+            continue
         hit = hit_time is not None
         ax.plot(
-            [p0[0], p1[0]],
-            [p0[1], p1[1]],
+            path[:, 0],
+            path[:, 1],
             color="red" if hit else miss_color,
             linewidth=1.5 if hit else 1.0,
             alpha=float(ray_alpha),
@@ -259,8 +265,10 @@ def plot_attack_planview(
         misses.sort(key=lambda x: x[0])
         for dist, torp_id in misses[: max(0, int(miss_k))]:
             torpedo = next(t for t in torpedoes if t.id == torp_id)
-            p0, p1 = torpedo_segment(torpedo, t0=0.0, t1=t_max)
-            ax.annotate(f"{dist:.1f}m", (p1[0], p1[1]), fontsize=8, color="gray")
+            path = torpedo_path_points(torpedo, t0=0.0, t1=t_max)
+            if path.size > 0:
+                p_last = path[-1]
+                ax.annotate(f"{dist:.1f}m", (p_last[0], p_last[1]), fontsize=8, color="gray")
 
     return ax
 
@@ -394,11 +402,12 @@ def render_attack_frame(
             t_end = min(t_end, float(hit_state.torpedo_hit_times[torpedo.id]))
             if t_end <= t_start:
                 continue
-        p0 = torpedo_position_at_global_time(torpedo, t_start)
-        p1 = torpedo_position_at_global_time(torpedo, t_end)
+        path = torpedo_path_points(torpedo, t0=t_start, t1=t_end)
+        if path.size == 0:
+            continue
         ax.plot(
-            [p0[0], p1[0]],
-            [p0[1], p1[1]],
+            path[:, 0],
+            path[:, 1],
             color=trail_color,
             linewidth=float(trail_linewidth),
             alpha=float(trail_alpha),
