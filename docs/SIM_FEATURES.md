@@ -232,6 +232,7 @@ Profile supports:
 - timing controls: launch delay + salvo interval
 - U-boat motion controls
 - partial-observation noise controls
+- explicit fan spread doctrine controls
 
 `fire_control.py` provides a deterministic attacker-side baseline that can turn noisy observation into a resolved `AttackProfile`.
 
@@ -270,7 +271,7 @@ Source-of-truth order:
 1. `UBoatMotionPlan.state_at(t)` determines the submarine center position and bow heading at each torpedo launch time.
 2. `launch_from` determines whether torpedoes originate from the submarine center or bow point.
 3. `base_bearing_rad` / `bearing_rad` defines the intended attack centerline.
-4. `spread_rad` defines final torpedo fan width around that centerline.
+4. fan-mode doctrine determines how per-torpedo final heading offsets are assigned around that centerline.
 5. Each torpedo leaves on the bow heading, travels straight for `gyro_straight_run_m`, then turns to its own final heading.
 
 Firing-stability doctrine:
@@ -282,11 +283,35 @@ Firing-stability doctrine:
 Implication for profile authoring:
 - `u_boat_initial_heading_rad` and any motion plan should describe how the submarine is pointed when firing starts
 - `spread_rad` no longer requires rotating the submarine or consuming bow-tube arc across the full fan
-- default-library profiles keep their numeric spread values; those values now map to post-launch gyro deflection
+- `spread_rad` is specifically the total fan width for `uniform_divergent`, not the universal spread mechanism
+- default-library profiles keep their numeric spread values; those values now map to post-launch gyro deflection under `uniform_divergent`
 
-## 8.5 Fire Control Lite Baseline
+## 8.5 Fan Spread Doctrines
+
+Fan-mode attack profiles now support three explicit doctrines:
+
+- `longitudinal`
+  - all torpedoes share the same final heading
+  - spacing comes only from launch timing, submarine motion, and bow-origin geometry
+- `uniform_divergent`
+  - preserves the historical simulator behavior
+  - per-torpedo final headings are evenly spaced across total fan width `spread_rad`
+- `explicit_divergent`
+  - uses `per_torpedo_heading_offsets_rad`
+  - each torpedo gets an explicitly authored final offset from the centerline
+
+Backward compatibility:
+- legacy fan profiles with `spread_rad > 0` behave as `uniform_divergent`
+- legacy fan profiles with `spread_rad == 0` behave as `longitudinal`
+- existing serialized profiles remain valid without adding new fields
+## 8.6 Fire Control Lite Baseline
 
 `fire_control.py` implements a deterministic attacker-side firing solution baseline.
+
+Role in the stack:
+- `build_attacker_observation(...)` produces the attacker-facing estimate of convoy state
+- `fire_control.py` consumes that estimate and turns it into a firing solution
+- it does not replace the observation layer and it does not generate observation noise itself
 
 Inputs:
 - U-boat position
@@ -320,6 +345,10 @@ Boundary:
   - future GenAI attack-distribution conditioning
   - eventual attacker-side baseline comparison
 
+Conceptual split from partial observability:
+- partial observability = sensing / information model
+- `fire_control_lite` = firing-decision / solution model
+
 ---
 
 ## 9) Realism Overlays (`realism.py`)
@@ -335,6 +364,15 @@ Boundary:
 - observation quality sigmas
 
 This context can be passed into proposal metadata and consumed by bearing-resolution logic.
+
+Role in the stack:
+- starts from true convoy state
+- applies uncertainty to produce what the attacker thinks it sees
+- does not choose aimpoint, spread, gyro offsets, or torpedo speed setting
+
+Relationship to `fire_control_lite`:
+- partial observability answers: "what does the attacker know?"
+- `fire_control_lite` answers: "given that estimate, how does the attacker shoot?"
 
 ## 9.2 Ship Movement Realism Overlay
 

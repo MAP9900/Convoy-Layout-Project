@@ -16,6 +16,7 @@ from convoy_sim.realism import AttackerObservationConfig, UBoatMotionPlan, build
 
 
 SpreadMode = Literal["fan", "parallel"]
+SpreadDoctrine = Literal["longitudinal", "uniform_divergent", "explicit_divergent"]
 
 _MIN_TORPEDO_COUNT = 1
 _MAX_TORPEDO_COUNT = 10
@@ -56,7 +57,10 @@ class AttackProfile:
     - mode, u_pos, n, speed, max_run_time
 
     fan mode params:
-    - base_bearing_rad, spread_rad
+    - base_bearing_rad
+    - spread_doctrine
+    - spread_rad (total fan width for `uniform_divergent`)
+    - per_torpedo_heading_offsets_rad (used by `explicit_divergent`)
 
     parallel mode params:
     - bearing_rad, lateral_spacing
@@ -78,6 +82,8 @@ class AttackProfile:
 
     base_bearing_rad: float = 0.0
     spread_rad: float = 0.0
+    spread_doctrine: SpreadDoctrine = "uniform_divergent"
+    per_torpedo_heading_offsets_rad: tuple[float, ...] = ()
 
     bearing_rad: float = 0.0
     lateral_spacing: float = 0.0
@@ -155,12 +161,25 @@ class AttackProfile:
         if self.max_u_boat_heading_drift_during_salvo_deg < 0.0:
             raise ValueError("max_u_boat_heading_drift_during_salvo_deg must be >= 0")
         if self.mode == "fan":
+            if self.spread_doctrine not in {"longitudinal", "uniform_divergent", "explicit_divergent"}:
+                raise ValueError("spread_doctrine must be 'longitudinal', 'uniform_divergent', or 'explicit_divergent'")
             if not np.isfinite(self.base_bearing_rad) or not _MIN_BEARING_RAD <= self.base_bearing_rad <= _MAX_BEARING_RAD:
                 raise ValueError(
                     f"base_bearing_rad must be finite and in [{_MIN_BEARING_RAD}, {_MAX_BEARING_RAD}]"
                 )
             if not np.isfinite(self.spread_rad) or not _MIN_SPREAD_RAD <= self.spread_rad <= _MAX_SPREAD_RAD:
                 raise ValueError(f"spread_rad must be finite and in [{_MIN_SPREAD_RAD}, {_MAX_SPREAD_RAD}]")
+            if any(not np.isfinite(float(offset)) for offset in self.per_torpedo_heading_offsets_rad):
+                raise ValueError("per_torpedo_heading_offsets_rad entries must be finite")
+            if self.spread_doctrine == "explicit_divergent":
+                if not self.per_torpedo_heading_offsets_rad:
+                    raise ValueError("explicit_divergent doctrine requires per_torpedo_heading_offsets_rad")
+                if len(self.per_torpedo_heading_offsets_rad) != int(self.n):
+                    raise ValueError("per_torpedo_heading_offsets_rad length must match n")
+            elif self.per_torpedo_heading_offsets_rad:
+                raise ValueError(
+                    "per_torpedo_heading_offsets_rad is only valid with spread_doctrine='explicit_divergent'"
+                )
         else:
             if not np.isfinite(self.bearing_rad) or not _MIN_BEARING_RAD <= self.bearing_rad <= _MAX_BEARING_RAD:
                 raise ValueError(
@@ -170,6 +189,8 @@ class AttackProfile:
                 raise ValueError(
                     f"lateral_spacing must be finite and in [{_MIN_LATERAL_SPACING}, {_MAX_LATERAL_SPACING}]"
                 )
+            if self.per_torpedo_heading_offsets_rad:
+                raise ValueError("per_torpedo_heading_offsets_rad is only supported for fan mode")
 
     def requested_attack_bearing_rad(self) -> float:
         """Return the profile's intended shot axis in world coordinates."""
@@ -177,6 +198,39 @@ class AttackProfile:
         if self.mode == "fan":
             return float(self.base_bearing_rad)
         return float(self.bearing_rad)
+
+    def legacy_inferred_spread_doctrine(self) -> SpreadDoctrine:
+        """Infer legacy doctrine semantics from historical `spread_rad` usage."""
+
+        if self.mode != "fan":
+            return "uniform_divergent"
+        if float(self.spread_rad) == 0.0:
+            return "longitudinal"
+        return "uniform_divergent"
+
+    def resolved_spread_doctrine(self) -> SpreadDoctrine:
+        """Return the doctrine to apply for this profile."""
+
+        if self.spread_doctrine == "uniform_divergent" and not self.per_torpedo_heading_offsets_rad:
+            return self.legacy_inferred_spread_doctrine()
+        return self.spread_doctrine
+
+    def fan_heading_offsets_rad(self) -> list[float]:
+        """Return final per-torpedo heading offsets for fan doctrine resolution."""
+
+        n_torp = int(self.n)
+        doctrine = self.resolved_spread_doctrine()
+        if doctrine == "longitudinal":
+            return [0.0 for _ in range(n_torp)]
+        if doctrine == "explicit_divergent":
+            return [float(offset) for offset in self.per_torpedo_heading_offsets_rad]
+        requested_half_spread = float(self.spread_rad) * 0.5
+        if n_torp == 1 or self.spread_rad == 0.0:
+            return [0.0 for _ in range(n_torp)]
+        return [
+            float(-requested_half_spread + (float(self.spread_rad) * i / (n_torp - 1)))
+            for i in range(n_torp)
+        ]
 
     def uses_legacy_bearing_compat(self) -> bool:
         """Return whether the profile should auto-align the sub to legacy bearing intent.
@@ -291,14 +345,7 @@ class AttackProfile:
         ]
         self._enforce_firing_stability(motion_plan, launch_times)
         if self.mode == "fan":
-            requested_half_spread = float(self.spread_rad) * 0.5
-            if n_torp == 1 or self.spread_rad == 0.0:
-                rel_offsets = [0.0 for _ in range(n_torp)]
-            else:
-                rel_offsets = [
-                    float(-requested_half_spread + (float(self.spread_rad) * i / (n_torp - 1)))
-                    for i in range(n_torp)
-                ]
+            rel_offsets = self.fan_heading_offsets_rad()
         else:
             rel_offsets = [0.0 for _ in range(n_torp)]
 
@@ -384,7 +431,7 @@ class AttackProfile:
         return torpedoes
 
     def to_dict(self) -> dict[str, Any]:
-        return {
+        payload = {
             "profile_id": self.profile_id,
             "name": self.name,
             "weight": float(self.weight),
@@ -426,9 +473,20 @@ class AttackProfile:
             "obs_speed_sigma_mps": float(self.obs_speed_sigma_mps),
             "obs_contact_count_sigma": float(self.obs_contact_count_sigma),
         }
+        if self.mode == "fan":
+            legacy_doctrine = self.legacy_inferred_spread_doctrine()
+            if self.spread_doctrine != legacy_doctrine or self.per_torpedo_heading_offsets_rad:
+                payload["spread_doctrine"] = self.spread_doctrine
+            if self.per_torpedo_heading_offsets_rad:
+                payload["per_torpedo_heading_offsets_rad"] = [
+                    float(offset) for offset in self.per_torpedo_heading_offsets_rad
+                ]
+        return payload
 
     @classmethod
     def from_dict(cls, payload: dict[str, Any]) -> "AttackProfile":
+        spread_rad = float(payload.get("spread_rad", 0.0))
+        inferred_doctrine: SpreadDoctrine = "longitudinal" if spread_rad == 0.0 else "uniform_divergent"
         return cls(
             profile_id=str(payload["profile_id"]),
             name=str(payload["name"]),
@@ -439,7 +497,11 @@ class AttackProfile:
             speed=float(payload.get("speed", 25.0)),
             max_run_time=float(payload.get("max_run_time", 800.0)),
             base_bearing_rad=float(payload.get("base_bearing_rad", 0.0)),
-            spread_rad=float(payload.get("spread_rad", 0.0)),
+            spread_rad=spread_rad,
+            spread_doctrine=str(payload.get("spread_doctrine", inferred_doctrine)),
+            per_torpedo_heading_offsets_rad=tuple(
+                float(item) for item in payload.get("per_torpedo_heading_offsets_rad", [])
+            ),
             bearing_rad=float(payload.get("bearing_rad", 0.0)),
             lateral_spacing=float(payload.get("lateral_spacing", 0.0)),
             launch_delay_s=float(payload.get("launch_delay_s", 0.0)),

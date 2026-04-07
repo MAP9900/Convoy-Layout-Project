@@ -82,6 +82,30 @@ def test_profile_validation_rejects_invalid_bounds() -> None:
             mode="parallel",
             lateral_spacing=-1.0,
         )
+    with pytest.raises(ValueError):
+        AttackProfile(
+            profile_id="P07",
+            name="bad_explicit_offsets_missing",
+            mode="fan",
+            spread_doctrine="explicit_divergent",
+        )
+    with pytest.raises(ValueError):
+        AttackProfile(
+            profile_id="P08",
+            name="bad_explicit_offsets_len",
+            mode="fan",
+            n=3,
+            spread_doctrine="explicit_divergent",
+            per_torpedo_heading_offsets_rad=(0.0, 0.1),
+        )
+    with pytest.raises(ValueError):
+        AttackProfile(
+            profile_id="P09",
+            name="bad_offsets_wrong_doctrine",
+            mode="fan",
+            spread_doctrine="longitudinal",
+            per_torpedo_heading_offsets_rad=(0.0,),
+        )
 
 
 def test_profile_build_torpedoes_uses_sim_named_fields() -> None:
@@ -127,6 +151,56 @@ def test_profile_build_torpedoes_uses_sim_named_fields() -> None:
     assert all(np.isclose(torp.gyro_turn_distance_m, profile.gyro_straight_run_m) for torp in torpedoes)
 
 
+def test_longitudinal_doctrine_produces_zero_heading_offsets() -> None:
+    profile = AttackProfile(
+        profile_id="PLONG",
+        name="longitudinal",
+        mode="fan",
+        n=3,
+        base_bearing_rad=0.2,
+        spread_rad=0.2,
+        spread_doctrine="longitudinal",
+        u_boat_initial_heading_rad=0.2,
+    )
+    torpedoes = profile.build_torpedoes(np.random.default_rng(0))
+    headings = np.array([torp.heading_rad for torp in torpedoes], dtype=float)
+    assert np.allclose(headings, profile.base_bearing_rad)
+
+
+def test_uniform_divergent_doctrine_preserves_linear_spread_behavior() -> None:
+    profile = AttackProfile(
+        profile_id="PUNIF",
+        name="uniform_divergent",
+        mode="fan",
+        n=4,
+        base_bearing_rad=0.3,
+        spread_rad=0.24,
+        spread_doctrine="uniform_divergent",
+        u_boat_initial_heading_rad=0.3,
+    )
+    expected_offsets = np.array([-0.12, -0.04, 0.04, 0.12], dtype=float)
+    assert np.allclose(profile.fan_heading_offsets_rad(), expected_offsets)
+    torpedoes = profile.build_torpedoes(np.random.default_rng(1))
+    final_offsets = np.array([torp.heading_rad - profile.base_bearing_rad for torp in torpedoes], dtype=float)
+    assert np.allclose(final_offsets, expected_offsets)
+
+
+def test_explicit_divergent_doctrine_applies_non_uniform_offsets() -> None:
+    profile = AttackProfile(
+        profile_id="PEXP",
+        name="explicit_divergent",
+        mode="fan",
+        n=4,
+        base_bearing_rad=0.3,
+        spread_doctrine="explicit_divergent",
+        per_torpedo_heading_offsets_rad=(-0.15, -0.03, 0.01, 0.11),
+        u_boat_initial_heading_rad=0.3,
+    )
+    torpedoes = profile.build_torpedoes(np.random.default_rng(2))
+    final_offsets = np.array([torp.heading_rad - profile.base_bearing_rad for torp in torpedoes], dtype=float)
+    assert np.allclose(final_offsets, np.array(profile.per_torpedo_heading_offsets_rad, dtype=float))
+
+
 def test_default_library_p01_uses_profile_bearing_as_attack_intent() -> None:
     profile = next(p for p in DEFAULT_ATTACK_PROFILE_LIBRARY.profiles if p.profile_id == "P01")
     torpedoes = profile.build_torpedoes(np.random.default_rng(0))
@@ -136,6 +210,46 @@ def test_default_library_p01_uses_profile_bearing_as_attack_intent() -> None:
     expected = float(np.arctan2(np.sin(profile.base_bearing_rad), np.cos(profile.base_bearing_rad)))
     assert np.isclose(mean_heading, expected, atol=1e-3)
     assert np.allclose(launch_headings, profile.u_boat_initial_heading_rad)
+
+
+def test_backward_compatibility_infers_doctrine_from_legacy_spread_rad() -> None:
+    legacy_uniform = AttackProfile.from_dict(
+        {
+            "profile_id": "PLEG1",
+            "name": "legacy_uniform",
+            "mode": "fan",
+            "n": 3,
+            "base_bearing_rad": 0.2,
+            "spread_rad": 0.1,
+        }
+    )
+    legacy_longitudinal = AttackProfile.from_dict(
+        {
+            "profile_id": "PLEG2",
+            "name": "legacy_longitudinal",
+            "mode": "fan",
+            "n": 3,
+            "base_bearing_rad": 0.2,
+            "spread_rad": 0.0,
+        }
+    )
+    assert legacy_uniform.resolved_spread_doctrine() == "uniform_divergent"
+    assert legacy_longitudinal.resolved_spread_doctrine() == "longitudinal"
+    assert np.allclose(legacy_longitudinal.fan_heading_offsets_rad(), np.zeros(3))
+
+
+def test_to_dict_omits_new_doctrine_fields_for_legacy_equivalent_profiles() -> None:
+    profile = AttackProfile(
+        profile_id="PLEG3",
+        name="legacy_equivalent",
+        mode="fan",
+        n=3,
+        base_bearing_rad=0.2,
+        spread_rad=0.1,
+    )
+    payload = profile.to_dict()
+    assert "spread_doctrine" not in payload
+    assert "per_torpedo_heading_offsets_rad" not in payload
 
 
 def test_default_library_profiles_no_longer_depend_on_legacy_bearing_compat() -> None:
