@@ -1,6 +1,6 @@
 # Simulation Features Reference
 
-Last updated: 2026-04-06
+Last updated: 2026-04-07
 
 This is the central technical reference for the convoy simulation stack.
 It is intended to be the single place to answer:
@@ -51,6 +51,7 @@ The project models WWII-style convoy defense against torpedo attacks on a 2D Euc
 - Feasibility and environment risk: `convoy_sim/feasibility.py`
 - Attack proposal generation: `convoy_sim/attack_proposals.py`
 - Attack profile schema and sampling: `convoy_sim/attack_profiles.py`
+- Fire-control baseline helpers: `convoy_sim/fire_control.py`
 - Realism overlays: `convoy_sim/realism.py`
 - Simulation kernels and Monte Carlo: `convoy_sim/simulation.py`
 - Objectives and scoring: `convoy_sim/objectives.py`, `convoy_sim/risk.py`
@@ -232,6 +233,8 @@ Profile supports:
 - U-boat motion controls
 - partial-observation noise controls
 
+`fire_control.py` provides a deterministic attacker-side baseline that can turn noisy observation into a resolved `AttackProfile`.
+
 ## 8.2 V2 U-Boat Motion Controls
 
 Fields include:
@@ -280,6 +283,42 @@ Implication for profile authoring:
 - `u_boat_initial_heading_rad` and any motion plan should describe how the submarine is pointed when firing starts
 - `spread_rad` no longer requires rotating the submarine or consuming bow-tube arc across the full fan
 - default-library profiles keep their numeric spread values; those values now map to post-launch gyro deflection
+
+## 8.5 Fire Control Lite Baseline
+
+`fire_control.py` implements a deterministic attacker-side firing solution baseline.
+
+Inputs:
+- U-boat position
+- U-boat bow heading
+- noisy attacker observation:
+  - estimated convoy bearing
+  - estimated range
+  - estimated convoy course
+  - estimated convoy speed
+  - observation-quality sigmas
+
+Outputs:
+- centerline bearing
+- spread width
+- salvo size
+- G7a speed setting (`fast|medium|long_range`)
+- torpedo speed and max run time
+- estimated target point and metadata
+
+Behavior:
+- chooses G7a speed setting deterministically from estimated range
+- computes a coarse intercept lead from estimated convoy lateral motion
+- widens spread with observation uncertainty and range
+- clips centerline to the configured bow-arc allowance relative to the submarine heading
+- can emit a standard `AttackProfile` via `build_attack_profile_from_fire_control(...)`
+
+Boundary:
+- this is not a full TDC / fire-control computer simulation
+- it is a coarse attacker-perspective baseline for:
+  - realistic scripted attacks
+  - future GenAI attack-distribution conditioning
+  - eventual attacker-side baseline comparison
 
 ---
 

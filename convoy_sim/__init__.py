@@ -29,6 +29,15 @@ from convoy_sim.noise import NoiseModel
 from convoy_sim.risk import empirical_cvar, empirical_var
 from convoy_sim.objectives import ObjectiveSpec, aggregate_objective, score_trial_result
 from convoy_sim.attackers import fan_spread, parallel_spread
+from convoy_sim.fire_control import (
+    FireControlLiteConfig,
+    FireControlLiteSolution,
+    G7A_SPEED_SETTINGS,
+    G7aSpeedSetting,
+    build_attack_profile_from_fire_control,
+    choose_g7a_speed_setting,
+    solve_fire_control_lite,
+)
 from convoy_sim.rl_wrapper import ActionSpaceMap, OBS_SCHEMA_VERSION, RLEpisode, build_observation
 from convoy_sim.defender_policy import (
     DefenderPolicy,
@@ -110,6 +119,13 @@ __all__ = [
     "torpedo_hits_ship_dynamic",
     "fan_spread",
     "parallel_spread",
+    "G7aSpeedSetting",
+    "G7A_SPEED_SETTINGS",
+    "FireControlLiteConfig",
+    "FireControlLiteSolution",
+    "choose_g7a_speed_setting",
+    "solve_fire_control_lite",
+    "build_attack_profile_from_fire_control",
     "ActionSpaceMap",
     "OBS_SCHEMA_VERSION",
     "RLEpisode",

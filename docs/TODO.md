@@ -1,6 +1,6 @@
 # TODO
 
-Last updated: 2026-04-06
+Last updated: 2026-04-07
 
 ## Current Workflow (Canonical)
 
@@ -35,6 +35,14 @@ Last updated: 2026-04-06
 - [x] Run baseline + RL pair with matched eval seeds.
 - [x] Record V2-Realism Test 1 in `docs/RESULTS_LOG.md` and `docs/OPTIMIZATION_LOG.md`.
 - [ ] Define RL promotion threshold (`expected_hits` primary, `CVaR_90` guardrail).
+- [x] Add deterministic `fire_control_lite` baseline:
+  - attacker-side firing solution from noisy convoy observation
+  - deterministic centerline / spread / salvo size / G7a speed-setting selection
+- [ ] Connect `fire_control_lite` baseline into attacker-profile generation and diagnostic workflows more broadly.
+- [ ] Add G7a-only torpedo speed-setting doctrine refinement:
+  - `fast`
+  - `medium`
+  - `long_range`
 - [ ] Define GenAI attack-profile dataset schema (context + attack vector + outcomes).
 - [ ] Add reproducible synthetic attack-dataset generation config/script (fixed seeds + manifest metadata).
 - [ ] Generate first dataset snapshot for GenAI model training.
@@ -108,15 +116,10 @@ Last updated: 2026-04-06
 - [ ] Add approach-geometry doctrine:
   - abeam/intercept preference
   - stern-chase effectiveness penalties where historically appropriate
-- [ ] Add salvo doctrine realism:
-  - bow/stern tube limits (bow-only launch + bow-arc constraint implemented; stern/reload doctrine pending)
-  - reload delays
-  - partial-salvo decisions
-  - abort behavior
-- [ ] Add weapon-era configuration variants:
-  - straight-run
-  - pattern-running
-  - acoustic torpedoes (era-gated config)
+- [ ] Add attacker-side fire-control realism:
+  - coarse firing-solution derivation from noisy observation
+  - target aspect / range / speed estimation effects folded into centerline + spread + speed setting
+  - maintain deterministic baseline before any learned attack generator
 - [ ] Add escort behavior model:
   - sector screen assignment
   - sweep/search behavior
@@ -143,3 +146,10 @@ Last updated: 2026-04-06
 - [x] Add intelligence uncertainty model:
   - attacker decisions based on partial/noisy belief state
   - no direct use of full true convoy state for attacker/generative conditioning
+
+## Deferred / Out Of Scope For Current Phase
+
+- [ ] Stern-tube doctrine
+- [ ] Reload / re-attack timing doctrine
+- [ ] G7e / electric torpedo branch
+- [ ] Continuous curved gyro-turn hydrodynamics

@@ -37,6 +37,10 @@ Primary technical reference: `docs/SIM_FEATURES.md`.
   - U-boat salvos are rejected by default if the boat is materially turning during the firing window
   - opt-out remains available for explicit what-if or backward-compatibility scenarios
 - Attacker partial-observability layer (noisy estimated bearing/range/course/speed/contacts + environment).
+- Deterministic `fire_control_lite` baseline:
+  - derives a coarse firing solution from noisy attacker observation
+  - selects G7a speed setting deterministically from estimated range
+  - resolves centerline / spread while respecting the bow-arc constraint
 - Ship movement realism overlay:
   - bounded position/heading jitter
   - class-dependent cohesion scaling

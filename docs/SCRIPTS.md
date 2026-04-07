@@ -65,6 +65,7 @@ Primary simulation feature reference:
 - `convoy_sim/diagnostics.py` (`diagnostic`)
 - `convoy_sim/dynamics.py` (`canonical`)
 - `convoy_sim/entities.py` (`canonical`)
+- `convoy_sim/fire_control.py` (`canonical`)
 - `convoy_sim/feasibility.py` (`canonical`)
 - `convoy_sim/game.py` (`supporting`)
 - `convoy_sim/geometry.py` (`canonical`)
