@@ -1,0 +1,25 @@
+{
+  "selected_action": "staggered_loose",
+  "q_values": {
+    "rect_compact": -3.0976919582329763,
+    "rect_standard": -3.024462297143463,
+    "rect_loose": -3.208292487877858,
+    "staggered_compact": -3.22432410914151,
+    "staggered_standard": -3.054726190907624,
+    "staggered_loose": -1.894375048430212
+  },
+  "action_counts": {
+    "rect_compact": 15,
+    "rect_standard": 99,
+    "rect_loose": 42,
+    "staggered_compact": 13,
+    "staggered_standard": 43,
+    "staggered_loose": 88
+  },
+  "training_summary": {
+    "episodes": 300,
+    "epsilon_final": 0.055573049960186756,
+    "avg_reward_last_50": -2.58,
+    "selected_action": "staggered_loose"
+  }
+}

@@ -147,3 +147,56 @@ Tracks how each test was produced, including optimization method, objective, sea
 
 - This run pair is reproducible and comparable, but not yet a strong RL capability test.
 - Post-run review found that the canonical `[[rl.actions]]` set in `configs/rl/default.toml` was effectively degenerate, so the learner had almost no meaningful convoy-layout freedom.
+
+## V2-Realism Test 3 - Baseline vs RL After Phase 1 Action-Space Fix (2026-04-08)
+
+### Run References
+
+- Baseline run dir: `results/runs/baseline/20260408_153149_baseline_test1`
+- RL run dir: `results/runs/rl/20260408_153137_rl_test1`
+- Results summary: see `docs/RESULTS_LOG.md` (V2-Realism Test 3)
+
+### What Changed In This Test
+
+- This was the first benchmark after Phase 1 of the RL overhaul.
+- `configs/rl/default.toml` was updated so the canonical `[[rl.actions]]` menu became genuinely non-degenerate:
+  - rectangular vs staggered layouts
+  - compact / standard / loose spacing variants
+- Baseline config remained unchanged.
+
+### Protocol/Realism Stamp
+
+- Protocol track: `V2-Realism` active.
+- `u_boat_mode` default: `moving`.
+- Torpedo realism enabled: heading noise, launch-delay noise, speed variance, dud probability.
+- Included movement realism: bounded station-keeping jitter + class-dependent cohesion + bounded per-ship deviation overlay.
+- Included attacker input realism: partial observability (noisy bearing/range/course/speed/contact estimate + environment context).
+
+### Config Stamp (from run manifests)
+
+- Git SHA: `bb7ba4e5ee3b33aac6167ab1b437c61f31f5069e`
+- Noise: `sigma_heading_rad=0.01`, `sigma_launch_delay=0.05`, `sigma_speed_mps=0.25`, `p_dud=0.02`
+- Environment: `time_of_day=night`, `visibility_m=3500`, `sea_state=4`, `detection_risk_scale=1.0`
+- Ship movement realism enabled: `true`
+- Train seeds: `[1939, 1940, 1941]`
+- Eval seeds: `[1942, 1943, 1944]`
+- RL episodes: `300`
+- RL selected action: `staggered_loose`
+
+### Comparability Status
+
+- Train/eval profile splits matched across baseline and RL.
+- Train/eval seeds matched across baseline and RL.
+- Both runs use the same realism stamp and git SHA.
+- V2-Realism Test 3 is a valid apples-to-apples comparison.
+
+### Methodology Interpretation
+
+- This is the first RL run in the current protocol where the canonical action set actually provided meaningful geometric freedom.
+- The result therefore says more than earlier RL tests:
+  - Phase 1 action-space repair worked
+  - the current one-step tabular learner still performs poorly even when given nontrivial choices
+- This points the next work toward:
+  - reward redesign
+  - richer state/threat modeling
+  - eventual learner upgrade

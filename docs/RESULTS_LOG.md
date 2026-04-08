@@ -90,3 +90,42 @@
 
 - This run pair is best read as a workflow/debug benchmark, not a strong RL-vs-heuristic study.
 - Review after the run showed the canonical RL action set was effectively degenerate in `configs/rl/default.toml`: the listed actions did not provide meaningful geometric freedom, so RL was not actually searching a rich convoy-layout space.
+
+## V2-Realism Test 3 - Baseline vs RL After Phase 1 Action-Space Fix (2026-04-08)
+
+- Baseline run:
+  - `results/runs/baseline/20260408_153149_baseline_test1`
+  - `static_baseline.expected_hits = 2.624166666666667`
+  - `heuristic_baseline.expected_hits = 2.4316666666666666` (winner)
+- RL run:
+  - `results/runs/rl/20260408_153137_rl_test1`
+  - `evaluation.expected_hits = 2.8883333333333336`
+  - `training.selected_action = staggered_loose`
+
+### Conclusion
+
+- This is the first benchmark after fixing the degenerate canonical RL action set.
+- RL now selected a materially different layout (`staggered_loose`), which confirms the action menu is no longer collapsing to one geometry.
+- Performance worsened relative to both baselines:
+  - RL trailed static baseline by `0.26416666666666694` expected hits
+  - RL trailed heuristic baseline by `0.456666666666667` expected hits
+- This suggests Phase 1 succeeded as an action-space fix, but the current one-step tabular learner and reward/training setup are still not good enough.
+
+### Validity Notes
+
+- Both runs use the same git SHA: `bb7ba4e5ee3b33aac6167ab1b437c61f31f5069e`.
+- Train/eval profile splits matched across both runs.
+- Train/eval seeds matched across both runs:
+  - Train seeds: `[1939, 1940, 1941]`
+  - Eval seeds: `[1942, 1943, 1944]`
+- Both manifests stamp the same realism config family:
+  - `u_boat_mode_default = moving`
+  - noise enabled (`sigma_heading_rad=0.01`, `sigma_launch_delay=0.05`, `sigma_speed_mps=0.25`, `p_dud=0.02`)
+  - environment enabled (`time_of_day=night`, `visibility_m=3500`, `sea_state=4`, `detection_risk_scale=1.0`)
+  - ship movement realism enabled
+- The baseline config remained unchanged; the RL-side action menu was expanded in Phase 1.
+
+### Interpretation Note
+
+- Unlike earlier RL tests, this run does carry meaningful action-space information because the canonical RL menu now contains genuinely different layouts.
+- However, it is still not a final RL capability benchmark because the environment remains a one-step selector and the learner/reward design have not yet been upgraded.
