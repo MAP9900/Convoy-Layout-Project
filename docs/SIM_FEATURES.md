@@ -119,6 +119,7 @@ Each torpedo includes:
 
 Behavior:
 - waits at `launch_position` until `launch_delay`
+- `max_run_time` is the torpedo's post-launch endurance, not a global simulation timestamp cutoff
 - leaves the tube on `launch_heading_rad` when provided, otherwise on `heading_rad`
 - after `gyro_turn_distance_m`, snaps to final `heading_rad`
 - remains fixed-speed/fixed-course after the gyro deflection (no active guidance model)

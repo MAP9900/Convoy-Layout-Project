@@ -635,7 +635,7 @@ def build_scaffolded_attack_profile_library() -> AttackProfileLibrary:
     - u_pos: launch origin in world coordinates (meters), as (x, y).
     - n: number of torpedoes in the salvo. DEFAULT: 4 for attack against convoy (4 stern tubes)
     - speed: torpedo speed (m/s). DEFAULT: 30kts -> 15.4333 m/s
-    - max_run_time: max torpedo run horizon (seconds).  DEFAULT: 7500/15.4333 -> 486 seconds
+    - max_run_time: max torpedo run endurance after launch (seconds).  DEFAULT: 7500/15.4333 -> 486 seconds
 
     fan mode fields:
     - base_bearing_rad: center attack bearing in radians. (Centered around base_bearing_rad)

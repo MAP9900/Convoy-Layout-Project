@@ -10,6 +10,7 @@ from convoy_sim.viz_attack import (
     format_torpedo_heading_table,
     min_miss_distance_ship_torpedo,
     sample_u_boat_track,
+    torpedo_path_points,
     torpedo_heading_table_rows,
 )
 
@@ -142,3 +143,16 @@ def test_sample_u_boat_track_samples_requested_interval() -> None:
     assert track.shape == (5, 2)
     assert np.allclose(track[0], np.array([0.0, 0.0]))
     assert np.allclose(track[-1], np.array([0.0, 20.0]), atol=1e-6)
+
+
+def test_torpedo_path_points_respect_absolute_end_time_with_launch_delay() -> None:
+    torpedo = Torpedo(
+        id="F03",
+        launch_position=as_vec(0.0, 0.0),
+        speed=10.0,
+        heading_rad=0.0,
+        max_run_time=20.0,
+        launch_delay=5.0,
+    )
+    path = torpedo_path_points(torpedo, t0=0.0, t1=30.0)
+    assert np.allclose(path[-1], np.array([200.0, 0.0]))

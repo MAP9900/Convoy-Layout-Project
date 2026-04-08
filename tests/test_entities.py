@@ -47,6 +47,21 @@ def test_torpedo_position_at_supports_gyro_turn_after_exit_run() -> None:
     assert np.allclose(torpedo.position_at(3.0), np.array([20.0, 10.0]))
 
 
+def test_launch_delay_does_not_reduce_torpedo_total_range() -> None:
+    torpedo = Torpedo(
+        id="type-delay",
+        launch_position=as_vec(0.0, 0.0),
+        speed=10.0,
+        heading_rad=0.0,
+        max_run_time=20.0,
+        launch_delay=5.0,
+    )
+    assert torpedo.active_run_duration_s() == 20.0
+    assert torpedo.end_time_s() == 25.0
+    assert np.allclose(torpedo.position_at(25.0), np.array([200.0, 0.0]))
+    assert np.allclose(torpedo.position_at(30.0), np.array([200.0, 0.0]))
+
+
 def _stationary_ship() -> Ship:
     return Ship(
         id="cargo",

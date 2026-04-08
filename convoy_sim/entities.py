@@ -137,9 +137,19 @@ class Torpedo:
         return abs(delta) > 1e-12
 
     def active_run_duration_s(self) -> float:
-        """Return time available for post-launch motion under current semantics."""
+        """Return time available for post-launch motion.
 
-        return max(0.0, float(self.max_run_time) - float(self.launch_delay))
+        `max_run_time` is the torpedo's run endurance after it leaves the tube,
+        not a global simulation cutoff. Launch delay shifts the absolute end time
+        but does not shorten the torpedo's available run duration.
+        """
+
+        return max(0.0, float(self.max_run_time))
+
+    def end_time_s(self) -> float:
+        """Return the absolute time when the torpedo run is exhausted."""
+
+        return float(self.launch_delay + self.active_run_duration_s())
 
     def gyro_turn_time_s(self) -> float:
         """Return absolute time when the gyro deflection is applied."""
@@ -189,7 +199,7 @@ class Torpedo:
         Each segment is `(start_t, end_t, start_pos, velocity_vec)`.
         """
 
-        window_end = min(float(t_end), float(self.max_run_time))
+        window_end = min(float(t_end), self.end_time_s())
         if window_end <= 0.0:
             return []
 
@@ -243,7 +253,7 @@ class Torpedo:
             ship.position,
             ship.velocity_vec(),)
         t += self.launch_delay
-        return min(t, self.max_run_time)
+        return min(t, self.end_time_s())
 
 
 @dataclass

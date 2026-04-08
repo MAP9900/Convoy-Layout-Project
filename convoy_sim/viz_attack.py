@@ -29,7 +29,8 @@ def torpedo_segment(
     """Return the start/end points of the torpedo ray segment."""
 
     start_t = float(max(0.0, t0))
-    end_t = float(torpedo.max_run_time if t1 is None else min(t1, torpedo.max_run_time))
+    end_limit = torpedo.end_time_s()
+    end_t = float(end_limit if t1 is None else min(t1, end_limit))
     p_start = torpedo.position_at(start_t)
     p_end = torpedo.position_at(end_t)
     return p_start, p_end
@@ -43,7 +44,8 @@ def torpedo_path_points(
     """Return polyline points for the torpedo path over the requested window."""
 
     start_t = float(max(0.0, t0))
-    end_t = float(torpedo.max_run_time if t1 is None else min(t1, torpedo.max_run_time))
+    end_limit = torpedo.end_time_s()
+    end_t = float(end_limit if t1 is None else min(t1, end_limit))
     if end_t < start_t:
         return np.empty((0, 2), dtype=float)
     sample_times = [start_t, end_t]
@@ -180,6 +182,8 @@ def plot_torpedo_doctrine_snapshot(
     show_launch_points: bool = True,
     show_centerline: bool = True,
     show_u_boat_path: bool = True,
+    show_u_boat_heading: bool = False,
+    show_full_torpedo_run: bool = False,
 ) -> Any:
     """Render a submarine-centric attack snapshot for doctrine comparison."""
 
@@ -232,7 +236,8 @@ def plot_torpedo_doctrine_snapshot(
             )
 
     for torpedo in torpedoes:
-        path = torpedo_path_points(torpedo, t0=0.0, t1=snapshot)
+        path_end = torpedo.end_time_s() if show_full_torpedo_run else snapshot
+        path = torpedo_path_points(torpedo, t0=0.0, t1=path_end)
         if path.size == 0:
             continue
         ax.plot(
@@ -265,7 +270,7 @@ def plot_torpedo_doctrine_snapshot(
             linewidths=0.6,
             zorder=6,
         )
-        if u_boat_heading_rad is not None:
+        if show_u_boat_heading and u_boat_heading_rad is not None:
             _draw_heading_stub(ax, pos, float(u_boat_heading_rad))
 
     if title is not None:
@@ -321,7 +326,7 @@ def min_miss_distance_ship_torpedo(
 ) -> float:
     """Return the minimum distance between a static ship and torpedo track."""
 
-    window = min(float(t_max), float(torpedo.max_run_time))
+    window = min(float(t_max), float(torpedo.end_time_s()))
     if window <= 0.0:
         return float("inf")
     if dt is not None:
