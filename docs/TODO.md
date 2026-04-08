@@ -66,6 +66,13 @@ Last updated: 2026-04-08
   - multi-step decisions for layout family, along-spacing bucket, and across-spacing bucket
   - keep backward-compatible flat-action mode as a fallback
   - enable builder mode in `configs/rl/default.toml`
+- [x] Run direct builder audit after the Phase 2 minimal slice:
+  - `python -m experiments.audit_rl_actions --config configs/rl/default.toml`
+  - result: builder space is not the bottleneck; `rect_compact_loose` was best on both train and eval and matches heuristic-baseline-level performance
+- [ ] Phase 2.1 RL overhaul: fix builder-mode final selection / tie-break behavior:
+  - current selector switched from `rect_compact_loose` to `rect_compact_standard` because of the complexity tolerance tie-break
+  - tighten or redesign tie-break logic so a clearly better train objective is not discarded in builder mode
+  - rerun RL and confirm builder mode can recover the audited best layout
 - [ ] Expand Phase 2 RL layout-builder controls beyond the minimal slice:
   - row pattern vectors (e.g., `4,5,5,4`)
   - ship-class placement controls

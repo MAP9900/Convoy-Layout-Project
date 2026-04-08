@@ -169,3 +169,57 @@
   - coarse one-step action space
   - limited state/threat modeling
   - reward/objective limitations
+
+## V2-Realism Test 5 - RL After Phase 2 Minimal Builder Slice (2026-04-08)
+
+- Reference baseline for comparison:
+  - `results/runs/baseline/20260408_153149_baseline_test1`
+  - `static_baseline.expected_hits = 2.624166666666667`
+  - `heuristic_baseline.expected_hits = 2.4316666666666666` (winner)
+- RL run:
+  - `results/runs/rl/20260408_175732_rl_test1`
+  - `evaluation.expected_hits = 2.8916666666666666`
+  - `training.selected_action = rect_compact_standard`
+  - `training.selected_action_by_q_value = rect_compact_loose`
+  - `training.mode = builder`
+
+### Conclusion
+
+- The minimal multi-step builder is functioning, but this first builder-mode benchmark performed worse than the prior flat-menu Phase 1.5 run.
+- RL trailed static baseline by `0.2675` expected hits and trailed heuristic baseline by `0.46` expected hits.
+- The selected builder layout (`rect_compact_standard`) was only marginally preferred over `rect_compact_loose` on the train objective, and both builder-selected rectangular compact variants were materially worse on eval than the earlier `rect_standard` flat action.
+
+### Validity Notes
+
+- RL run git SHA: `52c356bcb56f17085eee64634a549c9dad605366`
+- Comparison baseline reference git SHA: `bb7ba4e5ee3b33aac6167ab1b437c61f31f5069e`
+- RL run kept the same canonical V2 split and seeds:
+  - Train seeds: `[1939, 1940, 1941]`
+  - Eval seeds: `[1942, 1943, 1944]`
+- RL manifest stamps the same realism family as recent V2 runs:
+  - `u_boat_mode_default = moving`
+  - noise enabled (`sigma_heading_rad=0.01`, `sigma_launch_delay=0.05`, `sigma_speed_mps=0.25`, `p_dud=0.02`)
+  - environment enabled (`time_of_day=night`, `visibility_m=3500`, `sea_state=4`, `detection_risk_scale=1.0`)
+  - ship movement realism enabled
+- This run used builder mode:
+  - family choice
+  - along-spacing bucket
+  - across-spacing bucket
+
+### Interpretation Note
+
+- Phase 2 minimal builder integration succeeded technically, but it did not improve optimization quality yet.
+- The next bottleneck now appears to be objective/training quality rather than missing compositional control alone:
+  - train-time selection is still driven by aggregate `expected_hits + risk * CVaR_90`
+  - the builder search space currently over-favors compact rectangular variants on the train split
+  - no explicit feasibility/footprint guardrails or richer reward terms are shaping the builder policy yet
+
+### Follow-Up Diagnostic Note (added 2026-04-08)
+
+- Direct builder audit later changed the interpretation of Test 5.
+- Audit run `results/runs/rl_action_audit/20260408_180301_rl_test1_action_audit` showed:
+  - best train action = `rect_compact_loose`
+  - best eval action = `rect_compact_loose`
+  - eval `expected_hits = 2.4316666666666666`
+- That means the minimal builder space already contains a layout matching the heuristic baseline.
+- The immediate failure in Test 5 was therefore not the builder search space itself; it was the final selector/tie-break choosing `rect_compact_standard` over the better `rect_compact_loose`.

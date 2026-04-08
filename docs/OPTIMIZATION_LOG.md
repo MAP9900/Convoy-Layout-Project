@@ -282,3 +282,93 @@ Interpretation:
   - richer environment/action design
   - reward/objective redesign
   - only then learner replacement
+
+## V2-Realism Test 5 - RL After Phase 2 Minimal Builder Slice (2026-04-08)
+
+### Run References
+
+- RL run dir: `results/runs/rl/20260408_175732_rl_test1`
+- Comparison baseline reference: `results/runs/baseline/20260408_153149_baseline_test1`
+- Results summary: see `docs/RESULTS_LOG.md` (V2-Realism Test 5)
+
+### What Changed In This Test
+
+- This test introduced the minimal Phase 2 builder path.
+- Canonical RL no longer had to choose only from a flat list of whole-layout actions.
+- Instead, the policy constructed a layout in 3 bounded steps:
+  1. layout family
+  2. along-spacing bucket
+  3. across-spacing bucket
+- `configs/rl/default.toml` now enables `[rl.builder]`.
+- The flat `[[rl.actions]]` path still remains available as a fallback, but this run used builder mode.
+
+### Protocol/Realism Stamp
+
+- Protocol track: `V2-Realism` active.
+- `u_boat_mode` default: `moving`.
+- Torpedo realism enabled: heading noise, launch-delay noise, speed variance, dud probability.
+- Included movement realism: bounded station-keeping jitter + class-dependent cohesion + bounded per-ship deviation overlay.
+- Included attacker input realism: partial observability (noisy bearing/range/course/speed/contact estimate + environment context).
+
+### Config Stamp (from run manifest)
+
+- Git SHA: `52c356bcb56f17085eee64634a549c9dad605366`
+- Noise: `sigma_heading_rad=0.01`, `sigma_launch_delay=0.05`, `sigma_speed_mps=0.25`, `p_dud=0.02`
+- Environment: `time_of_day=night`, `visibility_m=3500`, `sea_state=4`, `detection_risk_scale=1.0`
+- Ship movement realism enabled: `true`
+- Train seeds: `[1939, 1940, 1941]`
+- Eval seeds: `[1942, 1943, 1944]`
+- RL episodes: `300`
+- Training mode: `builder`
+- Selected action: `rect_compact_standard`
+- Raw Q-value builder trace: `family:rectangular -> along:compact -> across:loose`
+- Final selected action by Q-value reconstruction: `rect_compact_loose`
+
+### Comparability Status
+
+- RL run uses the same canonical train/eval profile split and seed sets as the recent V2 runs.
+- Realism stamp remains aligned with recent V2 benchmarks.
+- This is a valid methodology follow-up to Test 4 because the primary change was the builder-mode environment.
+
+### Methodology Interpretation
+
+- The Phase 2 minimal slice worked mechanically:
+  - builder-mode training ran end to end
+  - builder metadata is written to manifests/checkpoints
+  - the policy now composes layouts instead of only choosing from a fixed menu
+- But optimization quality regressed:
+  - train-time ranking favored `rect_compact_loose` and `rect_compact_standard`
+  - the risk-aware selector chose the slightly simpler `rect_compact_standard`
+  - eval `expected_hits = 2.8916666666666666`, worse than the prior flat-menu `rect_standard` result (`2.624166666666667`)
+- That suggests the next bottleneck is not merely action compositionality. The builder now needs:
+  - better reward shaping
+  - explicit constraint/footprint guardrails
+  - possibly broader threat conditioning
+- In other words: Phase 2 minimal slice was necessary infrastructure, but not yet a performance win.
+
+### Follow-Up Diagnostic: Direct Builder Action Audit
+
+- Audit run dir: `results/runs/rl_action_audit/20260408_180301_rl_test1_action_audit`
+- Entrypoint:
+  - `python -m experiments.audit_rl_actions --config configs/rl/default.toml`
+- Why this was run:
+  - determine whether the new minimal builder space itself was weak, or whether RL/selection still picked the wrong composed layout
+
+Key findings:
+- Best train action: `rect_compact_loose`
+  - train `expected_hits = 2.5704166666666666`
+  - eval `expected_hits = 2.4316666666666666`
+- Best eval action: `rect_compact_loose`
+  - eval `expected_hits = 2.4316666666666666`
+  - `CVaR_90 = 3.0257354395162213`
+
+Interpretation:
+- The minimal builder search space is already strong enough to contain a heuristic-level layout.
+- The main failure in Test 5 was not the builder menu.
+- It was the final selection rule:
+  - raw builder Q trace reconstructed `rect_compact_loose`
+  - train-split selector/tie-break switched to `rect_compact_standard`
+  - that switch caused the eval regression
+- This moves the immediate next task away from reward redesign and toward:
+  - fixing builder-mode selection/tie-break behavior
+  - possibly reducing or disabling the complexity tie-break when the lower-primary-score option is still clearly preferable
