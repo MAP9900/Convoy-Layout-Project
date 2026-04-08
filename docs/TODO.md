@@ -69,7 +69,7 @@ Last updated: 2026-04-08
 - [x] Run direct builder audit after the Phase 2 minimal slice:
   - `python -m experiments.audit_rl_actions --config configs/rl/default.toml`
   - result: builder space is not the bottleneck; `rect_compact_loose` was best on both train and eval and matches heuristic-baseline-level performance
-- [ ] Phase 2.1 RL overhaul: fix builder-mode final selection / tie-break behavior:
+- [x] Phase 2.1 RL overhaul: fix builder-mode final selection / tie-break behavior:
   - current selector switched from `rect_compact_loose` to `rect_compact_standard` because of the complexity tolerance tie-break
   - tighten or redesign tie-break logic so a clearly better train objective is not discarded in builder mode
   - rerun RL and confirm builder mode can recover the audited best layout
@@ -84,6 +84,10 @@ Last updated: 2026-04-08
   - penalize number of ships hit more strongly than repeated hits on one ship where appropriate
   - add value-weighting support (e.g., tanker > freighter)
   - add risk guardrail (`CVaR_90` or proxy)
+- [ ] Expand attack-profile diversity and harder eval gates after the selector fix:
+  - add more attacker geometry/doctrine/range variety
+  - add repeated eval seed sets or held-out harder-case pack
+  - use the expanded profile library to test whether builder-mode RL still matches or exceeds heuristic baseline
 - [ ] Phase 4 RL overhaul: replace tabular RL selector with stronger learner while preserving artifact schema.
 - [ ] Expand RL training threat diversity beyond the current narrow setup.
 - [ ] Add compact RL observation/state vector for geometry/composition/threat context.

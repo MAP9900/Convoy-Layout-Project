@@ -300,3 +300,54 @@ def test_rl_train_selection_prefers_simpler_action_when_scores_are_nearly_tied()
     )
     assert best_idx == 0
     assert ranked[0]["name"] == "complex"
+
+
+def test_rl_train_builder_selection_does_not_override_better_primary_score() -> None:
+    actions = [
+        LayoutAction(
+            name="rect_compact_standard",
+            layout_fn=make_rectangular_convoy,
+            layout_kwargs={
+                "n_rows": 1,
+                "n_cols": 1,
+                "spacing_along": 100.0,
+                "spacing_across": 100.0,
+                "speed": 5.0,
+                "heading_rad": 0.0,
+                "length": 120.0,
+                "beam": 18.0,
+                "origin": [0.0, 0.0],
+            },
+            complexity_cost=1.05,
+        ),
+        LayoutAction(
+            name="rect_compact_loose",
+            layout_fn=make_rectangular_convoy,
+            layout_kwargs={
+                "n_rows": 1,
+                "n_cols": 1,
+                "spacing_along": 100.0,
+                "spacing_across": 120.0,
+                "speed": 5.0,
+                "heading_rad": 0.0,
+                "length": 120.0,
+                "beam": 18.0,
+                "origin": [0.0, 0.0],
+            },
+            complexity_cost=1.15,
+        ),
+    ]
+    train_summaries = [
+        {"expected_hits": 2.5725, "CVaR_90": 3.1384668883586913},
+        {"expected_hits": 2.5704166666666666, "CVaR_90": 3.083746117133406},
+    ]
+    best_idx, ranked = _select_best_action_from_train_summaries(
+        actions,
+        train_summaries,
+        risk_cvar_weight=0.05,
+        complexity_tiebreak_tolerance=0.1,
+        selection_mode="builder",
+    )
+    assert best_idx == 1
+    assert ranked[0]["name"] == "rect_compact_loose"
+    assert ranked[0]["effective_tolerance"] < 0.004

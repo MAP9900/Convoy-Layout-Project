@@ -372,3 +372,62 @@ Interpretation:
 - This moves the immediate next task away from reward redesign and toward:
   - fixing builder-mode selection/tie-break behavior
   - possibly reducing or disabling the complexity tie-break when the lower-primary-score option is still clearly preferable
+
+## V2-Realism Test 6 - RL After Phase 2.1 Builder Selection Fix (2026-04-08)
+
+### Run References
+
+- RL run dir: `results/runs/rl/20260408_182159_rl_test1`
+- Comparison baseline reference: `results/runs/baseline/20260408_153149_baseline_test1`
+- Results summary: see `docs/RESULTS_LOG.md` (V2-Realism Test 6)
+
+### What Changed In This Test
+
+- This test implemented Phase 2.1 of the RL overhaul.
+- `experiments/run_rl_train.py` now applies a builder-aware effective tie-break tolerance:
+  - flat action mode keeps the configured broad tolerance
+  - builder mode shrinks the effective complexity tie-break band sharply
+  - complexity can no longer override the best primary score in builder mode unless the scores are genuinely near-identical
+- Added regression coverage for the previous failure mode between:
+  - `rect_compact_loose`
+  - `rect_compact_standard`
+
+### Protocol/Realism Stamp
+
+- Protocol track: `V2-Realism` active.
+- `u_boat_mode` default: `moving`.
+- Torpedo realism enabled: heading noise, launch-delay noise, speed variance, dud probability.
+- Included movement realism: bounded station-keeping jitter + class-dependent cohesion + bounded per-ship deviation overlay.
+- Included attacker input realism: partial observability (noisy bearing/range/course/speed/contact estimate + environment context).
+
+### Config Stamp (from run manifest)
+
+- Git SHA: `510092af5321235c4e2cfa9143c07eb05575c913`
+- Noise: `sigma_heading_rad=0.01`, `sigma_launch_delay=0.05`, `sigma_speed_mps=0.25`, `p_dud=0.02`
+- Environment: `time_of_day=night`, `visibility_m=3500`, `sea_state=4`, `detection_risk_scale=1.0`
+- Ship movement realism enabled: `true`
+- Train seeds: `[1939, 1940, 1941]`
+- Eval seeds: `[1942, 1943, 1944]`
+- RL episodes: `300`
+- Training mode: `builder`
+- Selected action: `rect_compact_loose`
+- Raw Q-value builder trace: `family:rectangular -> along:compact -> across:loose`
+- Final selected action by Q-value reconstruction: `rect_compact_loose`
+- Effective builder tie-break tolerance: `0.002724603972523337`
+
+### Comparability Status
+
+- RL run uses the same canonical train/eval profile split and seed sets as the recent V2 runs.
+- Realism stamp remains aligned with recent V2 benchmarks.
+- This is a valid follow-up to Tests 5 and the builder audit because the primary change was isolated to builder-mode final selection behavior.
+
+### Methodology Interpretation
+
+- Phase 2.1 worked as intended:
+  - the selector no longer discarded the audited winner
+  - RL now recovers `rect_compact_loose` directly
+  - eval `expected_hits = 2.4316666666666666`, matching the heuristic baseline
+- This materially changes the RL diagnosis:
+  - the minimal builder search space is now validated
+  - selector logic is no longer the main bottleneck
+  - the next work should move to richer objectives and harder generalization, not more selector repair

@@ -96,12 +96,32 @@ def _selection_score(summary: dict[str, Any], *, risk_cvar_weight: float) -> flo
     return float(summary["expected_hits"]) + risk_cvar_weight * float(summary["CVaR_90"])
 
 
+def _effective_complexity_tiebreak_tolerance(
+    *,
+    selection_mode: str,
+    configured_tolerance: float,
+    best_primary_score: float,
+) -> float:
+    """Return the tolerance used before complexity can override the best primary score.
+
+    Builder mode needs a much tighter tie-break band than the flat action menu.
+    Otherwise a broad complexity tolerance can discard the audited winner even
+    when it is measurably better on the train objective.
+    """
+
+    if selection_mode != "builder":
+        return float(configured_tolerance)
+    relative_builder_tol = max(1e-6, 0.001 * max(1.0, abs(float(best_primary_score))))
+    return float(min(configured_tolerance, relative_builder_tol))
+
+
 def _select_best_action_from_train_summaries(
     actions: list[LayoutAction],
     train_summaries: list[dict[str, Any]],
     *,
     risk_cvar_weight: float,
     complexity_tiebreak_tolerance: float,
+    selection_mode: str = "flat_action_menu",
 ) -> tuple[int, list[dict[str, Any]]]:
     """Select final action using train metrics with a small complexity tie-break.
 
@@ -129,10 +149,15 @@ def _select_best_action_from_train_summaries(
 
     ranked.sort(key=lambda item: (item["primary_score"], item["complexity_cost"], item["name"]))
     best_primary = float(ranked[0]["primary_score"])
+    effective_tolerance = _effective_complexity_tiebreak_tolerance(
+        selection_mode=selection_mode,
+        configured_tolerance=complexity_tiebreak_tolerance,
+        best_primary_score=best_primary,
+    )
     tied = [
         item
         for item in ranked
-        if float(item["primary_score"]) <= best_primary + float(complexity_tiebreak_tolerance)
+        if float(item["primary_score"]) <= best_primary + float(effective_tolerance)
     ]
     tied.sort(
         key=lambda item: (
@@ -143,6 +168,9 @@ def _select_best_action_from_train_summaries(
         )
     )
     selected = tied[0]
+    for item in ranked:
+        item["effective_tolerance"] = float(effective_tolerance)
+        item["selection_mode"] = selection_mode
     return int(selected["index"]), ranked
 
 
@@ -357,6 +385,7 @@ def run_from_config(config: dict[str, Any], *, project_root: Path) -> Path:
         train_summaries_in_action_order,
         risk_cvar_weight=risk_cvar_weight,
         complexity_tiebreak_tolerance=complexity_tiebreak_tolerance,
+        selection_mode="builder" if builder_cfg is not None and builder_cfg.enabled else "flat_action_menu",
     )
     best_action = actions[best_action_idx]
 
@@ -388,6 +417,8 @@ def run_from_config(config: dict[str, Any], *, project_root: Path) -> Path:
     selection_summary = {
         "risk_cvar_weight": risk_cvar_weight,
         "complexity_tiebreak_tolerance": complexity_tiebreak_tolerance,
+        "selection_mode": "builder" if builder_cfg is not None and builder_cfg.enabled else "flat_action_menu",
+        "effective_complexity_tiebreak_tolerance": float(ranked_train_actions[0]["effective_tolerance"]),
         "ranked_train_actions": [
             {
                 "name": item["name"],

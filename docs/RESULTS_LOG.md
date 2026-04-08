@@ -223,3 +223,47 @@
   - eval `expected_hits = 2.4316666666666666`
 - That means the minimal builder space already contains a layout matching the heuristic baseline.
 - The immediate failure in Test 5 was therefore not the builder search space itself; it was the final selector/tie-break choosing `rect_compact_standard` over the better `rect_compact_loose`.
+
+## V2-Realism Test 6 - RL After Phase 2.1 Builder Selection Fix (2026-04-08)
+
+- Reference baseline for comparison:
+  - `results/runs/baseline/20260408_153149_baseline_test1`
+  - `static_baseline.expected_hits = 2.624166666666667`
+  - `heuristic_baseline.expected_hits = 2.4316666666666666` (winner)
+- RL run:
+  - `results/runs/rl/20260408_182159_rl_test1`
+  - `evaluation.expected_hits = 2.4316666666666666`
+  - `training.selected_action = rect_compact_loose`
+  - `training.selected_action_by_q_value = rect_compact_loose`
+  - `training.mode = builder`
+
+### Conclusion
+
+- Phase 2.1 fixed the builder-mode selector failure.
+- RL now selects the audited winner `rect_compact_loose`.
+- This RL run:
+  - beats static baseline by `0.1925` expected hits
+  - matches heuristic baseline exactly on `expected_hits`
+  - improves materially over the prior builder-mode run from Test 5
+
+### Validity Notes
+
+- RL run git SHA: `510092af5321235c4e2cfa9143c07eb05575c913`
+- Comparison baseline reference git SHA: `bb7ba4e5ee3b33aac6167ab1b437c61f31f5069e`
+- RL run kept the same canonical V2 split and seeds:
+  - Train seeds: `[1939, 1940, 1941]`
+  - Eval seeds: `[1942, 1943, 1944]`
+- RL manifest stamps the same realism family as recent V2 runs:
+  - `u_boat_mode_default = moving`
+  - noise enabled (`sigma_heading_rad=0.01`, `sigma_launch_delay=0.05`, `sigma_speed_mps=0.25`, `p_dud=0.02`)
+  - environment enabled (`time_of_day=night`, `visibility_m=3500`, `sea_state=4`, `detection_risk_scale=1.0`)
+  - ship movement realism enabled
+
+### Interpretation Note
+
+- The minimal builder path is now validated as a real RL-capable search space for the current benchmark.
+- The immediate blocker was selector behavior, not missing builder freedom.
+- The next meaningful frontier is no longer selector repair. It is:
+  - stronger reward design
+  - broader attack-profile diversity
+  - harder evaluation gates beyond matching the current heuristic baseline on one split
