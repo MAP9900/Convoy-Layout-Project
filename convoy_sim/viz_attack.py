@@ -10,6 +10,7 @@ from pathlib import Path
 
 from convoy_sim.entities import Ship, ShipClass, Torpedo, torpedo_hit_time
 from convoy_sim.geometry import as_vec, distance, min_distance_over_interval
+from convoy_sim.realism import UBoatMotionPlan
 from convoy_sim.viz import plot_convoy_planview
 from convoy_sim.dynamics import ConvoyFormation, ConvoyKinematics, ship_positions_at
 from convoy_sim.simulation import (
@@ -57,6 +58,231 @@ def torpedo_position_at_global_time(torpedo: Torpedo, t_global: float) -> np.nda
     """Return torpedo position at global time, respecting launch_delay."""
 
     return torpedo.position_at(float(t_global))
+
+
+def sample_u_boat_track(
+    motion_plan: UBoatMotionPlan,
+    t_start: float,
+    t_end: float,
+    *,
+    n_points: int = 200,
+) -> np.ndarray:
+    """Sample a U-boat motion plan into polyline points."""
+
+    start = float(t_start)
+    end = float(t_end)
+    if end < start:
+        raise ValueError("t_end must be >= t_start")
+    if n_points < 2:
+        raise ValueError("n_points must be >= 2")
+    times = np.linspace(start, end, int(n_points), dtype=float)
+    return np.asarray([motion_plan.position_at(float(t)) for t in times], dtype=float)
+
+
+def torpedo_heading_table_rows(torpedoes: list[Torpedo]) -> list[dict[str, float | str]]:
+    """Return compact launch/final-heading rows for reporting or notebook display."""
+
+    rows: list[dict[str, float | str]] = []
+    for idx, torpedo in enumerate(torpedoes, start=1):
+        launch_heading_deg = float(np.degrees(torpedo.initial_heading_rad()))
+        final_heading_deg = float(np.degrees(torpedo.heading_rad))
+        gyro_offset_deg = float(
+            np.degrees(
+                np.arctan2(
+                    np.sin(float(torpedo.heading_rad) - float(torpedo.initial_heading_rad())),
+                    np.cos(float(torpedo.heading_rad) - float(torpedo.initial_heading_rad())),
+                )
+            )
+        )
+        rows.append(
+            {
+                "shot": idx,
+                "torpedo_id": torpedo.id,
+                "launch_time_s": float(torpedo.launch_delay),
+                "launch_x_m": float(torpedo.launch_position[0]),
+                "launch_y_m": float(torpedo.launch_position[1]),
+                "launch_heading_deg": launch_heading_deg,
+                "final_heading_deg": final_heading_deg,
+                "gyro_offset_deg": gyro_offset_deg,
+            }
+        )
+    return rows
+
+
+def format_torpedo_heading_table(torpedoes: list[Torpedo]) -> str:
+    """Return a monospace table for launch positions and final headings."""
+
+    rows = torpedo_heading_table_rows(torpedoes)
+    if not rows:
+        return "No torpedoes."
+    header = (
+        f"{'shot':>4} {'id':>5} {'t_launch_s':>10} {'launch_x_m':>11} "
+        f"{'launch_y_m':>11} {'launch_deg':>11} {'final_deg':>10} {'gyro_deg':>9}"
+    )
+    body = [
+        (
+            f"{int(row['shot']):>4} {str(row['torpedo_id']):>5} {float(row['launch_time_s']):>10.1f} "
+            f"{float(row['launch_x_m']):>11.1f} {float(row['launch_y_m']):>11.1f} "
+            f"{float(row['launch_heading_deg']):>11.1f} {float(row['final_heading_deg']):>10.1f} "
+            f"{float(row['gyro_offset_deg']):>9.1f}"
+        )
+        for row in rows
+    ]
+    return "\n".join([header, *body])
+
+
+def _draw_heading_stub(
+    ax: Any,
+    position: np.ndarray,
+    heading_rad: float,
+    *,
+    length_m: float = 120.0,
+    color: str = "#111111",
+    linewidth: float = 2.0,
+    alpha: float = 1.0,
+    zorder: int = 7,
+) -> None:
+    """Draw a short heading line for the U-boat orientation."""
+
+    direction = np.asarray([np.cos(float(heading_rad)), np.sin(float(heading_rad))], dtype=float)
+    start = np.asarray(position, dtype=float)
+    end = start + direction * float(length_m)
+    ax.plot(
+        [float(start[0]), float(end[0])],
+        [float(start[1]), float(end[1])],
+        color=color,
+        linewidth=float(linewidth),
+        alpha=float(alpha),
+        solid_capstyle="round",
+        zorder=int(zorder),
+    )
+
+
+def plot_torpedo_doctrine_snapshot(
+    torpedoes: list[Torpedo],
+    *,
+    snapshot_time_s: float,
+    ax: Any | None = None,
+    title: str | None = None,
+    u_boat_track: np.ndarray | None = None,
+    u_boat_position: np.ndarray | None = None,
+    u_boat_heading_rad: float | None = None,
+    centerline_bearing_rad: float | None = None,
+    view_bounds: tuple[float, float, float, float] | None = None,
+    figure_facecolor: str | None = None,
+    axes_facecolor: str = "#06768d",
+    grid_color: str = "lightgrey",
+    torpedo_color: str = "#b00020",
+    path_color: str = "#6c757d",
+    centerline_color: str = "#8d99ae",
+    launch_point_color: str = "#111111",
+    torpedo_linewidth: float = 1.2,
+    show_launch_points: bool = True,
+    show_centerline: bool = True,
+    show_u_boat_path: bool = True,
+) -> Any:
+    """Render a submarine-centric attack snapshot for doctrine comparison."""
+
+    try:
+        import matplotlib.pyplot as plt  # type: ignore
+    except ImportError as exc:  # pragma: no cover - depends on environment
+        raise ImportError("matplotlib is required for doctrine plotting") from exc
+
+    if ax is None:
+        _fig, ax = plt.subplots(figsize=(8, 8), facecolor=figure_facecolor)
+    elif figure_facecolor is not None:
+        ax.figure.set_facecolor(figure_facecolor)
+    ax.set_facecolor(axes_facecolor)
+
+    snapshot = float(snapshot_time_s)
+    if show_u_boat_path and u_boat_track is not None and len(u_boat_track) >= 2:
+        track = np.asarray(u_boat_track, dtype=float)
+        ax.plot(
+            track[:, 0],
+            track[:, 1],
+            linestyle="--",
+            linewidth=1.4,
+            color=path_color,
+            alpha=0.9,
+            zorder=1,
+        )
+
+    if show_centerline and centerline_bearing_rad is not None:
+        reference_origin = None
+        if u_boat_position is not None:
+            reference_origin = np.asarray(u_boat_position, dtype=float)
+        elif torpedoes:
+            reference_origin = np.asarray(torpedoes[0].launch_position, dtype=float)
+        if reference_origin is not None:
+            direction = np.asarray(
+                [np.cos(float(centerline_bearing_rad)), np.sin(float(centerline_bearing_rad))],
+                dtype=float,
+            )
+            line_length = 1_200.0
+            start = reference_origin
+            end = reference_origin + direction * line_length
+            ax.plot(
+                [float(start[0]), float(end[0])],
+                [float(start[1]), float(end[1])],
+                linestyle=(0, (4, 4)),
+                linewidth=1.0,
+                color=centerline_color,
+                alpha=0.8,
+                zorder=2,
+            )
+
+    for torpedo in torpedoes:
+        path = torpedo_path_points(torpedo, t0=0.0, t1=snapshot)
+        if path.size == 0:
+            continue
+        ax.plot(
+            path[:, 0],
+            path[:, 1],
+            color=torpedo_color,
+            linewidth=float(torpedo_linewidth),
+            alpha=0.95,
+            zorder=3,
+        )
+        if show_launch_points:
+            ax.scatter(
+                float(torpedo.launch_position[0]),
+                float(torpedo.launch_position[1]),
+                s=20.0,
+                c=launch_point_color,
+                edgecolors="white",
+                linewidths=0.4,
+                zorder=5,
+            )
+
+    if u_boat_position is not None:
+        pos = np.asarray(u_boat_position, dtype=float)
+        ax.scatter(
+            float(pos[0]),
+            float(pos[1]),
+            s=80.0,
+            c="#111111",
+            edgecolors="white",
+            linewidths=0.6,
+            zorder=6,
+        )
+        if u_boat_heading_rad is not None:
+            _draw_heading_stub(ax, pos, float(u_boat_heading_rad))
+
+    if title is not None:
+        ax.set_title(title)
+    if view_bounds is not None:
+        xmin, xmax, ymin, ymax = view_bounds
+        ax.set_xlim(float(xmin), float(xmax))
+        ax.set_ylim(float(ymin), float(ymax))
+    ax.set_aspect("equal", adjustable="box")
+    ax.set_axisbelow(True)
+    ax.grid(True, color=grid_color, linewidth=0.5, alpha=0.75, linestyle="--")
+    for spine in ax.spines.values():
+        spine.set_visible(False)
+    ax.tick_params(labelsize=9)
+    ax.set_xlabel("x (m)")
+    ax.set_ylabel("y (m)")
+    return ax
 
 
 def get_ship_positions_dynamic(

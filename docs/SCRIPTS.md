@@ -133,6 +133,7 @@ Primary simulation feature reference:
 
 - `notebooks/attack_profile_tests.ipynb` (`diagnostic`)
 - `notebooks/attack_manual_verification.ipynb` (`diagnostic`)
+- `notebooks/torpedo_firing_doctrine_comparison.ipynb` (`diagnostic`)
 
 ## Results Files (Tracked)
 

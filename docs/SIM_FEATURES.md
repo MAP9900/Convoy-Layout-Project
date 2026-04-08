@@ -304,6 +304,10 @@ Backward compatibility:
 - legacy fan profiles with `spread_rad > 0` behave as `uniform_divergent`
 - legacy fan profiles with `spread_rad == 0` behave as `longitudinal`
 - existing serialized profiles remain valid without adding new fields
+
+Focused visual comparison:
+- `notebooks/torpedo_firing_doctrine_comparison.ipynb` renders end-of-firing-cycle doctrine snapshots for static and moving U-boat cases using the same attack-profile semantics described above
+
 ## 8.6 Fire Control Lite Baseline
 
 `fire_control.py` implements a deterministic attacker-side firing solution baseline.
@@ -547,6 +551,7 @@ Current U-boat rendering options:
 
 Key manual verification notebook:
 - `notebooks/attack_manual_verification.ipynb`
+- `notebooks/torpedo_firing_doctrine_comparison.ipynb` for zoomed doctrine-comparison views
 
 ---
 

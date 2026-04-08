@@ -99,3 +99,17 @@ Attack Profile Editing Workflow (Source of Truth)
   - Keep any misses intentional and plausible.
   - Avoid close-range profiles with bearings that clearly shoot away from target area unless explicitly modeling fire-control error.
   - Treat `implausible_geometry` audit labels as fix-first unless intentional.
+
+Torpedo Firing Doctrine Comparison (Notebook)
+- Notebook: `notebooks/torpedo_firing_doctrine_comparison.ipynb`
+- What it shows:
+  - one large plot per doctrine/motion case instead of a batch grid
+  - end-of-firing-cycle snapshots for:
+    - longitudinal timing spread
+    - uniform divergent spread
+    - explicit divergent spread
+  - static and moving U-boat variants side by side in notebook order
+  - moving U-boat dashed path, red torpedo tracks, and a compact heading table under each plot
+- Notes:
+  - Intended for doctrine interpretation and visual validation, not convoy-scale run review.
+  - Uses focused submarine-centric plotting helpers in `convoy_sim/viz_attack.py` while preserving the repo's existing visual style.
