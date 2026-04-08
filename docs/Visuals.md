@@ -110,6 +110,9 @@ Torpedo Firing Doctrine Comparison (Notebook)
     - explicit divergent spread
   - static and moving U-boat variants side by side in notebook order
   - moving U-boat dashed path, red torpedo tracks, and a compact heading table under each plot
+- Output behavior:
+  - `show_case(..., save=True)` and `show_summary_grid(save=True)` save PNGs by default
+  - output directory: `notebooks/results/torpedo_firing_doctrine_comparison/`
 - Notes:
   - Intended for doctrine interpretation and visual validation, not convoy-scale run review.
   - Uses focused submarine-centric plotting helpers in `convoy_sim/viz_attack.py` while preserving the repo's existing visual style.

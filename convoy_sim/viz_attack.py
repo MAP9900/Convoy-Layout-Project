@@ -178,12 +178,16 @@ def plot_torpedo_doctrine_snapshot(
     path_color: str = "#6c757d",
     centerline_color: str = "#8d99ae",
     launch_point_color: str = "#111111",
-    torpedo_linewidth: float = 1.2,
+    launch_point_marker: str = ".",
+    launch_point_size: float = 20.0,
+    torpedo_linewidth: float = 1,
     show_launch_points: bool = True,
     show_centerline: bool = True,
     show_u_boat_path: bool = True,
     show_u_boat_heading: bool = False,
     show_full_torpedo_run: bool = False,
+    u_boat_marker: str = ".",
+    u_boat_size: float = 75,
 ) -> Any:
     """Render a submarine-centric attack snapshot for doctrine comparison."""
 
@@ -252,10 +256,11 @@ def plot_torpedo_doctrine_snapshot(
             ax.scatter(
                 float(torpedo.launch_position[0]),
                 float(torpedo.launch_position[1]),
-                s=20.0,
+                s=float(launch_point_size),
                 c=launch_point_color,
-                edgecolors="white",
-                linewidths=0.4,
+                marker=launch_point_marker,
+                edgecolors="none",
+                linewidths=0.0,
                 zorder=5,
             )
 
@@ -264,10 +269,11 @@ def plot_torpedo_doctrine_snapshot(
         ax.scatter(
             float(pos[0]),
             float(pos[1]),
-            s=80.0,
+            s=float(u_boat_size),
             c="#111111",
-            edgecolors="white",
-            linewidths=0.6,
+            marker=u_boat_marker,
+            edgecolors="none",
+            linewidths=0.0,
             zorder=6,
         )
         if show_u_boat_heading and u_boat_heading_rad is not None:
