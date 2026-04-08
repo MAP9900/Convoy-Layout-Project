@@ -50,11 +50,18 @@ Last updated: 2026-04-08
 
 ## Next
 
-- [ ] Phase 1 RL overhaul: fix degenerate canonical RL action set in `configs/rl/default.toml`:
+- [x] Phase 1 RL overhaul: fix degenerate canonical RL action set in `configs/rl/default.toml`:
   - make actions genuinely different geometrically
   - include rectangular vs staggered alternatives
   - include compact / standard / loose spacing variants
   - rerun baseline vs RL after the action-space fix
+- [x] Run direct RL action audit after Phase 1:
+  - `python -m experiments.audit_rl_actions --config configs/rl/default.toml`
+  - result: action menu is now meaningful, but learner selected the wrong action (`staggered_loose`) while `rect_standard` was best on eval
+- [ ] Phase 1.5 RL overhaul: improve train-time action selection / reward alignment before learner replacement:
+  - reduce train/eval mismatch exposed by the action audit
+  - incorporate risk-aware selection logic rather than relying on final tabular Q-values alone
+  - rerun RL and compare against direct action-audit best eval action
 - [ ] Phase 2 RL overhaul: add constrained RL layout-builder action space:
   - row pattern vectors (e.g., `4,5,5,4`)
   - spacing controls

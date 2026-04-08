@@ -200,3 +200,27 @@ Tracks how each test was produced, including optimization method, objective, sea
   - reward redesign
   - richer state/threat modeling
   - eventual learner upgrade
+
+### Follow-Up Diagnostic: Direct RL Action Audit
+
+- Audit run dir: `results/runs/rl_action_audit/20260408_154017_rl_test1_action_audit`
+- Entrypoint:
+  - `python -m experiments.audit_rl_actions --config configs/rl/default.toml`
+- Why this was run:
+  - determine whether the new Phase 1 action menu itself was weak, or whether the learner selected the wrong action
+
+Key findings:
+- Best train action: `staggered_loose`
+  - train `expected_hits = 2.7375`
+  - eval `expected_hits = 2.8883333333333336`
+- Best eval action: `rect_standard`
+  - train `expected_hits = 2.7904166666666663`
+  - eval `expected_hits = 2.624166666666667`
+
+Interpretation:
+- The canonical RL action menu is no longer degenerate.
+- There is at least one materially better action on eval (`rect_standard`) than the one RL selected in Test 3 (`staggered_loose`).
+- This shifts the main bottleneck away from action degeneracy and toward:
+  - train/eval objective mismatch
+  - weak one-step tabular selection logic
+  - reward/risk alignment issues
