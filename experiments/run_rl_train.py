@@ -67,6 +67,62 @@ def _render_layout_kwargs(layout_kwargs: dict[str, Any]) -> dict[str, Any]:
     return {k: v for k, v in layout_kwargs.items() if k != "ship_movement_realism"}
 
 
+def _selection_score(summary: dict[str, Any], *, risk_cvar_weight: float) -> float:
+    """Return lower-is-better action score on the train split."""
+
+    return float(summary["expected_hits"]) + risk_cvar_weight * float(summary["CVaR_90"])
+
+
+def _select_best_action_from_train_summaries(
+    actions: list[LayoutAction],
+    train_summaries: list[dict[str, Any]],
+    *,
+    risk_cvar_weight: float,
+    complexity_tiebreak_tolerance: float,
+) -> tuple[int, list[dict[str, Any]]]:
+    """Select final action using train metrics with a small complexity tie-break.
+
+    Primary ranking minimizes:
+    - expected hits
+    - plus optional CVaR-based risk guardrail
+
+    If multiple actions are effectively tied on the primary score, prefer the
+    simpler action. This is meant to reduce train/eval mismatch when the train
+    advantage is marginal.
+    """
+
+    ranked: list[dict[str, Any]] = []
+    for idx, (action, summary) in enumerate(zip(actions, train_summaries, strict=True)):
+        primary_score = _selection_score(summary, risk_cvar_weight=risk_cvar_weight)
+        ranked.append(
+            {
+                "index": idx,
+                "name": action.name,
+                "complexity_cost": float(action.complexity_cost),
+                "primary_score": float(primary_score),
+                "summary": summary,
+            }
+        )
+
+    ranked.sort(key=lambda item: (item["primary_score"], item["complexity_cost"], item["name"]))
+    best_primary = float(ranked[0]["primary_score"])
+    tied = [
+        item
+        for item in ranked
+        if float(item["primary_score"]) <= best_primary + float(complexity_tiebreak_tolerance)
+    ]
+    tied.sort(
+        key=lambda item: (
+            item["complexity_cost"],
+            item["primary_score"],
+            float(item["summary"]["expected_hits"]),
+            item["name"],
+        )
+    )
+    selected = tied[0]
+    return int(selected["index"]), ranked
+
+
 def _train_library(default_library: AttackProfileLibrary, train_ids: list[str]) -> AttackProfileLibrary:
     keep = [profile for profile in default_library.profiles if profile.profile_id in set(train_ids)]
     if not keep:
@@ -107,6 +163,7 @@ def run_from_config(config: dict[str, Any], *, project_root: Path) -> Path:
     actions = [_layout_action_from_cfg(item) for item in action_cfgs]
     if not actions:
         raise ValueError("Config must define at least one RL action")
+    selection_cfg = dict(rl_cfg.get("selection", {}))
     ship_movement_realism = dict(sim_cfg.get("ship_movement_realism", {}))
     if ship_movement_realism:
         for action in actions:
@@ -136,6 +193,8 @@ def run_from_config(config: dict[str, Any], *, project_root: Path) -> Path:
     epsilon_min = float(train_cfg.get("epsilon_min", 0.02))
     alpha = float(train_cfg.get("alpha", 0.1))
     train_seed = int(train_cfg.get("seed", 0))
+    risk_cvar_weight = float(selection_cfg.get("risk_cvar_weight", 0.05))
+    complexity_tiebreak_tolerance = float(selection_cfg.get("complexity_tiebreak_tolerance", 0.1))
 
     profile_lib = _train_library(DEFAULT_ATTACK_PROFILE_LIBRARY, train_profile_ids)
 
@@ -178,7 +237,36 @@ def run_from_config(config: dict[str, Any], *, project_root: Path) -> Path:
         reward_history.append(float(reward))
         epsilon = max(epsilon_min, epsilon * epsilon_decay)
 
-    best_action_idx = int(np.argmax(q_values))
+    best_q_action_idx = int(np.argmax(q_values))
+
+    train_action_rows: dict[str, list[Any]] = {}
+    train_action_summaries: dict[str, dict[str, Any]] = {}
+    train_summaries_in_action_order: list[dict[str, Any]] = []
+    for action in actions:
+        rows = evaluate_layout_over_profiles(
+            model_name=f"{action.name}_train_objective",
+            layout_fn=action.layout_fn,
+            layout_kwargs=action.layout_kwargs,
+            library=profile_lib,
+            profile_ids=train_profile_ids,
+            seeds=train_seeds,
+            n_trials_per_seed=n_trials_per_seed,
+            t_max=t_max,
+            noise_model=noise_model,
+            env=env_profile,
+            max_hits_per_torpedo=max_hits_per_torpedo,
+        )
+        summary = summarize_profile_rows(rows)
+        train_action_rows[action.name] = rows
+        train_action_summaries[action.name] = summary
+        train_summaries_in_action_order.append(summary)
+
+    best_action_idx, ranked_train_actions = _select_best_action_from_train_summaries(
+        actions,
+        train_summaries_in_action_order,
+        risk_cvar_weight=risk_cvar_weight,
+        complexity_tiebreak_tolerance=complexity_tiebreak_tolerance,
+    )
     best_action = actions[best_action_idx]
 
     eval_rows = evaluate_layout_over_profiles(
@@ -201,15 +289,33 @@ def run_from_config(config: dict[str, Any], *, project_root: Path) -> Path:
         "epsilon_final": epsilon,
         "avg_reward_last_50": float(np.mean(reward_history[-50:])) if reward_history else 0.0,
         "selected_action": best_action.name,
+        "selected_action_by_q_value": actions[best_q_action_idx].name,
+        "selection_method": "train_split_risk_aware_objective",
+    }
+
+    selection_summary = {
+        "risk_cvar_weight": risk_cvar_weight,
+        "complexity_tiebreak_tolerance": complexity_tiebreak_tolerance,
+        "ranked_train_actions": [
+            {
+                "name": item["name"],
+                "primary_score": float(item["primary_score"]),
+                "complexity_cost": float(item["complexity_cost"]),
+                "train_summary": item["summary"],
+            }
+            for item in ranked_train_actions
+        ],
     }
 
     checkpoint_dir = run_dir / "checkpoints"
     checkpoint_dir.mkdir(parents=True, exist_ok=True)
     checkpoint = {
         "selected_action": best_action.name,
+        "selected_action_by_q_value": actions[best_q_action_idx].name,
         "q_values": {actions[idx].name: float(q_values[idx]) for idx in range(len(actions))},
         "action_counts": {actions[idx].name: int(action_counts[idx]) for idx in range(len(actions))},
         "training_summary": training_summary,
+        "selection_summary": selection_summary,
     }
     (checkpoint_dir / "policy_latest.json").write_text(json.dumps(checkpoint, indent=2), encoding="utf-8")
 
@@ -217,16 +323,19 @@ def run_from_config(config: dict[str, Any], *, project_root: Path) -> Path:
         "config": config,
         "resolved": {
             "selected_action": best_action.name,
+            "selected_action_by_q_value": actions[best_q_action_idx].name,
             "selected_layout_fn": getattr(best_action.layout_fn, "__name__", str(best_action.layout_fn)),
             "selected_layout_kwargs": {
                 k: (v.tolist() if isinstance(v, np.ndarray) else v)
                 for k, v in best_action.layout_kwargs.items()
             },
+            "selection_summary": selection_summary,
         },
     }
 
     metrics_summary = {
         "training": training_summary,
+        "selection": selection_summary,
         "evaluation": eval_summary,
     }
 
@@ -271,6 +380,12 @@ def run_from_config(config: dict[str, Any], *, project_root: Path) -> Path:
                 "detection_risk_scale": env_profile.detection_risk_scale,
             },
             "ship_movement_realism_enabled": bool(ship_movement_realism),
+        },
+        "selection": {
+            "risk_cvar_weight": risk_cvar_weight,
+            "complexity_tiebreak_tolerance": complexity_tiebreak_tolerance,
+            "selected_action": best_action.name,
+            "selected_action_by_q_value": actions[best_q_action_idx].name,
         },
         "layout_plots": {
             "selected_policy": str(selected_plot_path.relative_to(project_root)) if selected_plot_written else None,

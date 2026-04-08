@@ -129,3 +129,43 @@
 
 - Unlike earlier RL tests, this run does carry meaningful action-space information because the canonical RL menu now contains genuinely different layouts.
 - However, it is still not a final RL capability benchmark because the environment remains a one-step selector and the learner/reward design have not yet been upgraded.
+
+## V2-Realism Test 4 - RL After Phase 1.5 Train-Time Selection Fix (2026-04-08)
+
+- Reference baseline for comparison:
+  - `results/runs/baseline/20260408_153149_baseline_test1`
+  - `static_baseline.expected_hits = 2.624166666666667`
+  - `heuristic_baseline.expected_hits = 2.4316666666666666` (winner)
+- RL run:
+  - `results/runs/rl/20260408_155214_rl_test1`
+  - `evaluation.expected_hits = 2.624166666666667`
+  - `training.selected_action = rect_standard`
+  - `training.selected_action_by_q_value = staggered_loose`
+
+### Conclusion
+
+- Phase 1.5 corrected the final action-selection failure exposed by the direct action audit.
+- The new train-split risk-aware selector overrode the raw Q-value choice and selected `rect_standard`, which was the best eval action in the audit.
+- RL evaluation returned to the static baseline level and avoided the worse `staggered_loose` outcome from Test 3.
+- RL still trails the heuristic baseline by `0.1925` expected hits, so the selector fix helped, but it did not close the optimization gap.
+
+### Validity Notes
+
+- RL run git SHA: `a4e3317eb32e8e3942e76f23fd113e0322c9ef80`
+- Baseline comparison reference git SHA: `bb7ba4e5ee3b33aac6167ab1b437c61f31f5069e`
+- Train/eval profile splits matched the existing canonical V2 split:
+  - Train seeds: `[1939, 1940, 1941]`
+  - Eval seeds: `[1942, 1943, 1944]`
+- RL manifest stamps the same realism config family:
+  - `u_boat_mode_default = moving`
+  - noise enabled (`sigma_heading_rad=0.01`, `sigma_launch_delay=0.05`, `sigma_speed_mps=0.25`, `p_dud=0.02`)
+  - environment enabled (`time_of_day=night`, `visibility_m=3500`, `sea_state=4`, `detection_risk_scale=1.0`)
+  - ship movement realism enabled
+
+### Interpretation Note
+
+- This result shows the immediate next bottleneck is no longer final action selection.
+- The remaining gap to heuristic baseline now points more toward:
+  - coarse one-step action space
+  - limited state/threat modeling
+  - reward/objective limitations

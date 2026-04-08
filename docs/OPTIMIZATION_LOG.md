@@ -224,3 +224,61 @@ Interpretation:
   - train/eval objective mismatch
   - weak one-step tabular selection logic
   - reward/risk alignment issues
+
+## V2-Realism Test 4 - RL After Phase 1.5 Train-Time Selection Fix (2026-04-08)
+
+### Run References
+
+- RL run dir: `results/runs/rl/20260408_155214_rl_test1`
+- Comparison baseline reference: `results/runs/baseline/20260408_153149_baseline_test1`
+- Results summary: see `docs/RESULTS_LOG.md` (V2-Realism Test 4)
+
+### What Changed In This Test
+
+- This test implemented Phase 1.5 of the RL overhaul.
+- `experiments/run_rl_train.py` now keeps the existing tabular training loop but changes final action selection:
+  - raw Q-values are still tracked
+  - final action is selected from direct train-split action summaries
+  - selection score uses `expected_hits + risk_cvar_weight * CVaR_90`
+  - near-tied actions use a complexity tie-break
+- Canonical config now includes:
+  - `[rl.selection]`
+  - `risk_cvar_weight = 0.05`
+  - `complexity_tiebreak_tolerance = 0.1`
+
+### Protocol/Realism Stamp
+
+- Protocol track: `V2-Realism` active.
+- `u_boat_mode` default: `moving`.
+- Torpedo realism enabled: heading noise, launch-delay noise, speed variance, dud probability.
+- Included movement realism: bounded station-keeping jitter + class-dependent cohesion + bounded per-ship deviation overlay.
+- Included attacker input realism: partial observability (noisy bearing/range/course/speed/contact estimate + environment context).
+
+### Config Stamp (from run manifest)
+
+- Git SHA: `a4e3317eb32e8e3942e76f23fd113e0322c9ef80`
+- Noise: `sigma_heading_rad=0.01`, `sigma_launch_delay=0.05`, `sigma_speed_mps=0.25`, `p_dud=0.02`
+- Environment: `time_of_day=night`, `visibility_m=3500`, `sea_state=4`, `detection_risk_scale=1.0`
+- Ship movement realism enabled: `true`
+- Train seeds: `[1939, 1940, 1941]`
+- Eval seeds: `[1942, 1943, 1944]`
+- RL episodes: `300`
+- Selected action: `rect_standard`
+- Raw Q-value winner: `staggered_loose`
+
+### Comparability Status
+
+- RL run uses the same canonical train/eval profile split and seed sets as the recent V2 runs.
+- Realism stamp remains aligned with recent V2 benchmarks.
+- This is a valid follow-up comparison to Test 3 because the key methodological change was isolated to train-time action selection.
+
+### Methodology Interpretation
+
+- Phase 1.5 worked as intended:
+  - the selector no longer followed the overfit/raw-Q preference for `staggered_loose`
+  - it selected `rect_standard`, which the direct action audit had already identified as the best eval action
+- This restored RL performance to the static baseline level.
+- The remaining gap to heuristic baseline suggests the next work should focus on:
+  - richer environment/action design
+  - reward/objective redesign
+  - only then learner replacement

@@ -1,0 +1,282 @@
+config:
+  run:
+    name: "rl_test1"
+    output_root: "results/runs"
+  simulation:
+    t_max: 400.0
+    n_trials_per_seed: 40
+    max_hits_per_torpedo: 1
+    noise:
+      sigma_heading_rad: 0.01
+      sigma_launch_delay: 0.05
+      sigma_speed_mps: 0.25
+      p_dud: 0.02
+    environment:
+      time_of_day: "night"
+      visibility_m: 3500.0
+      sea_state: 4
+      detection_risk_scale: 1.0
+    ship_movement_realism:
+      position_jitter_std_m: 8.0
+      heading_jitter_std_rad: 0.015
+      deviation_offset_cap_m: 12.0
+      enable_slot_swaps: false
+      max_swap_fraction: 0.0
+      freighter_scale: 1.0
+      tanker_scale: 0.9
+      escort_scale: 0.6
+      decoy_scale: 1.1
+  splits:
+    train_profiles:
+      - "P01"
+      - "P02"
+      - "P04"
+      - "P05"
+      - "P06"
+      - "P07"
+      - "P09"
+      - "P11"
+      - "P15"
+      - "P16"
+      - "P17"
+      - "P18"
+      - "P19"
+      - "P21"
+      - "P22"
+      - "P24"
+      - "P25"
+      - "P27"
+      - "P28"
+      - "P30"
+    eval_profiles:
+      - "P03"
+      - "P08"
+      - "P10"
+      - "P12"
+      - "P13"
+      - "P14"
+      - "P20"
+      - "P23"
+      - "P26"
+      - "P29"
+    train_seeds:
+      - 1939
+      - 1940
+      - 1941
+    eval_seeds:
+      - 1942
+      - 1943
+      - 1944
+  training:
+    episodes: 300
+    epsilon: 0.25
+    epsilon_decay: 0.995
+    epsilon_min: 0.02
+    alpha: 0.12
+    seed: 7
+  rl:
+    selection:
+      risk_cvar_weight: 0.05
+      complexity_tiebreak_tolerance: 0.1
+    actions:
+      -
+        name: "rect_compact"
+        type: "rectangular"
+        complexity_cost: 1.0
+        n_rows: 6
+        n_cols: 7
+        spacing_along: 365.76
+        spacing_across: 914.4
+        speed: 5.0
+        heading_rad: 0.0
+        length: 150.0
+        beam: 20.0
+        origin:
+          - 0.0
+          - 0.0
+      -
+        name: "rect_standard"
+        type: "rectangular"
+        complexity_cost: 1.1
+        n_rows: 6
+        n_cols: 7
+        spacing_along: 457.2
+        spacing_across: 1371.6
+        speed: 5.0
+        heading_rad: 0.0
+        length: 150.0
+        beam: 20.0
+        origin:
+          - 0.0
+          - 0.0
+      -
+        name: "rect_loose"
+        type: "rectangular"
+        complexity_cost: 1.3
+        n_rows: 6
+        n_cols: 7
+        spacing_along: 548.64
+        spacing_across: 1371.6
+        speed: 5.0
+        heading_rad: 0.0
+        length: 150.0
+        beam: 20.0
+        origin:
+          - 0.0
+          - 0.0
+      -
+        name: "staggered_compact"
+        type: "staggered"
+        complexity_cost: 1.15
+        n_rows: 6
+        n_cols: 7
+        spacing_along: 365.76
+        spacing_across: 914.4
+        speed: 5.0
+        heading_rad: 0.0
+        length: 150.0
+        beam: 20.0
+        origin:
+          - 0.0
+          - 0.0
+      -
+        name: "staggered_standard"
+        type: "staggered"
+        complexity_cost: 1.25
+        n_rows: 6
+        n_cols: 7
+        spacing_along: 457.2
+        spacing_across: 1143.0
+        speed: 5.0
+        heading_rad: 0.0
+        length: 150.0
+        beam: 20.0
+        origin:
+          - 0.0
+          - 0.0
+      -
+        name: "staggered_loose"
+        type: "staggered"
+        complexity_cost: 1.4
+        n_rows: 6
+        n_cols: 7
+        spacing_along: 548.64
+        spacing_across: 1371.6
+        speed: 5.0
+        heading_rad: 0.0
+        length: 150.0
+        beam: 20.0
+        origin:
+          - 0.0
+          - 0.0
+  split_meta:
+    method: "random_partition"
+    split_seed: 1945
+    n_total: 30
+    n_train: 20
+    n_eval: 10
+    generated_utc: "2026-03-31T00:01:09Z"
+    profile_prefix: "P"
+    profile_width: 2
+resolved:
+  selected_action: "rect_standard"
+  selected_action_by_q_value: "staggered_loose"
+  selected_layout_fn: "make_rectangular_convoy"
+  selected_layout_kwargs:
+    n_rows: 6
+    n_cols: 7
+    spacing_along: 457.2
+    spacing_across: 1371.6
+    speed: 5.0
+    heading_rad: 0.0
+    length: 150.0
+    beam: 20.0
+    origin:
+      - 0.0
+      - 0.0
+    ship_movement_realism:
+      position_jitter_std_m: 8.0
+      heading_jitter_std_rad: 0.015
+      deviation_offset_cap_m: 12.0
+      enable_slot_swaps: false
+      max_swap_fraction: 0.0
+      freighter_scale: 1.0
+      tanker_scale: 0.9
+      escort_scale: 0.6
+      decoy_scale: 1.1
+  selection_summary:
+    risk_cvar_weight: 0.05
+    complexity_tiebreak_tolerance: 0.1
+    ranked_train_actions:
+      -
+        name: "staggered_loose"
+        primary_score: 2.909327549492232
+        complexity_cost: 1.4
+        train_summary:
+          profiles: 20
+          samples: 2400
+          expected_hits: 2.7375
+          CVaR_90: 3.436550989844642
+          VaR_90: 3.706666666666667
+          p_hit_ge_1: 0.9941666666666666
+          value_lost: null
+      -
+        name: "rect_standard"
+        primary_score: 2.959585965365558
+        complexity_cost: 1.1
+        train_summary:
+          profiles: 20
+          samples: 2400
+          expected_hits: 2.7904166666666663
+          CVaR_90: 3.3833859739778296
+          VaR_90: 3.766666666666667
+          p_hit_ge_1: 0.9966666666666667
+          value_lost: null
+      -
+        name: "rect_compact"
+        primary_score: 3.072049053887288
+        complexity_cost: 1.0
+        train_summary:
+          profiles: 20
+          samples: 2400
+          expected_hits: 2.8987499999999993
+          CVaR_90: 3.4659810777457833
+          VaR_90: 3.9166666666666665
+          p_hit_ge_1: 0.9929166666666667
+          value_lost: null
+      -
+        name: "rect_loose"
+        primary_score: 3.2241934046345815
+        complexity_cost: 1.3
+        train_summary:
+          profiles: 20
+          samples: 2400
+          expected_hits: 3.0362500000000003
+          CVaR_90: 3.7588680926916225
+          VaR_90: 3.7583333333333333
+          p_hit_ge_1: 0.9983333333333334
+          value_lost: null
+      -
+        name: "staggered_standard"
+        primary_score: 3.238017473985027
+        complexity_cost: 1.25
+        train_summary:
+          profiles: 20
+          samples: 2400
+          expected_hits: 3.049166666666667
+          CVaR_90: 3.777016146367201
+          VaR_90: 3.515
+          p_hit_ge_1: 0.99875
+          value_lost: null
+      -
+        name: "staggered_compact"
+        primary_score: 3.586876412429378
+        complexity_cost: 1.15
+        train_summary:
+          profiles: 20
+          samples: 2400
+          expected_hits: 3.394166666666666
+          CVaR_90: 3.8541949152542374
+          VaR_90: 3.9166666666666665
+          p_hit_ge_1: 0.9991666666666668
+          value_lost: null

@@ -7,7 +7,12 @@ import json
 from pathlib import Path
 
 from experiments.run_baseline_suite import run_from_config as run_baseline_from_config
-from experiments.run_rl_train import run_from_config as run_rl_from_config
+from experiments.run_rl_train import (
+    _select_best_action_from_train_summaries,
+    run_from_config as run_rl_from_config,
+)
+from convoy_sim.defender_policy import LayoutAction
+from convoy_sim.layouts import make_rectangular_convoy
 
 
 REQUIRED_BASE_FILES = {
@@ -128,6 +133,10 @@ def test_run_rl_train_writes_canonical_artifacts_and_checkpoint(tmp_path: Path) 
             "seed": 5,
         },
         "rl": {
+            "selection": {
+                "risk_cvar_weight": 0.05,
+                "complexity_tiebreak_tolerance": 0.1,
+            },
             "actions": [
                 {
                     "name": "rect_a",
@@ -171,8 +180,16 @@ def test_run_rl_train_writes_canonical_artifacts_and_checkpoint(tmp_path: Path) 
     assert {row["model_name"] for row in rows} == {"rl_policy"}
 
     metrics = _read_json(run_dir / "metrics_summary.json")
-    assert {"training", "evaluation"} <= set(metrics)
-    assert {"episodes", "epsilon_final", "avg_reward_last_50", "selected_action"} <= set(metrics["training"])
+    assert {"training", "selection", "evaluation"} <= set(metrics)
+    assert {
+        "episodes",
+        "epsilon_final",
+        "avg_reward_last_50",
+        "selected_action",
+        "selected_action_by_q_value",
+        "selection_method",
+    } <= set(metrics["training"])
+    assert {"risk_cvar_weight", "complexity_tiebreak_tolerance", "ranked_train_actions"} <= set(metrics["selection"])
     assert REQUIRED_SUMMARY_KEYS <= set(metrics["evaluation"])
 
     manifest = _read_json(run_dir / "run_manifest.json")
@@ -180,4 +197,54 @@ def test_run_rl_train_writes_canonical_artifacts_and_checkpoint(tmp_path: Path) 
     assert manifest["workflow"] == "rl"
     assert "episodes" in manifest
     assert "realism" in manifest
+    assert "selection" in manifest
     assert manifest["realism"]["u_boat_mode_default"] == "moving"
+
+
+def test_rl_train_selection_prefers_simpler_action_when_scores_are_nearly_tied() -> None:
+    actions = [
+        LayoutAction(
+            name="simple",
+            layout_fn=make_rectangular_convoy,
+            layout_kwargs={
+                "n_rows": 1,
+                "n_cols": 1,
+                "spacing_along": 100.0,
+                "spacing_across": 100.0,
+                "speed": 5.0,
+                "heading_rad": 0.0,
+                "length": 120.0,
+                "beam": 18.0,
+                "origin": [0.0, 0.0],
+            },
+            complexity_cost=1.0,
+        ),
+        LayoutAction(
+            name="complex",
+            layout_fn=make_rectangular_convoy,
+            layout_kwargs={
+                "n_rows": 1,
+                "n_cols": 1,
+                "spacing_along": 100.0,
+                "spacing_across": 100.0,
+                "speed": 5.0,
+                "heading_rad": 0.0,
+                "length": 120.0,
+                "beam": 18.0,
+                "origin": [0.0, 0.0],
+            },
+            complexity_cost=1.4,
+        ),
+    ]
+    train_summaries = [
+        {"expected_hits": 2.05, "CVaR_90": 3.0},
+        {"expected_hits": 2.0, "CVaR_90": 3.0},
+    ]
+    best_idx, ranked = _select_best_action_from_train_summaries(
+        actions,
+        train_summaries,
+        risk_cvar_weight=0.0,
+        complexity_tiebreak_tolerance=0.1,
+    )
+    assert best_idx == 0
+    assert ranked[0]["name"] == "complex"

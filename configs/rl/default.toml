@@ -46,6 +46,10 @@ seed = 7
 
 [rl]
 
+[rl.selection]
+risk_cvar_weight = 0.05
+complexity_tiebreak_tolerance = 0.1
+
 [[rl.actions]]
 name = "rect_compact"
 type = "rectangular"
