@@ -1,38 +1,38 @@
 """Smoke test for attacker optimization search."""
 
-import numpy as np
+from __future__ import annotations
 
 from convoy_sim.attacker_opt import search_attack_params
-from scenarios.scenario_a import build_scenario_a
+from scenarios.convoy_profiles import get_convoy_layout_profile
 
 
 def test_attacker_opt_deterministic() -> None:
-    scenario = build_scenario_a(n_trials=50, rng_seed=1)
+    profile = get_convoy_layout_profile("small_demo")
     grid = {
         "base_bearing_rad": [0.0, 0.1],
         "spread_rad": [0.0, 0.2],
         "n": [2],
     }
     results_a = search_attack_params(
-        layout_fn=scenario.layout_fn,
-        layout_kwargs=scenario.layout_kwargs,
+        layout_fn=profile.layout_fn,
+        layout_kwargs=dict(profile.layout_kwargs),
         param_grid=grid,
         torpedo_origin=(-1000.0, 0.0),
         torpedo_speed=20.0,
         torpedo_max_run_time=500.0,
-        t_max=scenario.t_max,
+        t_max=500.0,
         n_trials=50,
         rng_seed=10,
         mode="fan",
     )
     results_b = search_attack_params(
-        layout_fn=scenario.layout_fn,
-        layout_kwargs=scenario.layout_kwargs,
+        layout_fn=profile.layout_fn,
+        layout_kwargs=dict(profile.layout_kwargs),
         param_grid=grid,
         torpedo_origin=(-1000.0, 0.0),
         torpedo_speed=20.0,
         torpedo_max_run_time=500.0,
-        t_max=scenario.t_max,
+        t_max=500.0,
         n_trials=50,
         rng_seed=10,
         mode="fan",
