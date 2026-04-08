@@ -16,6 +16,7 @@ Primary simulation feature reference:
 |---|---|---|---|---|---|---|
 | `experiments/run_baseline_suite.py` | `python -m experiments.run_baseline_suite --config ...` | Baseline TOML config, scenario/profile refs | Baseline metrics/artifacts under `results/` | `convoy_sim.workflows`, scenarios, core sim modules | Medium | Baseline |
 | `experiments/run_rl_train.py` | `python -m experiments.run_rl_train --config ...` | RL TOML config | RL training/eval artifacts and checkpoints under `results/` | `convoy_sim.rl_env`, `convoy_sim.rl_wrapper`, workflows | Long | RL |
+| `experiments/audit_rl_actions.py` | `python -m experiments.audit_rl_actions --config ...` | RL TOML config | Per-action train/eval audit metrics, plots, and manifest under `results/` | `convoy_sim.workflows`, RL action config, core sim modules | Medium-Long | RL diagnostic |
 | `experiments/generate_run_config.py` | `python -m experiments.generate_run_config --template ... --output ...` | Template TOML, split seed, split sizes, optional seed/run-name overrides | Full generated TOML with reproducible splits and `split_meta` | Python `tomllib`, local config templates | Short | Baseline + RL config generation |
 | `experiments/audit_attack_profiles.py` | `python -m experiments.audit_attack_profiles ...` | Convoy profile id(s), audit parameters | Audit CSV/JSON diagnostics | `convoy_sim.profile_audit`, `convoy_sim.attack_profiles` | Short-Medium | Diagnostic |
 | `experiments/render_attack_profile_previews.py` | `python -m experiments.render_attack_profile_previews ...` | Convoy profile id(s), run mode, rendering flags | Preview frames + geometry/hit diagnostics in `results/diag` and frame dirs | `convoy_sim.viz_attack`, profile audit helpers | Medium-Long | Manual verification |
@@ -41,6 +42,7 @@ Primary simulation feature reference:
 
 - `experiments/run_baseline_suite.py`: Canonical baseline runner (config-first, artifact schema output). (`canonical`)
 - `experiments/run_rl_train.py`: Canonical RL runner (config-first train/eval + checkpoint output). (`canonical`)
+- `experiments/audit_rl_actions.py`: Direct audit of configured RL actions on train/eval splits. (`diagnostic`)
 - `experiments/generate_run_config.py`: Reproducible full TOML generator for baseline/RL run configs and profile splits. (`canonical`)
 - `experiments/audit_attack_profiles.py`: Attack-profile geometry plausibility audit. (`diagnostic`)
 - `experiments/render_attack_profile_previews.py`: Profile frame rendering + audit/hit CSV outputs. (`diagnostic`)

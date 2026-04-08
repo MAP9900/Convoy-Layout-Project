@@ -206,6 +206,14 @@ Success criteria:
 - selected action materially changes convoy layout
 - rerun baseline vs RL and record a new benchmark
 
+Recommended diagnostic immediately after Phase 1:
+- run `python -m experiments.audit_rl_actions --config configs/rl/default.toml`
+- compare all configured actions directly on train/eval splits
+- use that result to decide whether the next bottleneck is:
+  - weak action menu
+  - weak reward/training setup
+  - or both
+
 ## Phase 2: Constrained Layout-Builder Environment
 
 Goal:
