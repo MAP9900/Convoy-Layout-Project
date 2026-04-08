@@ -165,6 +165,8 @@ def test_longitudinal_doctrine_produces_zero_heading_offsets() -> None:
     torpedoes = profile.build_torpedoes(np.random.default_rng(0))
     headings = np.array([torp.heading_rad for torp in torpedoes], dtype=float)
     assert np.allclose(headings, profile.base_bearing_rad)
+    assert profile.is_standard_convoy_doctrine() is False
+    assert "Rare/nonstandard convoy doctrine" in profile.doctrine_note()
 
 
 def test_uniform_divergent_doctrine_preserves_linear_spread_behavior() -> None:
@@ -183,6 +185,8 @@ def test_uniform_divergent_doctrine_preserves_linear_spread_behavior() -> None:
     torpedoes = profile.build_torpedoes(np.random.default_rng(1))
     final_offsets = np.array([torp.heading_rad - profile.base_bearing_rad for torp in torpedoes], dtype=float)
     assert np.allclose(final_offsets, expected_offsets)
+    assert profile.is_standard_convoy_doctrine() is True
+    assert "Standard convoy doctrine" in profile.doctrine_note()
 
 
 def test_explicit_divergent_doctrine_applies_non_uniform_offsets() -> None:
@@ -199,6 +203,8 @@ def test_explicit_divergent_doctrine_applies_non_uniform_offsets() -> None:
     torpedoes = profile.build_torpedoes(np.random.default_rng(2))
     final_offsets = np.array([torp.heading_rad - profile.base_bearing_rad for torp in torpedoes], dtype=float)
     assert np.allclose(final_offsets, np.array(profile.per_torpedo_heading_offsets_rad, dtype=float))
+    assert profile.is_standard_convoy_doctrine() is True
+    assert "Manual convoy doctrine" in profile.doctrine_note()
 
 
 def test_default_library_p01_uses_profile_bearing_as_attack_intent() -> None:
@@ -256,7 +262,19 @@ def test_default_library_profiles_no_longer_depend_on_legacy_bearing_compat() ->
     assert all(not profile.uses_legacy_bearing_compat() for profile in DEFAULT_ATTACK_PROFILE_LIBRARY.profiles)
 
 
-def test_profile_rejects_turning_u_boat_during_salvo_by_default() -> None:
+@pytest.mark.parametrize(
+    ("spread_doctrine", "spread_rad", "per_offsets"),
+    [
+        ("uniform_divergent", 0.1, ()),
+        ("explicit_divergent", 0.0, (-0.05, 0.04)),
+        ("longitudinal", 0.0, ()),
+    ],
+)
+def test_profile_rejects_turning_u_boat_during_salvo_by_default(
+    spread_doctrine: str,
+    spread_rad: float,
+    per_offsets: tuple[float, ...],
+) -> None:
     profile = AttackProfile(
         profile_id="PTURN",
         name="turning_salvo",
@@ -266,7 +284,9 @@ def test_profile_rejects_turning_u_boat_during_salvo_by_default() -> None:
         speed=15.0,
         max_run_time=200.0,
         base_bearing_rad=0.3,
-        spread_rad=0.1,
+        spread_rad=spread_rad,
+        spread_doctrine=spread_doctrine,
+        per_torpedo_heading_offsets_rad=per_offsets,
         salvo_interval_s=5.0,
         u_boat_mode="moving",
         u_boat_initial_heading_rad=0.0,
@@ -275,7 +295,10 @@ def test_profile_rejects_turning_u_boat_during_salvo_by_default() -> None:
         u_boat_turn_rate_limit_rad_s=0.02,
         u_boat_motion_legs=((100.0, 0.5, 2.0),),
     )
-    with pytest.raises(ValueError, match="turning during torpedo launch|heading changes during the firing window"):
+    with pytest.raises(
+        ValueError,
+        match="steady firing course|heading changes during the firing window",
+    ):
         profile.build_torpedoes(np.random.default_rng(1))
 
 

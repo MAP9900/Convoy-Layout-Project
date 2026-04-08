@@ -8,6 +8,10 @@ The repository provides:
 - realism layers (moving U-boat, partial observability, torpedo imperfections, ship station-keeping overlays)
 - diagnostics and visualization tooling for manual verification
 
+Current scope note:
+- the core simulator is responsible for plausible torpedo/submarine execution geometry
+- richer historical fire-control / TDC procedure is treated as a future attacker-side GenAI decision layer, not as a requirement for the base execution engine
+
 ## Current Protocol
 
 - Active simulation track: `Protocol V2-Realism`

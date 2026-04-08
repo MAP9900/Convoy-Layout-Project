@@ -116,3 +116,4 @@ Torpedo Firing Doctrine Comparison (Notebook)
 - Notes:
   - Intended for doctrine interpretation and visual validation, not convoy-scale run review.
   - Uses focused submarine-centric plotting helpers in `convoy_sim/viz_attack.py` while preserving the repo's existing visual style.
+  - The current longitudinal panels are intentionally stylized visualization aids; simulator doctrine still assumes a steady firing course during the salvo for all doctrines unless the stability guardrails are explicitly disabled.

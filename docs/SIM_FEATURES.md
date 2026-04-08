@@ -293,13 +293,22 @@ Fan-mode attack profiles now support three explicit doctrines:
 
 - `longitudinal`
   - all torpedoes share the same final heading
-  - spacing comes only from launch timing, submarine motion, and bow-origin geometry
+  - spacing comes only from launch timing and launch-position changes while the submarine holds course during the salvo
+  - supported for completeness and backward compatibility, but rare/nonstandard for convoy attacks
 - `uniform_divergent`
-  - preserves the historical simulator behavior
+  - standard convoy doctrine
   - per-torpedo final headings are evenly spaced across total fan width `spread_rad`
+  - submarine holds course during the salvo; only gyro-selected final headings differ
 - `explicit_divergent`
+  - advanced/manual convoy doctrine
   - uses `per_torpedo_heading_offsets_rad`
   - each torpedo gets an explicitly authored final offset from the centerline
+  - submarine holds course during the salvo; only gyro-selected final headings differ
+
+Important separation of concerns:
+- `spread_doctrine` controls only the torpedoes' final post-gyro heading logic
+- it does not tell the submarine to turn during the salvo
+- non-steady firing windows are rejected by default for all three doctrines unless `require_stable_u_boat_during_salvo` is deliberately disabled for a diagnostic/special-case scenario
 
 Backward compatibility:
 - legacy fan profiles with `spread_rad > 0` behave as `uniform_divergent`
@@ -309,6 +318,7 @@ Backward compatibility:
 Focused visual comparison:
 - `notebooks/torpedo_firing_doctrine_comparison.ipynb` renders end-of-firing-cycle doctrine snapshots for static and moving U-boat cases using the same attack-profile semantics described above
 - its `show_case(..., save=True)` and `show_summary_grid(save=True)` helpers save PNGs by default to `notebooks/results/torpedo_firing_doctrine_comparison/`
+- its current longitudinal views are visualization aids for comparing spread geometry; the core simulator doctrine remains steady-boat timing spread, not a pivot or heading-sweep tactic
 
 ## 8.6 Fire Control Lite Baseline
 

@@ -44,6 +44,7 @@ Last updated: 2026-04-07
   - `medium`
   - `long_range`
 - [ ] Define GenAI attack-profile dataset schema (context + attack vector + outcomes).
+  - include enough attacker-side context to support future historical fire-control/TDC-style reasoning rather than only raw geometry labels
 - [ ] Add reproducible synthetic attack-dataset generation config/script (fixed seeds + manifest metadata).
 - [ ] Generate first dataset snapshot for GenAI model training.
 
@@ -120,6 +121,10 @@ Last updated: 2026-04-07
   - coarse firing-solution derivation from noisy observation
   - target aspect / range / speed estimation effects folded into centerline + spread + speed setting
   - maintain deterministic baseline before any learned attack generator
+- [ ] Define GenAI-layer historical fire-control/TDC scope:
+  - exact/near-exact historical firing procedure belongs in the attacker decision/generation layer, not the core torpedo/submarine geometry engine
+  - use the current realism stack as the execution layer underneath a future GenAI fire-control agent
+  - document what the GenAI layer is expected to choose: target selection, centerline, doctrine, spread, speed setting, and confidence under noisy observation
 - [ ] Add escort behavior model:
   - sector screen assignment
   - sweep/search behavior

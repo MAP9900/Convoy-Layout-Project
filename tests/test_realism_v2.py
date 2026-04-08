@@ -204,6 +204,54 @@ def test_attack_profile_bow_launch_point_and_per_shot_heading_updates() -> None:
         assert abs(float(np.degrees(rel))) <= np.degrees(profile.spread_rad * 0.5) + 1e-6
 
 
+@pytest.mark.parametrize(
+    ("spread_doctrine", "spread_rad", "per_offsets"),
+    [
+        ("uniform_divergent", 0.2, ()),
+        ("explicit_divergent", 0.0, (-0.08, 0.0, 0.12)),
+        ("longitudinal", 0.0, ()),
+    ],
+)
+def test_attack_profile_doctrine_changes_final_heading_not_launch_heading_on_steady_course(
+    spread_doctrine: str,
+    spread_rad: float,
+    per_offsets: tuple[float, ...],
+) -> None:
+    profile = AttackProfile(
+        profile_id=f"PX4C_{spread_doctrine}",
+        name="steady_course_doctrine",
+        mode="fan",
+        u_pos=(-1000.0, 0.0),
+        n=3,
+        speed=15.0,
+        max_run_time=200.0,
+        base_bearing_rad=0.2,
+        spread_rad=spread_rad,
+        spread_doctrine=spread_doctrine,
+        per_torpedo_heading_offsets_rad=per_offsets,
+        launch_delay_s=0.0,
+        salvo_interval_s=10.0,
+        u_boat_mode="moving",
+        u_boat_initial_heading_rad=0.2,
+        u_boat_initial_speed_mps=2.0,
+        u_boat_launch_time_s=20.0,
+        u_boat_motion_legs=((100.0, 0.2, 2.0),),
+        sub_length_m=60.0,
+        launch_from="bow",
+        max_bow_offset_deg=15.0,
+    )
+    torps = profile.build_torpedoes(np.random.default_rng(8), ships=_ships(), env=Environment("night", 3000.0, 4))
+    launch_headings = np.array([torp.initial_heading_rad() for torp in torps], dtype=float)
+    final_offsets = np.array([torp.heading_rad - profile.base_bearing_rad for torp in torps], dtype=float)
+    assert np.allclose(launch_headings, profile.u_boat_initial_heading_rad)
+    if spread_doctrine == "longitudinal":
+        assert np.allclose(final_offsets, np.zeros(3))
+    elif spread_doctrine == "uniform_divergent":
+        assert np.allclose(final_offsets, np.array([-0.1, 0.0, 0.1], dtype=float))
+    else:
+        assert np.allclose(final_offsets, np.array(per_offsets, dtype=float))
+
+
 def test_attack_profile_allows_turning_salvo_when_stability_constraint_disabled() -> None:
     profile = AttackProfile(
         profile_id="PX4B",

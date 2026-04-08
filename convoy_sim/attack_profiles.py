@@ -59,6 +59,9 @@ class AttackProfile:
     fan mode params:
     - base_bearing_rad
     - spread_doctrine
+      - `uniform_divergent`: standard convoy doctrine; evenly spaced gyro offsets
+      - `explicit_divergent`: authored per-torpedo gyro offsets
+      - `longitudinal`: same final heading for every torpedo; rare/nonstandard for convoy attacks
     - spread_rad (total fan width for `uniform_divergent`)
     - per_torpedo_heading_offsets_rad (used by `explicit_divergent`)
 
@@ -91,7 +94,8 @@ class AttackProfile:
     launch_delay_s: float = 0.0
     salvo_interval_s: float = 0.0
 
-    # V2 realism: moving U-boat is default.
+    # V2 realism: moving U-boat is default, but firing remains a hold-course action
+    # unless callers deliberately disable the steady-boat guardrails below.
     u_boat_mode: Literal["moving", "static"] = "moving"
     u_boat_initial_heading_rad: float = 0.0
     u_boat_initial_speed_mps: float = 2.0
@@ -215,6 +219,21 @@ class AttackProfile:
             return self.legacy_inferred_spread_doctrine()
         return self.spread_doctrine
 
+    def is_standard_convoy_doctrine(self) -> bool:
+        """Return whether this doctrine is standard for convoy-attack authoring."""
+
+        return self.resolved_spread_doctrine() in {"uniform_divergent", "explicit_divergent"}
+
+    def doctrine_note(self) -> str:
+        """Return a short authoring note for the resolved spread doctrine."""
+
+        doctrine = self.resolved_spread_doctrine()
+        if doctrine == "uniform_divergent":
+            return "Standard convoy doctrine: evenly spaced gyro offsets with the submarine held steady."
+        if doctrine == "explicit_divergent":
+            return "Manual convoy doctrine: authored per-torpedo gyro offsets with the submarine held steady."
+        return "Rare/nonstandard convoy doctrine: same final heading for every torpedo with staggered launch timing."
+
     def fan_heading_offsets_rad(self) -> list[float]:
         """Return final per-torpedo heading offsets for fan doctrine resolution."""
 
@@ -247,7 +266,12 @@ class AttackProfile:
         )
 
     def _enforce_firing_stability(self, motion_plan: UBoatMotionPlan, launch_times: Sequence[float]) -> None:
-        """Reject salvo windows where the U-boat is still turning materially."""
+        """Reject salvo windows where the U-boat is still turning materially.
+
+        By default every spread doctrine in the simulator assumes a steady firing
+        platform during the salvo. Longitudinal doctrine changes only the final
+        torpedo heading offsets; it does not imply a heading sweep or pivot turn.
+        """
 
         if not self.require_stable_u_boat_during_salvo or not launch_times:
             return
@@ -259,7 +283,7 @@ class AttackProfile:
             drift = abs(_wrap_angle_rad(heading - baseline))
             if drift > max_drift_rad + 1e-12:
                 raise ValueError(
-                    "U-boat heading changes during the firing window; set a steadier motion plan or disable require_stable_u_boat_during_salvo"
+                    "U-boat heading changes during the firing window; all doctrines assume a steady firing course by default, so set a steadier motion plan or disable require_stable_u_boat_during_salvo"
                 )
 
         probe_dt = 0.25
@@ -271,7 +295,7 @@ class AttackProfile:
             turn_rate = abs(_wrap_angle_rad(heading_after - heading_before)) / max(after_t - before_t, 1e-9)
             if turn_rate > float(self.max_u_boat_turn_rate_at_fire_rad_s) + 1e-12:
                 raise ValueError(
-                    "U-boat is turning during torpedo launch; set a steadier motion plan or disable require_stable_u_boat_during_salvo"
+                    "U-boat is turning during torpedo launch; all doctrines assume a steady firing course by default, so set a steadier motion plan or disable require_stable_u_boat_during_salvo"
                 )
 
     def build_torpedoes(
@@ -401,6 +425,8 @@ class AttackProfile:
                     raise ValueError(
                         "requested fan centerline exceeds bow tube arc limit; adjust sub heading/motion or widen max_bow_offset_deg"
                     )
+                # Doctrine only changes the final gyro-selected course. The torpedo
+                # still exits on the submarine's bow heading at this launch time.
                 torp_heading = _wrap_angle_rad(requested_bearing_rad + rel_offsets[idx])
                 torp_launch = launch_origin
                 torp_id = f"F{idx + 1:02d}"
@@ -628,7 +654,8 @@ def build_scaffolded_attack_profile_library() -> AttackProfileLibrary:
 
     - mode: spread model and required parameters. DEFAULT: fan
       - "fan": torpedoes share one launch point and fan by post-launch gyro deflection.
-        Uses: base_bearing_rad + spread_rad.
+        Uses: base_bearing_rad + spread_doctrine.
+        Standard convoy authoring should use `spread_doctrine="uniform_divergent"`.
       - "parallel": torpedoes launch from laterally offset positions with shared heading.
         Uses: bearing_rad + lateral_spacing.
 
@@ -639,8 +666,9 @@ def build_scaffolded_attack_profile_library() -> AttackProfileLibrary:
 
     fan mode fields:
     - base_bearing_rad: center attack bearing in radians. (Centered around base_bearing_rad)
-    - spread_rad: total fan width in radians.
+    - spread_rad: total fan width in radians for `uniform_divergent`.
         DEFAULT: 4° = 0.0698 rad, 5° = 0.0873 rad, 6° = 0.1047 rad
+    - `longitudinal` remains supported but is best treated as a rare/nonstandard convoy doctrine.
 
     parallel mode fields:
     - bearing_rad: shared launch bearing in radians.
