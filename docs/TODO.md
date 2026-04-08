@@ -58,13 +58,16 @@ Last updated: 2026-04-08
 - [x] Run direct RL action audit after Phase 1:
   - `python -m experiments.audit_rl_actions --config configs/rl/default.toml`
   - result: action menu is now meaningful, but learner selected the wrong action (`staggered_loose`) while `rect_standard` was best on eval
-- [ ] Phase 1.5 RL overhaul: improve train-time action selection / reward alignment before learner replacement:
+- [x] Phase 1.5 RL overhaul: improve train-time action selection / reward alignment before learner replacement:
   - reduce train/eval mismatch exposed by the action audit
   - incorporate risk-aware selection logic rather than relying on final tabular Q-values alone
   - rerun RL and compare against direct action-audit best eval action
-- [ ] Phase 2 RL overhaul: add constrained RL layout-builder action space:
+- [x] Phase 2 RL overhaul, minimal slice: add constrained RL layout-builder action space:
+  - multi-step decisions for layout family, along-spacing bucket, and across-spacing bucket
+  - keep backward-compatible flat-action mode as a fallback
+  - enable builder mode in `configs/rl/default.toml`
+- [ ] Expand Phase 2 RL layout-builder controls beyond the minimal slice:
   - row pattern vectors (e.g., `4,5,5,4`)
-  - spacing controls
   - ship-class placement controls
   - convoy speed and zig-zag controls
 - [ ] Define and enforce hard layout boundaries in config (separation, footprint, class counts, feasibility).

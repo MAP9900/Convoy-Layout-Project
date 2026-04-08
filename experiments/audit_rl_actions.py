@@ -19,6 +19,7 @@ from convoy_sim.defender_policy import LayoutAction
 from convoy_sim.feasibility import Environment
 from convoy_sim.layouts import make_rectangular_convoy, make_staggered_convoy
 from convoy_sim.noise import NoiseModel
+from convoy_sim.rl_layout_builder import RLLayoutBuilderConfig
 from convoy_sim.workflows import (
     evaluate_layout_over_profiles,
     git_sha,
@@ -67,6 +68,28 @@ def _layout_action_from_cfg(cfg: dict[str, Any]) -> LayoutAction:
 
 def _render_layout_kwargs(layout_kwargs: dict[str, Any]) -> dict[str, Any]:
     return {k: v for k, v in layout_kwargs.items() if k != "ship_movement_realism"}
+
+
+def _resolve_candidate_actions(
+    rl_cfg: dict[str, Any],
+    *,
+    ship_movement_realism: dict[str, Any] | None,
+) -> tuple[list[LayoutAction], RLLayoutBuilderConfig | None]:
+    builder_cfg = RLLayoutBuilderConfig.from_dict(dict(rl_cfg.get("builder", {})))
+    if builder_cfg.enabled:
+        return (
+            builder_cfg.enumerate_layout_actions(ship_movement_realism=ship_movement_realism),
+            builder_cfg,
+        )
+
+    action_cfgs = list(rl_cfg.get("actions", []))
+    actions = [_layout_action_from_cfg(item) for item in action_cfgs]
+    if not actions:
+        raise ValueError("Config must define at least one RL action")
+    if ship_movement_realism:
+        for action in actions:
+            action.layout_kwargs["ship_movement_realism"] = ship_movement_realism
+    return actions, None
 
 
 def _write_action_summary_csv(path: Path, rows: list[dict[str, Any]]) -> None:
@@ -120,15 +143,11 @@ def run_from_config(config: dict[str, Any], *, project_root: Path) -> Path:
     max_hits_per_torpedo = sim_cfg.get("max_hits_per_torpedo")
     max_hits_per_torpedo = None if max_hits_per_torpedo is None else int(max_hits_per_torpedo)
 
-    action_cfgs = list(rl_cfg.get("actions", []))
-    actions = [_layout_action_from_cfg(item) for item in action_cfgs]
-    if not actions:
-        raise ValueError("Config must define at least one RL action")
-
     ship_movement_realism = dict(sim_cfg.get("ship_movement_realism", {}))
-    if ship_movement_realism:
-        for action in actions:
-            action.layout_kwargs["ship_movement_realism"] = ship_movement_realism
+    actions, builder_cfg = _resolve_candidate_actions(
+        rl_cfg,
+        ship_movement_realism=ship_movement_realism or None,
+    )
 
     plot_xlim = tuple(float(x) for x in plot_cfg["xlim"]) if "xlim" in plot_cfg else (-5000.0, 5000.0)
     plot_ylim = tuple(float(y) for y in plot_cfg["ylim"]) if "ylim" in plot_cfg else (-5000.0, 5000.0)
@@ -241,6 +260,7 @@ def run_from_config(config: dict[str, Any], *, project_root: Path) -> Path:
             "actions": action_reports,
             "best_train_action": best_train["name"],
             "best_eval_action": best_eval["name"],
+            "builder": builder_cfg.to_dict() if builder_cfg is not None and builder_cfg.enabled else None,
         },
     }
 
@@ -286,6 +306,9 @@ def run_from_config(config: dict[str, Any], *, project_root: Path) -> Path:
         },
         "best_train_action": best_train["name"],
         "best_eval_action": best_eval["name"],
+        "selection": {
+            "mode": "builder" if builder_cfg is not None and builder_cfg.enabled else "flat_action_menu",
+        },
     }
 
     write_yaml(run_dir / "config_resolved.yaml", resolved)

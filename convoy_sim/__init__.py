@@ -38,7 +38,8 @@ from convoy_sim.fire_control import (
     choose_g7a_speed_setting,
     solve_fire_control_lite,
 )
-from convoy_sim.rl_wrapper import ActionSpaceMap, OBS_SCHEMA_VERSION, RLEpisode, build_observation
+from convoy_sim.rl_layout_builder import RLLayoutBuilderConfig, RLLayoutBuilderState
+from convoy_sim.rl_wrapper import ActionSpaceMap, OBS_SCHEMA_VERSION, RLLayoutBuilderEpisode, RLEpisode, build_observation
 from convoy_sim.defender_policy import (
     DefenderPolicy,
     LayoutAction,
@@ -129,6 +130,9 @@ __all__ = [
     "ActionSpaceMap",
     "OBS_SCHEMA_VERSION",
     "RLEpisode",
+    "RLLayoutBuilderEpisode",
+    "RLLayoutBuilderConfig",
+    "RLLayoutBuilderState",
     "build_observation",
     "ThreatType",
     "ThreatPrior",

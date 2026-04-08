@@ -18,9 +18,7 @@ Current canonical RL is too weak to be treated as a serious convoy-layout optimi
 
 Main reasons:
 - The learner is still a tabular one-step selector over predefined `[[rl.actions]]`.
-- The canonical action set in `configs/rl/default.toml` became effectively degenerate:
-  - actions are nearly or completely identical geometrically
-  - RL is not searching a rich convoy-layout space
+- Even after the Phase 1 action-space fix, the flat action menu remained too coarse to be a strong optimizer.
 - Training uses a very narrow threat setup.
 - Reward is too coarse for the richer convoy behavior we now care about.
 - The environment is still structured more like action selection than layout construction.
@@ -214,6 +212,11 @@ Recommended diagnostic immediately after Phase 1:
   - weak reward/training setup
   - or both
 
+Phase 1 status:
+- completed
+- action menu is now geometrically meaningful
+- direct action audit showed the learner/selector mismatch more clearly than action degeneracy
+
 ## Phase 2: Constrained Layout-Builder Environment
 
 Goal:
@@ -232,6 +235,19 @@ Candidate decision sequence:
 4. choose stagger/skew controls
 5. choose class placement policy
 6. choose speed / zig-zag doctrine if included in this phase
+
+Implemented minimal slice:
+- multi-step builder with 3 bounded decisions only:
+  1. layout family
+  2. along-spacing bucket
+  3. across-spacing bucket
+- canonical RL config now enables this builder path
+- legacy flat `[[rl.actions]]` path remains supported as a fallback for regression checks
+
+Next expansion inside Phase 2:
+- add hard constraint metadata and masking
+- extend from spacing buckets to bounded row-pattern controls
+- defer ship-class placement and zig-zag until the minimal builder is stable
 
 Success criteria:
 - environment supports meaningful sequential design
@@ -303,12 +319,12 @@ Acceptance gates:
 
 ## Recommended Immediate Next Step
 
-Start with Phase 1.
+Move to the next Phase 2 expansion step, not PPO yet.
 
 Reason:
-- current RL action degeneracy makes further learner discussion premature
-- Phase 1 is small, concrete, and benchmarkable
-- it creates a clean before/after comparison without redesigning the whole RL stack first
+- the builder minimal slice is now in place
+- the next bottleneck is still control richness and feasibility handling
+- reward redesign should happen against the builder path rather than the old flat action menu
 
 ## Logging Contract
 

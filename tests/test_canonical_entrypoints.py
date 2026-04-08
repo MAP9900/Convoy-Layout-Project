@@ -201,6 +201,58 @@ def test_run_rl_train_writes_canonical_artifacts_and_checkpoint(tmp_path: Path) 
     assert manifest["realism"]["u_boat_mode_default"] == "moving"
 
 
+def test_run_rl_train_builder_mode_writes_selection_metadata(tmp_path: Path) -> None:
+    cfg = {
+        "run": {"name": "builder_smoke", "output_root": "runs"},
+        "simulation": {"t_max": 120.0, "n_trials_per_seed": 2, "max_hits_per_torpedo": 1},
+        "splits": {
+            "train_profiles": ["P01", "P02"],
+            "eval_profiles": ["P03", "P04"],
+            "train_seeds": [31],
+            "eval_seeds": [41],
+        },
+        "training": {
+            "episodes": 6,
+            "epsilon": 0.2,
+            "epsilon_decay": 0.9,
+            "epsilon_min": 0.05,
+            "alpha": 0.3,
+            "seed": 5,
+        },
+        "rl": {
+            "builder": {
+                "enabled": True,
+                "base_n_rows": 1,
+                "base_n_cols": 2,
+                "speed": 5.0,
+                "heading_rad": 0.0,
+                "length": 120.0,
+                "beam": 18.0,
+                "origin": [0.0, 0.0],
+                "layout_families": ["rectangular", "staggered"],
+                "spacing_along_options": {"compact": 400.0, "loose": 500.0},
+                "spacing_across_options": {"compact": 300.0, "loose": 450.0},
+                "family_complexity": {"rectangular": 1.0, "staggered": 1.2},
+                "spacing_along_complexity": {"compact": 0.0, "loose": 0.1},
+                "spacing_across_complexity": {"compact": 0.0, "loose": 0.1},
+            },
+            "selection": {
+                "risk_cvar_weight": 0.05,
+                "complexity_tiebreak_tolerance": 0.1,
+            },
+        },
+    }
+
+    run_dir = run_rl_from_config(cfg, project_root=tmp_path)
+    metrics = _read_json(run_dir / "metrics_summary.json")
+    assert metrics["training"]["mode"] == "builder"
+    assert "builder_greedy_trace" in metrics["selection"]
+
+    manifest = _read_json(run_dir / "run_manifest.json")
+    assert manifest["selection"]["mode"] == "builder"
+    assert "builder" in manifest["selection"]
+
+
 def test_rl_train_selection_prefers_simpler_action_when_scores_are_nearly_tied() -> None:
     actions = [
         LayoutAction(

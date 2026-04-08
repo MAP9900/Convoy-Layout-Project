@@ -16,7 +16,8 @@ from convoy_sim.feasibility import Environment
 from convoy_sim.game import AttackerStrategy, DefenderStrategy
 from convoy_sim.layouts import make_rectangular_convoy, make_staggered_convoy
 from convoy_sim.noise import NoiseModel
-from convoy_sim.rl_wrapper import RLEpisode
+from convoy_sim.rl_layout_builder import RLLayoutBuilderConfig, RLLayoutBuilderState
+from convoy_sim.rl_wrapper import RLLayoutBuilderEpisode, RLEpisode
 from convoy_sim.workflows import (
     evaluate_layout_over_profiles,
     git_sha,
@@ -61,6 +62,28 @@ def _layout_action_from_cfg(cfg: dict[str, Any]) -> LayoutAction:
         layout_kwargs=kwargs,
         complexity_cost=float(cfg.get("complexity_cost", 0.0)),
     )
+
+
+def _resolve_candidate_actions(
+    rl_cfg: dict[str, Any],
+    *,
+    ship_movement_realism: dict[str, Any] | None,
+) -> tuple[list[LayoutAction], RLLayoutBuilderConfig | None]:
+    builder_cfg = RLLayoutBuilderConfig.from_dict(dict(rl_cfg.get("builder", {})))
+    if builder_cfg.enabled:
+        return (
+            builder_cfg.enumerate_layout_actions(ship_movement_realism=ship_movement_realism),
+            builder_cfg,
+        )
+
+    action_cfgs = list(rl_cfg.get("actions", []))
+    actions = [_layout_action_from_cfg(item) for item in action_cfgs]
+    if not actions:
+        raise ValueError("Config must define at least one RL action")
+    if ship_movement_realism:
+        for action in actions:
+            action.layout_kwargs["ship_movement_realism"] = ship_movement_realism
+    return actions, None
 
 
 def _render_layout_kwargs(layout_kwargs: dict[str, Any]) -> dict[str, Any]:
@@ -130,6 +153,25 @@ def _train_library(default_library: AttackProfileLibrary, train_ids: list[str]) 
     return AttackProfileLibrary(profiles=keep)
 
 
+def _greedy_builder_state(
+    builder_cfg: RLLayoutBuilderConfig,
+    q_tables: list[np.ndarray],
+) -> tuple[RLLayoutBuilderState, list[str]]:
+    state = RLLayoutBuilderState()
+    chosen_names: list[str] = []
+    action_names = builder_cfg.action_space_names()
+    name_to_index = {name: idx for idx, name in enumerate(action_names)}
+    for step_idx in range(builder_cfg.step_count):
+        valid = builder_cfg.valid_action_names(state)
+        valid_indices = [name_to_index[name] for name in valid]
+        scores = q_tables[step_idx][valid_indices]
+        best_offset = int(np.argmax(scores))
+        chosen_name = valid[best_offset]
+        chosen_names.append(chosen_name)
+        state = builder_cfg.apply_action(state, chosen_name)
+    return state, chosen_names
+
+
 def run_from_config(config: dict[str, Any], *, project_root: Path) -> Path:
     run_cfg = dict(config.get("run", {}))
     sim_cfg = dict(config.get("simulation", {}))
@@ -159,15 +201,12 @@ def run_from_config(config: dict[str, Any], *, project_root: Path) -> Path:
     max_hits_per_torpedo = sim_cfg.get("max_hits_per_torpedo")
     max_hits_per_torpedo = None if max_hits_per_torpedo is None else int(max_hits_per_torpedo)
 
-    action_cfgs = list(rl_cfg.get("actions", []))
-    actions = [_layout_action_from_cfg(item) for item in action_cfgs]
-    if not actions:
-        raise ValueError("Config must define at least one RL action")
     selection_cfg = dict(rl_cfg.get("selection", {}))
     ship_movement_realism = dict(sim_cfg.get("ship_movement_realism", {}))
-    if ship_movement_realism:
-        for action in actions:
-            action.layout_kwargs["ship_movement_realism"] = ship_movement_realism
+    actions, builder_cfg = _resolve_candidate_actions(
+        rl_cfg,
+        ship_movement_realism=ship_movement_realism or None,
+    )
 
     defenders = [
         DefenderStrategy(name=action.name, kind="layout_action", payload=action)
@@ -198,46 +237,98 @@ def run_from_config(config: dict[str, Any], *, project_root: Path) -> Path:
 
     profile_lib = _train_library(DEFAULT_ATTACK_PROFILE_LIBRARY, train_profile_ids)
 
-    rl_episode = RLEpisode(
-        defenders=defenders,
-        attackers=[attacker],
-        prior=ThreatPrior(probs={ThreatType.ABEAM_FAN: 1.0}),
-        env=None,
-        constraints=None,
-        dynamics=None,
-        sim_params={
+    threat_prior = ThreatPrior(probs={ThreatType.ABEAM_FAN: 1.0})
+    common_episode_kwargs = {
+        "attackers": [attacker],
+        "prior": threat_prior,
+        "env": None,
+        "constraints": None,
+        "dynamics": None,
+        "sim_params": {
             "t_max": t_max,
             "max_hits_per_torpedo": max_hits_per_torpedo,
             "noise_model": noise_model,
         },
-        max_steps=1,
-        reward_perspective="defender",
-        attack_profile_library=profile_lib,
-        use_sampled_attack_profile_for_torpedo_sampler=True,
-        rng=np.random.default_rng(train_seed),
-    )
+        "reward_perspective": "defender",
+        "attack_profile_library": profile_lib,
+        "use_sampled_attack_profile_for_torpedo_sampler": True,
+        "rng": np.random.default_rng(train_seed),
+    }
+    if builder_cfg is not None and builder_cfg.enabled:
+        rl_episode = RLLayoutBuilderEpisode(
+            builder_config=builder_cfg,
+            **common_episode_kwargs,
+        )
+    else:
+        rl_episode = RLEpisode(
+            defenders=defenders,
+            max_steps=1,
+            **common_episode_kwargs,
+        )
 
+    reward_history: list[float] = []
+    choose_rng = np.random.default_rng(train_seed)
     q_values = np.zeros(len(actions), dtype=float)
     action_counts = np.zeros(len(actions), dtype=int)
-    reward_history: list[float] = []
+    builder_q_tables: list[np.ndarray] | None = None
+    builder_action_counts: list[np.ndarray] | None = None
+    builder_q_choice_names: list[str] | None = None
+    builder_q_action_name: str | None = None
 
-    choose_rng = np.random.default_rng(train_seed)
+    if builder_cfg is not None and builder_cfg.enabled:
+        action_space_names = rl_episode.action_space.names
+        builder_q_tables = [np.zeros(len(action_space_names), dtype=float) for _ in range(builder_cfg.step_count)]
+        builder_action_counts = [np.zeros(len(action_space_names), dtype=int) for _ in range(builder_cfg.step_count)]
+        for episode in range(episodes):
+            reset_seed = int(train_seeds[episode % len(train_seeds)] + episode)
+            rl_episode.reset(seed=reset_seed)
+            chosen_indices: list[int] = []
+            reward = 0.0
+            done = False
+            step_idx = 0
+            while not done:
+                valid_indices = rl_episode.valid_defender_action_indices()
+                if choose_rng.random() < epsilon:
+                    action_idx = int(choose_rng.choice(valid_indices))
+                else:
+                    valid_scores = builder_q_tables[step_idx][valid_indices]
+                    action_idx = int(valid_indices[int(np.argmax(valid_scores))])
+                _obs, reward, done, _info = rl_episode.step(action_idx, 0)
+                chosen_indices.append(action_idx)
+                step_idx += 1
+            for update_step, action_idx in enumerate(chosen_indices):
+                builder_q_tables[update_step][action_idx] = builder_q_tables[update_step][action_idx] + alpha * (
+                    float(reward) - builder_q_tables[update_step][action_idx]
+                )
+                builder_action_counts[update_step][action_idx] += 1
+            reward_history.append(float(reward))
+            epsilon = max(epsilon_min, epsilon * epsilon_decay)
 
-    for episode in range(episodes):
-        reset_seed = int(train_seeds[episode % len(train_seeds)] + episode)
-        rl_episode.reset(seed=reset_seed)
-        if choose_rng.random() < epsilon:
-            action_idx = int(choose_rng.integers(len(actions)))
-        else:
-            action_idx = int(np.argmax(q_values))
+        greedy_state, builder_q_choice_names = _greedy_builder_state(builder_cfg, builder_q_tables)
+        q_action = builder_cfg.materialize_layout_action(
+            greedy_state,
+            ship_movement_realism=ship_movement_realism or None,
+        )
+        builder_q_action_name = q_action.name
+        try:
+            best_q_action_idx = next(idx for idx, action in enumerate(actions) if action.name == q_action.name)
+        except StopIteration as exc:
+            raise ValueError(f"Q-selected builder action {q_action.name} not found in enumerated actions") from exc
+    else:
+        for episode in range(episodes):
+            reset_seed = int(train_seeds[episode % len(train_seeds)] + episode)
+            rl_episode.reset(seed=reset_seed)
+            if choose_rng.random() < epsilon:
+                action_idx = int(choose_rng.integers(len(actions)))
+            else:
+                action_idx = int(np.argmax(q_values))
 
-        _obs, reward, _done, _info = rl_episode.step(action_idx, 0)
-        q_values[action_idx] = q_values[action_idx] + alpha * (float(reward) - q_values[action_idx])
-        action_counts[action_idx] += 1
-        reward_history.append(float(reward))
-        epsilon = max(epsilon_min, epsilon * epsilon_decay)
-
-    best_q_action_idx = int(np.argmax(q_values))
+            _obs, reward, _done, _info = rl_episode.step(action_idx, 0)
+            q_values[action_idx] = q_values[action_idx] + alpha * (float(reward) - q_values[action_idx])
+            action_counts[action_idx] += 1
+            reward_history.append(float(reward))
+            epsilon = max(epsilon_min, epsilon * epsilon_decay)
+        best_q_action_idx = int(np.argmax(q_values))
 
     train_action_rows: dict[str, list[Any]] = {}
     train_action_summaries: dict[str, dict[str, Any]] = {}
@@ -291,6 +382,7 @@ def run_from_config(config: dict[str, Any], *, project_root: Path) -> Path:
         "selected_action": best_action.name,
         "selected_action_by_q_value": actions[best_q_action_idx].name,
         "selection_method": "train_split_risk_aware_objective",
+        "mode": "builder" if builder_cfg is not None and builder_cfg.enabled else "flat_action_menu",
     }
 
     selection_summary = {
@@ -306,17 +398,39 @@ def run_from_config(config: dict[str, Any], *, project_root: Path) -> Path:
             for item in ranked_train_actions
         ],
     }
+    if builder_q_choice_names is not None:
+        selection_summary["builder_greedy_trace"] = list(builder_q_choice_names)
 
     checkpoint_dir = run_dir / "checkpoints"
     checkpoint_dir.mkdir(parents=True, exist_ok=True)
-    checkpoint = {
+    checkpoint: dict[str, Any] = {
         "selected_action": best_action.name,
         "selected_action_by_q_value": actions[best_q_action_idx].name,
-        "q_values": {actions[idx].name: float(q_values[idx]) for idx in range(len(actions))},
-        "action_counts": {actions[idx].name: int(action_counts[idx]) for idx in range(len(actions))},
         "training_summary": training_summary,
         "selection_summary": selection_summary,
     }
+    if builder_cfg is not None and builder_cfg.enabled:
+        assert builder_q_tables is not None
+        assert builder_action_counts is not None
+        checkpoint["builder_q_values"] = {
+            f"step_{step_idx}": {
+                rl_episode.action_space.names[action_idx]: float(step_values[action_idx])
+                for action_idx in range(len(step_values))
+            }
+            for step_idx, step_values in enumerate(builder_q_tables)
+        }
+        checkpoint["builder_action_counts"] = {
+            f"step_{step_idx}": {
+                rl_episode.action_space.names[action_idx]: int(step_counts[action_idx])
+                for action_idx in range(len(step_counts))
+            }
+            for step_idx, step_counts in enumerate(builder_action_counts)
+        }
+        checkpoint["builder_greedy_trace"] = list(builder_q_choice_names or [])
+        checkpoint["builder_selected_action_by_q_value"] = builder_q_action_name
+    else:
+        checkpoint["q_values"] = {actions[idx].name: float(q_values[idx]) for idx in range(len(actions))}
+        checkpoint["action_counts"] = {actions[idx].name: int(action_counts[idx]) for idx in range(len(actions))}
     (checkpoint_dir / "policy_latest.json").write_text(json.dumps(checkpoint, indent=2), encoding="utf-8")
 
     resolved = {
@@ -330,6 +444,7 @@ def run_from_config(config: dict[str, Any], *, project_root: Path) -> Path:
                 for k, v in best_action.layout_kwargs.items()
             },
             "selection_summary": selection_summary,
+            "builder": builder_cfg.to_dict() if builder_cfg is not None and builder_cfg.enabled else None,
         },
     }
 
@@ -386,11 +501,15 @@ def run_from_config(config: dict[str, Any], *, project_root: Path) -> Path:
             "complexity_tiebreak_tolerance": complexity_tiebreak_tolerance,
             "selected_action": best_action.name,
             "selected_action_by_q_value": actions[best_q_action_idx].name,
+            "mode": "builder" if builder_cfg is not None and builder_cfg.enabled else "flat_action_menu",
         },
         "layout_plots": {
             "selected_policy": str(selected_plot_path.relative_to(project_root)) if selected_plot_written else None,
         },
     }
+    if builder_cfg is not None and builder_cfg.enabled:
+        manifest["selection"]["builder"] = builder_cfg.to_dict()
+        manifest["selection"]["builder_greedy_trace"] = list(builder_q_choice_names or [])
 
     write_yaml(run_dir / "config_resolved.yaml", resolved)
     write_json(run_dir / "metrics_summary.json", metrics_summary)

@@ -7,7 +7,14 @@ from convoy_sim.attackers import fan_spread
 from convoy_sim.defender_policy import LayoutAction, ThreatPrior, ThreatType
 from convoy_sim.game import AttackerStrategy, DefenderStrategy
 from convoy_sim.layouts import make_rectangular_convoy
-from convoy_sim.rl_wrapper import ActionSpaceMap, RLEpisode, build_observation, OBS_SCHEMA_VERSION
+from convoy_sim.rl_layout_builder import RLLayoutBuilderConfig
+from convoy_sim.rl_wrapper import (
+    ActionSpaceMap,
+    OBS_SCHEMA_VERSION,
+    RLLayoutBuilderEpisode,
+    RLEpisode,
+    build_observation,
+)
 
 
 def test_action_space_map_roundtrip() -> None:
@@ -229,3 +236,68 @@ def test_episode_samples_attack_profile_on_reset_and_logs_payload() -> None:
     assert obs["attack_profile"]["profile_id"] == "P01"
     assert info["attack_profile_id"] == "P01"
     assert info["attack_profile"]["profile_id"] == "P01"
+
+
+def test_builder_episode_returns_terminal_reward_only_after_final_choice() -> None:
+    attackers = [
+        AttackerStrategy(
+            name="fan1",
+            kind="torpedo_sampler",
+            payload=lambda rng: fan_spread(
+                u_pos=np.array([-200.0, 0.0]),
+                base_bearing_rad=0.0,
+                n=1,
+                spread_rad=0.0,
+                speed=20.0,
+                max_run_time=200.0,
+            ),
+        )
+    ]
+    builder_cfg = RLLayoutBuilderConfig.from_dict(
+        {
+            "enabled": True,
+            "base_n_rows": 1,
+            "base_n_cols": 2,
+            "speed": 0.0,
+            "heading_rad": 0.0,
+            "length": 40.0,
+            "beam": 10.0,
+            "origin": [0.0, 0.0],
+            "layout_families": ["rectangular", "staggered"],
+            "spacing_along_options": {"compact": 100.0, "loose": 150.0},
+            "spacing_across_options": {"compact": 90.0, "loose": 120.0},
+        }
+    )
+    prior = ThreatPrior(probs={ThreatType.ABEAM_FAN: 1.0})
+    env = RLLayoutBuilderEpisode(
+        builder_config=builder_cfg,
+        attackers=attackers,
+        prior=prior,
+        env=None,
+        constraints=None,
+        dynamics=None,
+        sim_params={"t_max": 200.0},
+        rng=np.random.default_rng(0),
+    )
+
+    obs0 = env.reset(seed=0)
+    assert obs0["builder_mode"] is True
+    assert obs0["valid_defender_actions"] == ["family:rectangular", "family:staggered"]
+
+    obs1, reward1, done1, _info1 = env.step(env.action_space.to_index("family:rectangular"), 0)
+    assert reward1 == 0.0
+    assert done1 is False
+    assert obs1["builder_state"]["family"] == "rectangular"
+    assert obs1["valid_defender_actions"] == ["along:compact", "along:loose"]
+
+    obs2, reward2, done2, _info2 = env.step(env.action_space.to_index("along:compact"), 0)
+    assert reward2 == 0.0
+    assert done2 is False
+    assert obs2["builder_state"]["spacing_along_bucket"] == "compact"
+    assert obs2["valid_defender_actions"] == ["across:compact", "across:loose"]
+
+    obs3, reward3, done3, info3 = env.step(env.action_space.to_index("across:loose"), 0)
+    assert isinstance(reward3, float)
+    assert done3 is True
+    assert obs3["defender_action"] == "rect_compact_loose"
+    assert info3["materialized_action"]["name"] == "rect_compact_loose"
