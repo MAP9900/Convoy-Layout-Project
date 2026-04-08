@@ -1,6 +1,6 @@
 # Optimization Log
 
-Tracks *how* each test was produced (not just outcomes), including optimization method, objective, search space, and reproducibility details.
+Tracks how each test was produced, including optimization method, objective, search space, and reproducibility details.
 
 ## Test 1 - Baseline vs RL (2026-03-31)
 
@@ -70,6 +70,11 @@ Tracks *how* each test was produced (not just outcomes), including optimization 
   - Train/eval seeds matched across baseline and RL.
   - Test 1 is an apples-to-apples comparison.
 
+### Retrospective Methodology Note (added 2026-04-08)
+
+- Although the run is reproducible and comparable, it should be interpreted cautiously as an RL benchmark.
+- Later review showed the canonical RL action space needed overhaul before RL-vs-heuristic comparisons could say much about learning quality.
+
 ## V2-Realism Test 1 - Baseline vs RL (2026-04-01)
 
 ### Run References
@@ -99,6 +104,10 @@ Tracks *how* each test was produced (not just outcomes), including optimization 
 
 - Static U-boat compatibility verified in test coverage:
   - `tests/test_realism_v2.py::test_static_mode_profile_compatibility_in_workflow_eval`
+
+### Retrospective Methodology Note (added 2026-04-08)
+
+- This run pair remained useful for validating the V2 realism workflow, but the RL action space was still too narrow to treat the result as a strong optimization benchmark.
 
 ## V2-Realism Test 2 - Baseline vs RL (2026-04-08)
 
@@ -133,3 +142,8 @@ Tracks *how* each test was produced (not just outcomes), including optimization 
 - Train/eval seeds matched across baseline and RL.
 - Both runs use the same realism stamp and git SHA.
 - V2-Realism Test 2 is a valid apples-to-apples comparison.
+
+### Retrospective Methodology Note
+
+- This run pair is reproducible and comparable, but not yet a strong RL capability test.
+- Post-run review found that the canonical `[[rl.actions]]` set in `configs/rl/default.toml` was effectively degenerate, so the learner had almost no meaningful convoy-layout freedom.

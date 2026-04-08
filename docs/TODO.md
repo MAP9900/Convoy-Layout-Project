@@ -1,6 +1,6 @@
 # TODO
 
-Last updated: 2026-04-07
+Last updated: 2026-04-08
 
 ## Current Workflow (Canonical)
 
@@ -50,14 +50,26 @@ Last updated: 2026-04-07
 
 ## Next
 
-- [ ] Replace tabular RL selector with stronger learner while preserving artifact schema.
-- [ ] Add constrained RL layout-builder action space:
+- [ ] Phase 1 RL overhaul: fix degenerate canonical RL action set in `configs/rl/default.toml`:
+  - make actions genuinely different geometrically
+  - include rectangular vs staggered alternatives
+  - include compact / standard / loose spacing variants
+  - rerun baseline vs RL after the action-space fix
+- [ ] Phase 2 RL overhaul: add constrained RL layout-builder action space:
   - row pattern vectors (e.g., `4,5,5,4`)
   - spacing controls
   - ship-class placement controls
   - convoy speed and zig-zag controls
 - [ ] Define and enforce hard layout boundaries in config (separation, footprint, class counts, feasibility).
-- [ ] Add value-weighted objective support (e.g., tanker > freighter) with risk guardrail.
+- [ ] Add action masking / feasibility-first handling for invalid RL layouts.
+- [ ] Phase 3 RL overhaul: redesign reward:
+  - expected hits remains visible but is not the only signal
+  - penalize number of ships hit more strongly than repeated hits on one ship where appropriate
+  - add value-weighting support (e.g., tanker > freighter)
+  - add risk guardrail (`CVaR_90` or proxy)
+- [ ] Phase 4 RL overhaul: replace tabular RL selector with stronger learner while preserving artifact schema.
+- [ ] Expand RL training threat diversity beyond the current narrow setup.
+- [ ] Add compact RL observation/state vector for geometry/composition/threat context.
 - [ ] Expand baseline search space beyond spacing-only (bounded, interpretable knobs).
 - [ ] Add confidence intervals or repeated-seed summaries to run metrics.
 - [ ] Add run-to-run comparator script for baseline vs RL outputs.

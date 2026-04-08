@@ -24,6 +24,11 @@
   - Eval seeds: `[1942, 1943, 1944]`
 - This Test 1 result is a valid 1 to 1 comparison.
 
+### Retrospective Interpretation Note (added 2026-04-08)
+
+- Treat this RL comparison primarily as a pipeline/integration result, not strong evidence about RL optimization quality.
+- The canonical RL setup at this stage used a very narrow predefined action set, and later review showed the action space needed overhaul before RL-vs-heuristic conclusions could be taken seriously.
+
 ## V2-Realism Test 1 - Baseline vs RL (2026-04-01)
 
 - Baseline run:
@@ -45,6 +50,11 @@
 - Both runs use moving U-boat as default (`u_boat_mode=moving`).
 - Both manifests stamp identical profile splits and seed sets.
 - Both manifests include realism config stamps (noise/environment/ship-movement realism enabled).
+
+### Retrospective Interpretation Note (added 2026-04-08)
+
+- Treat this RL comparison primarily as a pipeline/integration result, not strong evidence about RL optimization quality.
+- The canonical RL action space was still too narrow, so this test should not be treated as a decisive benchmark of RL capability.
 
 ## V2-Realism Test 2 - Baseline vs RL (2026-04-08)
 
@@ -75,3 +85,8 @@
   - noise enabled (`sigma_heading_rad=0.01`, `sigma_launch_delay=0.05`, `sigma_speed_mps=0.25`, `p_dud=0.02`)
   - environment enabled (`time_of_day=night`, `visibility_m=3500`, `sea_state=4`, `detection_risk_scale=1.0`)
   - ship movement realism enabled
+
+### Retrospective Interpretation Note
+
+- This run pair is best read as a workflow/debug benchmark, not a strong RL-vs-heuristic study.
+- Review after the run showed the canonical RL action set was effectively degenerate in `configs/rl/default.toml`: the listed actions did not provide meaningful geometric freedom, so RL was not actually searching a rich convoy-layout space.
