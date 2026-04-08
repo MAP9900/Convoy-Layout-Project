@@ -47,13 +47,13 @@ seed = 7
 [rl]
 
 [[rl.actions]]
-name = "rect_standard"
+name = "rect_compact"
 type = "rectangular"
 complexity_cost = 1.0
 n_rows = 6
 n_cols = 7
-spacing_along = 457.2
-spacing_across = 1371.6
+spacing_along = 365.76
+spacing_across = 914.4
 speed = 5.0
 heading_rad = 0.0
 length = 150.0
@@ -61,7 +61,7 @@ beam = 20.0
 origin = [0.0, 0.0]
 
 [[rl.actions]]
-name = "rect_compact"
+name = "rect_standard"
 type = "rectangular"
 complexity_cost = 1.1
 n_rows = 6
@@ -75,12 +75,54 @@ beam = 20.0
 origin = [0.0, 0.0]
 
 [[rl.actions]]
-name = "staggered_mid"
+name = "rect_loose"
 type = "rectangular"
 complexity_cost = 1.3
 n_rows = 6
 n_cols = 7
+spacing_along = 548.64
+spacing_across = 1371.6
+speed = 5.0
+heading_rad = 0.0
+length = 150.0
+beam = 20.0
+origin = [0.0, 0.0]
+
+[[rl.actions]]
+name = "staggered_compact"
+type = "staggered"
+complexity_cost = 1.15
+n_rows = 6
+n_cols = 7
+spacing_along = 365.76
+spacing_across = 914.4
+speed = 5.0
+heading_rad = 0.0
+length = 150.0
+beam = 20.0
+origin = [0.0, 0.0]
+
+[[rl.actions]]
+name = "staggered_standard"
+type = "staggered"
+complexity_cost = 1.25
+n_rows = 6
+n_cols = 7
 spacing_along = 457.2
+spacing_across = 1143.0
+speed = 5.0
+heading_rad = 0.0
+length = 150.0
+beam = 20.0
+origin = [0.0, 0.0]
+
+[[rl.actions]]
+name = "staggered_loose"
+type = "staggered"
+complexity_cost = 1.4
+n_rows = 6
+n_cols = 7
+spacing_along = 548.64
 spacing_across = 1371.6
 speed = 5.0
 heading_rad = 0.0
