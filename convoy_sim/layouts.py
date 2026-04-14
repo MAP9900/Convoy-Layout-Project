@@ -9,7 +9,7 @@ import numpy as np
 
 from convoy_sim.entities import Ship, ShipClass
 from convoy_sim.geometry import Vec2, as_vec
-from convoy_sim.ship_catalog import make_ship
+from convoy_sim.ship_catalog import build_fleet_assignment_maps, make_ship
 
 
 def _rotation_matrix(heading_rad: float) -> np.ndarray:
@@ -95,11 +95,24 @@ def make_rectangular_convoy(
     rng: np.random.Generator | None = None,
     ship_class_map: Callable[[int, int], ShipClass] | None = None,
     ship_overrides_map: Callable[[int, int], dict] | None = None,
+    fleet_profile: str | None = None,
+    fleet_seed: int | None = None,
 ) -> list[Ship]:
     """Return a rectangular grid of ships centered around ``origin``."""
 
     if n_rows <= 0 or n_cols <= 0:
         raise ValueError("n_rows and n_cols must be positive")
+    if fleet_profile is not None:
+        fleet_class_map, fleet_overrides_map = build_fleet_assignment_maps(
+            n_rows=n_rows,
+            n_cols=n_cols,
+            fleet_profile=fleet_profile,
+            fleet_seed=fleet_seed,
+        )
+        if ship_class_map is None:
+            ship_class_map = fleet_class_map
+        if ship_overrides_map is None:
+            ship_overrides_map = fleet_overrides_map
     origin_vec = _origin_vec(origin)
     row_offsets = _grid_offsets(n_rows, spacing_along)
     col_offsets = _grid_offsets(n_cols, spacing_across)
@@ -135,11 +148,24 @@ def make_staggered_convoy(
     rng: np.random.Generator | None = None,
     ship_class_map: Callable[[int, int], ShipClass] | None = None,
     ship_overrides_map: Callable[[int, int], dict] | None = None,
+    fleet_profile: str | None = None,
+    fleet_seed: int | None = None,
 ) -> list[Ship]:
     """Return a grid with alternating row offsets along the across direction."""
 
     if n_rows <= 0 or n_cols <= 0:
         raise ValueError("n_rows and n_cols must be positive")
+    if fleet_profile is not None:
+        fleet_class_map, fleet_overrides_map = build_fleet_assignment_maps(
+            n_rows=n_rows,
+            n_cols=n_cols,
+            fleet_profile=fleet_profile,
+            fleet_seed=fleet_seed,
+        )
+        if ship_class_map is None:
+            ship_class_map = fleet_class_map
+        if ship_overrides_map is None:
+            ship_overrides_map = fleet_overrides_map
     origin_vec = _origin_vec(origin)
     row_offsets = _grid_offsets(n_rows, spacing_along)
     center = (n_cols - 1) / 2.0
@@ -177,6 +203,8 @@ def make_hexagonal_convoy(
     rng: np.random.Generator | None = None,
     ship_class_map: Callable[[int, int], ShipClass] | None = None,
     ship_overrides_map: Callable[[int, int], dict] | None = None,
+    fleet_profile: str | None = None,
+    fleet_seed: int | None = None,
 ) -> list[Ship]:
     """Return ships arranged using a hexagonal (triangular) packing approximation.
 
@@ -187,6 +215,17 @@ def make_hexagonal_convoy(
 
     if n_rows <= 0 or n_cols <= 0:
         raise ValueError("n_rows and n_cols must be positive")
+    if fleet_profile is not None:
+        fleet_class_map, fleet_overrides_map = build_fleet_assignment_maps(
+            n_rows=n_rows,
+            n_cols=n_cols,
+            fleet_profile=fleet_profile,
+            fleet_seed=fleet_seed,
+        )
+        if ship_class_map is None:
+            ship_class_map = fleet_class_map
+        if ship_overrides_map is None:
+            ship_overrides_map = fleet_overrides_map
     origin_vec = _origin_vec(origin)
     row_offsets = _grid_offsets(n_rows, spacing_along)
     center = (n_cols - 1) / 2.0

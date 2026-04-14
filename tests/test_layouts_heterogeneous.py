@@ -63,6 +63,44 @@ def test_default_layout_is_freighter() -> None:
     assert all(ship.ship_class == ShipClass.FREIGHTER for ship in ships)
 
 
+def test_fleet_profile_adds_seeded_within_class_size_variation() -> None:
+    ships = make_rectangular_convoy(
+        n_rows=2,
+        n_cols=3,
+        spacing_along=300.0,
+        spacing_across=200.0,
+        speed=5.0,
+        heading_rad=0.0,
+        length=120.0,
+        beam=20.0,
+        origin=as_vec(0.0, 0.0),
+        fleet_profile="freighter_heterogeneous_v1",
+        fleet_seed=1945,
+    )
+    assert all(ship.ship_class == ShipClass.FREIGHTER for ship in ships)
+    assert len({(ship.length, ship.beam) for ship in ships}) >= 2
+
+
+def test_mixed_fleet_profile_assigns_multiple_ship_classes() -> None:
+    ships = make_rectangular_convoy(
+        n_rows=6,
+        n_cols=7,
+        spacing_along=300.0,
+        spacing_across=200.0,
+        speed=5.0,
+        heading_rad=0.0,
+        length=120.0,
+        beam=20.0,
+        origin=as_vec(0.0, 0.0),
+        fleet_profile="mixed_convoy_v1",
+        fleet_seed=1947,
+    )
+    counts = Counter(ship.ship_class for ship in ships)
+    assert counts[ShipClass.FREIGHTER] > counts[ShipClass.TANKER]
+    assert counts[ShipClass.TANKER] > 0
+    assert counts[ShipClass.ESCORT] > 0
+
+
 def test_jitter_preserves_heading_speed() -> None:
     role_map = perimeter_escorts(n_rows=2, n_cols=2)
     ships = make_rectangular_convoy(

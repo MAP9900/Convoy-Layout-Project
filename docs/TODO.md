@@ -35,6 +35,10 @@ Last updated: 2026-04-08
 - [x] Run baseline + RL pair with matched eval seeds.
 - [x] Record V2-Realism Test 1 in `docs/RESULTS_LOG.md` and `docs/OPTIMIZATION_LOG.md`.
 - [ ] Define RL promotion threshold (`expected_hits` primary, `CVaR_90` guardrail).
+- [x] Add seeded fleet-profile support for heterogeneous convoy realization:
+  - config-friendly `fleet_profile` / `fleet_seed` layout kwargs
+  - deterministic within-class hull-size variation
+  - canonical mixed-class convoy profile for value-focused benchmarks
 - [x] Add deterministic `fire_control_lite` baseline:
   - attacker-side firing solution from noisy convoy observation
   - deterministic centerline / spread / salvo size / G7a speed-setting selection
@@ -84,6 +88,10 @@ Last updated: 2026-04-08
   - penalize number of ships hit more strongly than repeated hits on one ship where appropriate
   - add value-weighting support (e.g., tanker > freighter)
   - add risk guardrail (`CVaR_90` or proxy)
+- [ ] Switch canonical reward-focused benchmarks to heterogeneous convoys:
+  - use `convoy_layout_mixed_1` or a successor mixed profile
+  - keep seeded fleet realization matched across baseline and RL
+  - treat within-class hull heterogeneity as part of benchmark realism, not RL control
 - [ ] Expand attack-profile diversity and harder eval gates after the selector fix:
   - add more attacker geometry/doctrine/range variety
   - add repeated eval seed sets or held-out harder-case pack

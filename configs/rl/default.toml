@@ -1,5 +1,5 @@
 [run]
-name = "rl_test1"
+name = "rl_default"
 output_root = "results/runs"
 
 [simulation]
@@ -33,8 +33,8 @@ decoy_scale = 1.1
 [splits]
 train_profiles = ["P01", "P02", "P04", "P05", "P06", "P07", "P09", "P11", "P15", "P16", "P17", "P18", "P19", "P21", "P22", "P24", "P25", "P27", "P28", "P30"]
 eval_profiles = ["P03", "P08", "P10", "P12", "P13", "P14", "P20", "P23", "P26", "P29"]
-train_seeds = [1939, 1940, 1941]
-eval_seeds = [1942, 1943, 1944]
+train_seeds = [301, 302, 303]
+eval_seeds = [401, 402, 403]
 
 [training]
 episodes = 300
@@ -46,61 +46,24 @@ seed = 7
 
 [rl]
 
-[rl.builder]
-enabled = true
-base_n_rows = 6
-base_n_cols = 7
-speed = 5.0
-heading_rad = 0.0
-length = 150.0
-beam = 20.0
-origin = [0.0, 0.0]
-layout_families = ["rectangular", "staggered"]
-
-[rl.builder.spacing_along_options]
-compact = 365.76
-standard = 457.2
-loose = 548.64
-
-[rl.builder.spacing_across_options]
-compact = 914.4
-standard = 1143.0
-loose = 1371.6
-
-[rl.builder.family_complexity]
-rectangular = 1.0
-staggered = 1.15
-
-[rl.builder.spacing_along_complexity]
-compact = 0.0
-standard = 0.1
-loose = 0.2
-
-[rl.builder.spacing_across_complexity]
-compact = 0.0
-standard = 0.05
-loose = 0.15
-
-[rl.selection]
-risk_cvar_weight = 0.05
-complexity_tiebreak_tolerance = 0.1
-
 [[rl.actions]]
-name = "rect_compact"
+name = "rect_standard"
 type = "rectangular"
 complexity_cost = 1.0
 n_rows = 6
 n_cols = 7
-spacing_along = 365.76
-spacing_across = 914.4
+spacing_along = 457.2
+spacing_across = 1371.6
 speed = 5.0
 heading_rad = 0.0
 length = 150.0
 beam = 20.0
 origin = [0.0, 0.0]
+fleet_profile = "mixed_convoy_v1"
+fleet_seed = 1947
 
 [[rl.actions]]
-name = "rect_standard"
+name = "rect_compact"
 type = "rectangular"
 complexity_cost = 1.1
 n_rows = 6
@@ -112,62 +75,24 @@ heading_rad = 0.0
 length = 150.0
 beam = 20.0
 origin = [0.0, 0.0]
+fleet_profile = "mixed_convoy_v1"
+fleet_seed = 1947
 
 [[rl.actions]]
-name = "rect_loose"
+name = "staggered_mid"
 type = "rectangular"
 complexity_cost = 1.3
 n_rows = 6
 n_cols = 7
-spacing_along = 548.64
-spacing_across = 1371.6
-speed = 5.0
-heading_rad = 0.0
-length = 150.0
-beam = 20.0
-origin = [0.0, 0.0]
-
-[[rl.actions]]
-name = "staggered_compact"
-type = "staggered"
-complexity_cost = 1.15
-n_rows = 6
-n_cols = 7
-spacing_along = 365.76
-spacing_across = 914.4
-speed = 5.0
-heading_rad = 0.0
-length = 150.0
-beam = 20.0
-origin = [0.0, 0.0]
-
-[[rl.actions]]
-name = "staggered_standard"
-type = "staggered"
-complexity_cost = 1.25
-n_rows = 6
-n_cols = 7
 spacing_along = 457.2
-spacing_across = 1143.0
-speed = 5.0
-heading_rad = 0.0
-length = 150.0
-beam = 20.0
-origin = [0.0, 0.0]
-
-[[rl.actions]]
-name = "staggered_loose"
-type = "staggered"
-complexity_cost = 1.4
-n_rows = 6
-n_cols = 7
-spacing_along = 548.64
 spacing_across = 1371.6
 speed = 5.0
 heading_rad = 0.0
 length = 150.0
 beam = 20.0
 origin = [0.0, 0.0]
+fleet_profile = "mixed_convoy_v1"
+fleet_seed = 1947
 
 [split_meta]
 method = "random_partition"
@@ -175,6 +100,6 @@ split_seed = 1945
 n_total = 30
 n_train = 20
 n_eval = 10
-generated_utc = "2026-03-31T00:01:09Z"
+generated_utc = "2026-04-14T22:42:22Z"
 profile_prefix = "P"
 profile_width = 2

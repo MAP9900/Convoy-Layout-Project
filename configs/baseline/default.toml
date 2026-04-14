@@ -1,5 +1,5 @@
 [run]
-name = "baseline_test1"
+name = "baseline_default"
 output_root = "results/runs"
 
 [simulation]
@@ -49,6 +49,8 @@ heading_rad = 0.0
 length = 150.0
 beam = 20.0
 origin = [0.0, 0.0]
+fleet_profile = "mixed_convoy_v1"
+fleet_seed = 1947
 
 [baseline.heuristic_search]
 max_candidates = 18
@@ -63,6 +65,6 @@ split_seed = 1945
 n_total = 30
 n_train = 20
 n_eval = 10
-generated_utc = "2026-03-31T00:01:02Z"
+generated_utc = "2026-04-14T22:42:22Z"
 profile_prefix = "P"
 profile_width = 2

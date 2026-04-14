@@ -88,6 +88,10 @@ Otherwise comparisons become misleading.
 - class placement by slot/row within fixed composition rules
 - protected-core vs perimeter escort patterns
 - bounded high-value ship placement rules
+- within-class hull heterogeneity:
+  - not every freighter should share the same length/beam/value profile
+  - not every tanker or escort should be identical
+  - seeded hull-template sampling should define fleet realization, not RL layout control
 
 ### Kinematic / Doctrine Controls
 
@@ -118,6 +122,7 @@ Minimum constraint families:
 - fleet composition counts by class
 - feasibility checks for station keeping / footprint realism
 - escort-placement doctrine constraints where applicable
+- seeded fleet-composition realization should be stable for matched baseline/RL comparisons
 
 Constraint handling policy:
 - mask invalid actions when possible
@@ -138,6 +143,7 @@ Where `ship_loss_score` should distinguish between:
 Recommended direction:
 - heavier penalty for number of unique ships damaged/destroyed
 - lower marginal penalty for repeat hits on the same already-lost ship
+- only treat value-weighted reward as canonical once heterogeneous convoy composition is active
 
 ### Longer-Term Reward Additions
 
@@ -248,6 +254,11 @@ Next expansion inside Phase 2:
 - add hard constraint metadata and masking
 - extend from spacing buckets to bounded row-pattern controls
 - defer ship-class placement and zig-zag until the minimal builder is stable
+
+Phase 3A prerequisite now implemented:
+- config-friendly seeded fleet profiles
+- within-class hull heterogeneity support
+- mixed-class convoy profile available for value-focused benchmarks
 
 Success criteria:
 - environment supports meaningful sequential design

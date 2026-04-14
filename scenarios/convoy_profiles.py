@@ -71,7 +71,7 @@ def build_small_demo_profile() -> ConvoyLayoutProfile:
 
 
 def build_convoy_layout_1_profile() -> ConvoyLayoutProfile:
-    """Starting convoy layout profile (6x7, all freighters)."""
+    """Starting convoy layout profile (6x7, freighters with seeded hull variation)."""
 
     return ConvoyLayoutProfile(
         name="convoy_layout_1",
@@ -86,13 +86,15 @@ def build_convoy_layout_1_profile() -> ConvoyLayoutProfile:
             "length": 150.0,
             "beam": 20.0,
             "origin": as_vec(0.0, 0.0),
+            "fleet_profile": "freighter_heterogeneous_v1",
+            "fleet_seed": 1945,
         },
-        description="Starting 7x6 convoy layout with all freighters.",
+        description="Starting 7x6 convoy layout with all freighters but seeded hull-size variation within class.",
     )
 
 
 def build_convoy_layout_2_profile() -> ConvoyLayoutProfile:
-    """Secondary convoy layout profile (7x7, all freighters)."""
+    """Secondary convoy layout profile (7x7, freighters with seeded hull variation)."""
 
     return ConvoyLayoutProfile(
         name="convoy_layout_2",
@@ -107,8 +109,33 @@ def build_convoy_layout_2_profile() -> ConvoyLayoutProfile:
             "length": 150.0,
             "beam": 20.0,
             "origin": as_vec(0.0, 0.0),
+            "fleet_profile": "freighter_heterogeneous_v1",
+            "fleet_seed": 1946,
         },
-        description="7x7 convoy layout with 800yd along-spacing and 1000yd across-spacing. Different historical version of layout 1.",
+        description="7x7 convoy layout with varied freighter hulls, 800yd along-spacing and 1000yd across-spacing.",
+    )
+
+
+def build_convoy_layout_mixed_1_profile() -> ConvoyLayoutProfile:
+    """Canonical heterogeneous convoy benchmark profile for reward/value experiments."""
+
+    return ConvoyLayoutProfile(
+        name="convoy_layout_mixed_1",
+        layout_fn=make_rectangular_convoy,
+        layout_kwargs={
+            "n_rows": 6,
+            "n_cols": 7,
+            "spacing_along": 457.2,
+            "spacing_across": 1371.6,
+            "speed": 5.0,
+            "heading_rad": 0.0,
+            "length": 150.0,
+            "beam": 20.0,
+            "origin": as_vec(0.0, 0.0),
+            "fleet_profile": "mixed_convoy_v1",
+            "fleet_seed": 1947,
+        },
+        description="6x7 convoy with seeded mixed classes: mostly freighters plus central tankers and perimeter escorts.",
     )
 
 def get_convoy_layout_profile_registry() -> dict[str, ConvoyLayoutProfile]:
@@ -116,6 +143,7 @@ def get_convoy_layout_profile_registry() -> dict[str, ConvoyLayoutProfile]:
         "small_demo": build_small_demo_profile(),
         "convoy_layout_1": build_convoy_layout_1_profile(),
         "convoy_layout_2": build_convoy_layout_2_profile(),
+        "convoy_layout_mixed_1": build_convoy_layout_mixed_1_profile(),
     }
 
 

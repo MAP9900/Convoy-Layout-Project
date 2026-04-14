@@ -209,6 +209,69 @@ origin = [0.0, 0.0]
     assert layout["spacing_along"] == 500.0
 
 
+def test_generate_run_config_injects_mixed_convoy_profile_metadata(tmp_path: Path) -> None:
+    template = tmp_path / "baseline_template.toml"
+    output = tmp_path / "baseline_generated.toml"
+    template.write_text(
+        """
+[run]
+name = "baseline_default"
+output_root = "results/runs"
+
+[simulation]
+t_max = 400.0
+n_trials_per_seed = 40
+max_hits_per_torpedo = 1
+
+[splits]
+train_profiles = ["P01"]
+eval_profiles = ["P02"]
+train_seeds = [11, 12, 13]
+eval_seeds = [21, 22, 23]
+
+[baseline.static_layout]
+type = "rectangular"
+n_rows = 6
+n_cols = 7
+spacing_along = 457.2
+spacing_across = 1371.6
+speed = 5.0
+heading_rad = 0.0
+length = 150.0
+beam = 20.0
+origin = [0.0, 0.0]
+""".strip()
+        + "\n",
+        encoding="utf-8",
+    )
+
+    subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "experiments.generate_run_config",
+            "--template",
+            str(template),
+            "--output",
+            str(output),
+            "--split-seed",
+            "42",
+            "--n-total",
+            "30",
+            "--n-train",
+            "20",
+            "--convoy-profile",
+            "convoy_layout_mixed_1",
+        ],
+        check=True,
+    )
+
+    cfg = _read_toml(output)
+    layout = cfg["baseline"]["static_layout"]
+    assert layout["fleet_profile"] == "mixed_convoy_v1"
+    assert layout["fleet_seed"] == 1947
+
+
 def test_generate_run_config_injects_convoy_profile_into_baseline(tmp_path: Path) -> None:
     template = tmp_path / "baseline_template.toml"
     output = tmp_path / "baseline_generated.toml"
