@@ -33,8 +33,8 @@ decoy_scale = 1.1
 [splits]
 train_profiles = ["P01", "P02", "P04", "P05", "P06", "P07", "P09", "P11", "P15", "P16", "P17", "P18", "P19", "P21", "P22", "P24", "P25", "P27", "P28", "P30"]
 eval_profiles = ["P03", "P08", "P10", "P12", "P13", "P14", "P20", "P23", "P26", "P29"]
-train_seeds = [301, 302, 303]
-eval_seeds = [401, 402, 403]
+train_seeds = [1939, 1940, 1941]
+eval_seeds = [1942, 1943, 1944]
 
 [objective]
 w_total_value = 1.0
@@ -112,6 +112,6 @@ split_seed = 1945
 n_total = 30
 n_train = 20
 n_eval = 10
-generated_utc = "2026-04-14T22:42:22Z"
+generated_utc = "2026-04-14T23:02:53Z"
 profile_prefix = "P"
 profile_width = 2

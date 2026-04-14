@@ -1,0 +1,86 @@
+{
+  "training": {
+    "episodes": 300,
+    "epsilon_final": 0.055573049960186756,
+    "avg_reward_last_50": -6.329000000000001,
+    "selected_action": "rect_standard",
+    "selected_action_by_q_value": "staggered_mid",
+    "selection_method": "train_split_risk_aware_objective",
+    "mode": "flat_action_menu"
+  },
+  "selection": {
+    "risk_cvar_weight": 0.05,
+    "complexity_tiebreak_tolerance": 0.1,
+    "selection_mode": "flat_action_menu",
+    "effective_complexity_tiebreak_tolerance": 0.1,
+    "ranked_train_actions": [
+      {
+        "name": "rect_standard",
+        "primary_score": 6.601922113637163,
+        "complexity_cost": 1.0,
+        "train_summary": {
+          "profiles": 20,
+          "samples": 2400,
+          "expected_hits": 2.7645833333333334,
+          "CVaR_90": 3.3817706466469266,
+          "VaR_90": 3.9091666666666667,
+          "p_hit_ge_1": 0.9933333333333334,
+          "value_lost": 3.434432291666666,
+          "expected_unique_ships_hit": 2.667916666666667,
+          "expected_repeat_hits": 0.5537500000000001,
+          "expected_loss": 6.213098958333332,
+          "CVaR_90_loss": 7.776463106076605
+        }
+      },
+      {
+        "name": "rect_compact",
+        "primary_score": 6.601922113637163,
+        "complexity_cost": 1.1,
+        "train_summary": {
+          "profiles": 20,
+          "samples": 2400,
+          "expected_hits": 2.7645833333333334,
+          "CVaR_90": 3.3817706466469266,
+          "VaR_90": 3.9091666666666667,
+          "p_hit_ge_1": 0.9933333333333334,
+          "value_lost": 3.434432291666666,
+          "expected_unique_ships_hit": 2.667916666666667,
+          "expected_repeat_hits": 0.5537500000000001,
+          "expected_loss": 6.213098958333332,
+          "CVaR_90_loss": 7.776463106076605
+        }
+      },
+      {
+        "name": "staggered_mid",
+        "primary_score": 6.601922113637163,
+        "complexity_cost": 1.3,
+        "train_summary": {
+          "profiles": 20,
+          "samples": 2400,
+          "expected_hits": 2.7645833333333334,
+          "CVaR_90": 3.3817706466469266,
+          "VaR_90": 3.9091666666666667,
+          "p_hit_ge_1": 0.9933333333333334,
+          "value_lost": 3.434432291666666,
+          "expected_unique_ships_hit": 2.667916666666667,
+          "expected_repeat_hits": 0.5537500000000001,
+          "expected_loss": 6.213098958333332,
+          "CVaR_90_loss": 7.776463106076605
+        }
+      }
+    ]
+  },
+  "evaluation": {
+    "profiles": 10,
+    "samples": 1200,
+    "expected_hits": 2.565833333333333,
+    "CVaR_90": 3.1502574593679116,
+    "VaR_90": 3.29,
+    "p_hit_ge_1": 0.9983333333333334,
+    "value_lost": 3.1997083333333336,
+    "expected_unique_ships_hit": 2.236666666666667,
+    "expected_repeat_hits": 0.4925,
+    "expected_loss": 5.5348749999999995,
+    "CVaR_90_loss": 7.098197811397081
+  }
+}
