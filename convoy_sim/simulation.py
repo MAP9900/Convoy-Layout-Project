@@ -15,6 +15,7 @@ from convoy_sim.entities import Ship, ShipClass, Torpedo, torpedo_hit_time, torp
 from convoy_sim.feasibility import AttackProposal
 from convoy_sim.geometry import Vec2, as_vec, closest_approach_time, distance
 from convoy_sim.noise import NoiseModel
+from convoy_sim.objectives import ObjectiveSpec, score_trial_result, weighted_value_destroyed_from_trial
 from convoy_sim.realism import ShipMovementRealismConfig, apply_ship_movement_realism
 from convoy_sim.risk import empirical_cvar, empirical_var
 
@@ -222,9 +223,13 @@ def simulate_attack_once_scored(
             value_by_class[ship.ship_class] = value_by_class.get(ship.ship_class, 0.0) + ship.value_weight
 
     total_value_destroyed = float(sum(value_by_class.values()))
+    unique_ships_hit = int(len(hit_ship_ids))
+    repeat_hits = max(0, int(n_hits) - unique_ships_hit)
     return {
         "hit_ship_ids": list(hit_ship_ids),
         "n_hits": n_hits,
+        "unique_ships_hit": unique_ships_hit,
+        "repeat_hits": repeat_hits,
         "total_value_destroyed": total_value_destroyed,
         "value_destroyed_by_class": value_by_class,
         "hits_by_class": hits_by_class,
@@ -357,6 +362,7 @@ def run_monte_carlo_attack_scored(
     noise_model: NoiseModel | None = None,
     risk_alpha: float | None = None,
     max_hits_per_torpedo: int | None = None,
+    objective: ObjectiveSpec | None = None,
 ) -> dict[str, Any]:
     """Run Monte Carlo and return hit/value metrics."""
 
@@ -367,7 +373,11 @@ def run_monte_carlo_attack_scored(
     layout_kwargs_base = {k: v for k, v in layout_kwargs.items() if k != "ship_movement_realism"}
     sampler_arity = len(inspect.signature(torpedo_sampler).parameters)
     hits = np.zeros(n_trials, dtype=float)
+    unique_ships = np.zeros(n_trials, dtype=float)
+    repeat_hits = np.zeros(n_trials, dtype=float)
     values = np.zeros(n_trials, dtype=float)
+    weighted_values = np.zeros(n_trials, dtype=float)
+    losses = np.zeros(n_trials, dtype=float)
     for idx in range(n_trials):
         ships = layout_fn(**layout_kwargs_base)
         ships = apply_ship_movement_realism(ships, rng=generator, cfg=realism_cfg)
@@ -384,24 +394,42 @@ def run_monte_carlo_attack_scored(
             max_hits_per_torpedo=max_hits_per_torpedo,
         )
         hits[idx] = scored["n_hits"]
+        unique_ships[idx] = float(scored.get("unique_ships_hit", 0.0))
+        repeat_hits[idx] = float(scored.get("repeat_hits", 0.0))
         values[idx] = scored["total_value_destroyed"]
+        weighted_values[idx] = weighted_value_destroyed_from_trial(scored, objective)
+        losses[idx] = score_trial_result(scored, objective) if objective is not None else values[idx]
     expected_hits = float(np.mean(hits))
+    expected_unique_ships = float(np.mean(unique_ships))
+    expected_repeat_hits = float(np.mean(repeat_hits))
     expected_value = float(np.mean(values))
+    expected_weighted_value = float(np.mean(weighted_values))
+    expected_loss = float(np.mean(losses))
     variance = float(np.var(hits))
     hit_prob_at_least_one = float(np.mean(hits > 0))
     payload = {
         "hits_per_trial": hits,
+        "unique_ships_hit_per_trial": unique_ships,
+        "repeat_hits_per_trial": repeat_hits,
         "value_destroyed_per_trial": values,
+        "weighted_value_destroyed_per_trial": weighted_values,
+        "loss_per_trial": losses,
         "expected_hits": expected_hits,
+        "expected_unique_ships_hit": expected_unique_ships,
+        "expected_repeat_hits": expected_repeat_hits,
         "expected_value_destroyed": expected_value,
+        "expected_weighted_value_destroyed": expected_weighted_value,
+        "expected_loss": expected_loss,
         "var_hits": variance,
         "hit_prob_at_least_one": hit_prob_at_least_one,
         "n_trials": n_trials,
     }
-    if risk_alpha is not None:
-        alpha_label = int(round(risk_alpha * 100))
-        payload[f"VaR_{alpha_label}"] = empirical_var(values, risk_alpha)
-        payload[f"CVaR_{alpha_label}"] = empirical_cvar(values, risk_alpha)
+    alpha = 0.9 if risk_alpha is None else float(risk_alpha)
+    alpha_label = int(round(alpha * 100))
+    payload[f"VaR_{alpha_label}"] = empirical_var(hits, alpha)
+    payload[f"CVaR_{alpha_label}"] = empirical_cvar(hits, alpha)
+    payload[f"VaR_{alpha_label}_loss"] = empirical_var(losses, alpha)
+    payload[f"CVaR_{alpha_label}_loss"] = empirical_cvar(losses, alpha)
     return payload
 
 

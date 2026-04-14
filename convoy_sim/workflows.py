@@ -16,8 +16,9 @@ import numpy as np
 from convoy_sim.attack_profiles import AttackProfileLibrary
 from convoy_sim.feasibility import Environment
 from convoy_sim.noise import NoiseModel
+from convoy_sim.objectives import ObjectiveSpec
 from convoy_sim.risk import empirical_cvar, empirical_var
-from convoy_sim.simulation import run_monte_carlo_attack
+from convoy_sim.simulation import run_monte_carlo_attack_scored
 
 
 LayoutFn = Callable[..., list[Any]]
@@ -32,6 +33,10 @@ class ProfileEvalRow:
     cvar_90: float
     p_hit_ge_1: float
     value_lost: float | None
+    expected_unique_ships_hit: float = 0.0
+    expected_repeat_hits: float = 0.0
+    expected_loss: float = 0.0
+    cvar_90_loss: float = 0.0
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -42,6 +47,10 @@ class ProfileEvalRow:
             "CVaR_90": float(self.cvar_90),
             "p_hit_ge_1": float(self.p_hit_ge_1),
             "value_lost": self.value_lost,
+            "expected_unique_ships_hit": float(self.expected_unique_ships_hit),
+            "expected_repeat_hits": float(self.expected_repeat_hits),
+            "expected_loss": float(self.expected_loss),
+            "CVaR_90_loss": float(self.cvar_90_loss),
         }
 
 
@@ -148,6 +157,7 @@ def evaluate_layout_over_profiles(
     env: Environment | None = None,
     proposal_cfg: dict[str, Any] | None = None,
     max_hits_per_torpedo: int | None = None,
+    objective: ObjectiveSpec | None = None,
 ) -> list[ProfileEvalRow]:
     lookup = profile_lookup(library)
     rows: list[ProfileEvalRow] = []
@@ -157,6 +167,10 @@ def evaluate_layout_over_profiles(
             raise ValueError(f"Unknown profile id in split: {profile_id}")
         profile = lookup[profile_id]
         all_hits: list[float] = []
+        unique_accumulator: list[float] = []
+        repeat_accumulator: list[float] = []
+        value_accumulator: list[float] = []
+        loss_accumulator: list[float] = []
         for seed in seeds:
             rng = np.random.default_rng(int(seed))
 
@@ -168,7 +182,7 @@ def evaluate_layout_over_profiles(
                     env=env,
                 )
 
-            result = run_monte_carlo_attack(
+            result = run_monte_carlo_attack_scored(
                 layout_fn=layout_fn,
                 layout_kwargs=layout_kwargs,
                 torpedo_sampler=sampler,
@@ -176,11 +190,24 @@ def evaluate_layout_over_profiles(
                 t_max=t_max,
                 rng=rng,
                 noise_model=noise_model,
+                objective=objective,
                 max_hits_per_torpedo=max_hits_per_torpedo,
             )
             all_hits.extend(np.asarray(result["hits_per_trial"], dtype=float).tolist())
+            all_unique = np.asarray(result["unique_ships_hit_per_trial"], dtype=float)
+            all_repeat = np.asarray(result["repeat_hits_per_trial"], dtype=float)
+            all_values = np.asarray(result["weighted_value_destroyed_per_trial"], dtype=float)
+            all_losses = np.asarray(result["loss_per_trial"], dtype=float)
+            unique_accumulator.extend(all_unique.tolist())
+            repeat_accumulator.extend(all_repeat.tolist())
+            value_accumulator.extend(all_values.tolist())
+            loss_accumulator.extend(all_losses.tolist())
 
         hits = np.asarray(all_hits, dtype=float)
+        unique_hits = np.asarray(unique_accumulator, dtype=float)
+        repeat_hits = np.asarray(repeat_accumulator, dtype=float)
+        values = np.asarray(value_accumulator, dtype=float)
+        losses = np.asarray(loss_accumulator, dtype=float)
         rows.append(
             ProfileEvalRow(
                 model_name=model_name,
@@ -189,7 +216,11 @@ def evaluate_layout_over_profiles(
                 expected_hits=float(np.mean(hits)),
                 cvar_90=float(empirical_cvar(hits, 0.9)),
                 p_hit_ge_1=float(np.mean(hits >= 1.0)),
-                value_lost=None,
+                value_lost=float(np.mean(values)),
+                expected_unique_ships_hit=float(np.mean(unique_hits)),
+                expected_repeat_hits=float(np.mean(repeat_hits)),
+                expected_loss=float(np.mean(losses)),
+                cvar_90_loss=float(empirical_cvar(losses, 0.9)),
             )
         )
 
@@ -206,11 +237,20 @@ def summarize_profile_rows(rows: list[ProfileEvalRow]) -> dict[str, Any]:
             "VaR_90": 0.0,
             "p_hit_ge_1": 0.0,
             "value_lost": None,
+            "expected_unique_ships_hit": 0.0,
+            "expected_repeat_hits": 0.0,
+            "expected_loss": 0.0,
+            "CVaR_90_loss": 0.0,
         }
 
     expected_hits = np.array([row.expected_hits for row in rows], dtype=float)
     cvar_90 = np.array([row.cvar_90 for row in rows], dtype=float)
     p_hit = np.array([row.p_hit_ge_1 for row in rows], dtype=float)
+    value_lost = np.array([0.0 if row.value_lost is None else row.value_lost for row in rows], dtype=float)
+    unique_hits = np.array([row.expected_unique_ships_hit for row in rows], dtype=float)
+    repeat_hits = np.array([row.expected_repeat_hits for row in rows], dtype=float)
+    expected_loss = np.array([row.expected_loss for row in rows], dtype=float)
+    cvar_90_loss = np.array([row.cvar_90_loss for row in rows], dtype=float)
 
     return {
         "profiles": len(rows),
@@ -219,7 +259,11 @@ def summarize_profile_rows(rows: list[ProfileEvalRow]) -> dict[str, Any]:
         "CVaR_90": float(np.mean(cvar_90)),
         "VaR_90": float(empirical_var(expected_hits, 0.9)),
         "p_hit_ge_1": float(np.mean(p_hit)),
-        "value_lost": None,
+        "value_lost": float(np.mean(value_lost)),
+        "expected_unique_ships_hit": float(np.mean(unique_hits)),
+        "expected_repeat_hits": float(np.mean(repeat_hits)),
+        "expected_loss": float(np.mean(expected_loss)),
+        "CVaR_90_loss": float(np.mean(cvar_90_loss)),
     }
 
 
@@ -230,7 +274,19 @@ def write_json(path: Path, payload: Any) -> None:
 
 def write_profile_rows_csv(path: Path, rows: list[ProfileEvalRow]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    fieldnames = ["model_name", "profile_id", "samples", "expected_hits", "CVaR_90", "p_hit_ge_1", "value_lost"]
+    fieldnames = [
+        "model_name",
+        "profile_id",
+        "samples",
+        "expected_hits",
+        "CVaR_90",
+        "p_hit_ge_1",
+        "value_lost",
+        "expected_unique_ships_hit",
+        "expected_repeat_hits",
+        "expected_loss",
+        "CVaR_90_loss",
+    ]
     with path.open("w", newline="", encoding="utf-8") as handle:
         writer = csv.DictWriter(handle, fieldnames=fieldnames)
         writer.writeheader()

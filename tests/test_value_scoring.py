@@ -76,3 +76,37 @@ def test_value_counted_once_per_ship() -> None:
     scored = simulate_attack_once_scored(ships, torpedoes, t_max=200.0)
     assert scored["n_hits"] >= 1
     assert scored["total_value_destroyed"] == 2.0
+
+
+def test_scored_attack_reports_unique_and_repeat_hits() -> None:
+    ships = [
+        Ship(
+            id="S1",
+            position=as_vec(0.0, 0.0),
+            speed=0.0,
+            heading_rad=0.0,
+            length=120.0,
+            beam=20.0,
+            ship_class=ShipClass.FREIGHTER,
+            value_weight=2.0,
+        )
+    ]
+    torpedoes = [
+        Torpedo(
+            id="T1",
+            launch_position=as_vec(-500.0, 0.0),
+            speed=20.0,
+            heading_rad=0.0,
+            max_run_time=200.0,
+        ),
+        Torpedo(
+            id="T2",
+            launch_position=as_vec(-500.0, 0.0),
+            speed=20.0,
+            heading_rad=0.0,
+            max_run_time=200.0,
+        ),
+    ]
+    scored = simulate_attack_once_scored(ships, torpedoes, t_max=200.0)
+    assert scored["unique_ships_hit"] == 1
+    assert scored["repeat_hits"] == scored["n_hits"] - 1

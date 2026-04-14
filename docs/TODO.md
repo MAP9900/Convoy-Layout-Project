@@ -84,10 +84,10 @@ Last updated: 2026-04-08
 - [ ] Define and enforce hard layout boundaries in config (separation, footprint, class counts, feasibility).
 - [ ] Add action masking / feasibility-first handling for invalid RL layouts.
 - [ ] Phase 3 RL overhaul: redesign reward:
-  - expected hits remains visible but is not the only signal
-  - penalize number of ships hit more strongly than repeated hits on one ship where appropriate
-  - add value-weighting support (e.g., tanker > freighter)
-  - add risk guardrail (`CVaR_90` or proxy)
+  - [x] add objective plumbing for `unique_ships_hit`, `repeat_hits`, and weighted value
+  - [x] pass one `ObjectiveSpec` through baseline/RL workflows and summaries
+  - [ ] rerun matched mixed-convoy baseline + builder-mode RL benchmark with the new objective
+  - [ ] tune weights after the first objective-aligned benchmark
 - [ ] Switch canonical reward-focused benchmarks to heterogeneous convoys:
   - use `convoy_layout_mixed_1` or a successor mixed profile
   - keep seeded fleet realization matched across baseline and RL

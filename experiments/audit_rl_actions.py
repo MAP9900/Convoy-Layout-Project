@@ -19,6 +19,7 @@ from convoy_sim.defender_policy import LayoutAction
 from convoy_sim.feasibility import Environment
 from convoy_sim.layouts import make_rectangular_convoy, make_staggered_convoy
 from convoy_sim.noise import NoiseModel
+from convoy_sim.objectives import objective_from_config, objective_to_dict
 from convoy_sim.rl_layout_builder import RLLayoutBuilderConfig
 from convoy_sim.workflows import (
     evaluate_layout_over_profiles,
@@ -104,6 +105,10 @@ def _write_action_summary_csv(path: Path, rows: list[dict[str, Any]]) -> None:
         "VaR_90",
         "p_hit_ge_1",
         "value_lost",
+        "expected_unique_ships_hit",
+        "expected_repeat_hits",
+        "expected_loss",
+        "CVaR_90_loss",
         "complexity_cost",
         "layout_type",
     ]
@@ -119,6 +124,7 @@ def run_from_config(config: dict[str, Any], *, project_root: Path) -> Path:
     sim_cfg = dict(config.get("simulation", {}))
     split_cfg = dict(config.get("splits", {}))
     rl_cfg = dict(config.get("rl", {}))
+    objective_cfg = dict(config.get("objective", {}))
     plot_cfg = dict(config.get("plot", {}))
 
     output_root = project_root / str(run_cfg.get("output_root", "results/runs"))
@@ -142,6 +148,7 @@ def run_from_config(config: dict[str, Any], *, project_root: Path) -> Path:
     )
     max_hits_per_torpedo = sim_cfg.get("max_hits_per_torpedo")
     max_hits_per_torpedo = None if max_hits_per_torpedo is None else int(max_hits_per_torpedo)
+    objective = objective_from_config(objective_cfg)
 
     ship_movement_realism = dict(sim_cfg.get("ship_movement_realism", {}))
     actions, builder_cfg = _resolve_candidate_actions(
@@ -172,6 +179,7 @@ def run_from_config(config: dict[str, Any], *, project_root: Path) -> Path:
             noise_model=noise_model,
             env=env_profile,
             max_hits_per_torpedo=max_hits_per_torpedo,
+            objective=objective,
         )
         eval_rows = evaluate_layout_over_profiles(
             model_name=f"{action.name}_eval",
@@ -185,6 +193,7 @@ def run_from_config(config: dict[str, Any], *, project_root: Path) -> Path:
             noise_model=noise_model,
             env=env_profile,
             max_hits_per_torpedo=max_hits_per_torpedo,
+            objective=objective,
         )
         all_profile_rows.extend(train_rows)
         all_profile_rows.extend(eval_rows)
@@ -204,6 +213,10 @@ def run_from_config(config: dict[str, Any], *, project_root: Path) -> Path:
                 "VaR_90": train_summary["VaR_90"],
                 "p_hit_ge_1": train_summary["p_hit_ge_1"],
                 "value_lost": train_summary["value_lost"],
+                "expected_unique_ships_hit": train_summary["expected_unique_ships_hit"],
+                "expected_repeat_hits": train_summary["expected_repeat_hits"],
+                "expected_loss": train_summary["expected_loss"],
+                "CVaR_90_loss": train_summary["CVaR_90_loss"],
                 "complexity_cost": action.complexity_cost,
                 "layout_type": layout_type,
             }
@@ -219,6 +232,10 @@ def run_from_config(config: dict[str, Any], *, project_root: Path) -> Path:
                 "VaR_90": eval_summary["VaR_90"],
                 "p_hit_ge_1": eval_summary["p_hit_ge_1"],
                 "value_lost": eval_summary["value_lost"],
+                "expected_unique_ships_hit": eval_summary["expected_unique_ships_hit"],
+                "expected_repeat_hits": eval_summary["expected_repeat_hits"],
+                "expected_loss": eval_summary["expected_loss"],
+                "CVaR_90_loss": eval_summary["CVaR_90_loss"],
                 "complexity_cost": action.complexity_cost,
                 "layout_type": layout_type,
             }
@@ -251,8 +268,8 @@ def run_from_config(config: dict[str, Any], *, project_root: Path) -> Path:
             }
         )
 
-    best_train = min(action_reports, key=lambda item: float(item["train_summary"]["expected_hits"]))
-    best_eval = min(action_reports, key=lambda item: float(item["eval_summary"]["expected_hits"]))
+    best_train = min(action_reports, key=lambda item: float(item["train_summary"].get("expected_loss", item["train_summary"]["expected_hits"])))
+    best_eval = min(action_reports, key=lambda item: float(item["eval_summary"].get("expected_loss", item["eval_summary"]["expected_hits"])))
 
     resolved = {
         "config": config,
@@ -261,6 +278,7 @@ def run_from_config(config: dict[str, Any], *, project_root: Path) -> Path:
             "best_train_action": best_train["name"],
             "best_eval_action": best_eval["name"],
             "builder": builder_cfg.to_dict() if builder_cfg is not None and builder_cfg.enabled else None,
+            "objective": objective_to_dict(objective),
         },
     }
 
@@ -268,13 +286,17 @@ def run_from_config(config: dict[str, Any], *, project_root: Path) -> Path:
         "best_train_action": {
             "name": best_train["name"],
             "expected_hits": best_train["train_summary"]["expected_hits"],
+            "expected_loss": best_train["train_summary"].get("expected_loss"),
             "CVaR_90": best_train["train_summary"]["CVaR_90"],
+            "CVaR_90_loss": best_train["train_summary"].get("CVaR_90_loss"),
             "eval_expected_hits": best_train["eval_summary"]["expected_hits"],
         },
         "best_eval_action": {
             "name": best_eval["name"],
             "expected_hits": best_eval["eval_summary"]["expected_hits"],
+            "expected_loss": best_eval["eval_summary"].get("expected_loss"),
             "CVaR_90": best_eval["eval_summary"]["CVaR_90"],
+            "CVaR_90_loss": best_eval["eval_summary"].get("CVaR_90_loss"),
             "train_expected_hits": best_eval["train_summary"]["expected_hits"],
         },
         "actions": action_reports,
@@ -309,6 +331,7 @@ def run_from_config(config: dict[str, Any], *, project_root: Path) -> Path:
         "selection": {
             "mode": "builder" if builder_cfg is not None and builder_cfg.enabled else "flat_action_menu",
         },
+        "objective": objective_to_dict(objective),
     }
 
     write_yaml(run_dir / "config_resolved.yaml", resolved)

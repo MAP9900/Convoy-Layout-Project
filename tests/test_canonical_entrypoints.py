@@ -40,6 +40,10 @@ REQUIRED_PROFILE_CSV_COLUMNS = {
     "CVaR_90",
     "p_hit_ge_1",
     "value_lost",
+    "expected_unique_ships_hit",
+    "expected_repeat_hits",
+    "expected_loss",
+    "CVaR_90_loss",
 }
 
 
@@ -51,6 +55,10 @@ REQUIRED_SUMMARY_KEYS = {
     "VaR_90",
     "p_hit_ge_1",
     "value_lost",
+    "expected_unique_ships_hit",
+    "expected_repeat_hits",
+    "expected_loss",
+    "CVaR_90_loss",
 }
 
 
@@ -112,6 +120,7 @@ def test_run_baseline_suite_writes_canonical_artifacts(tmp_path: Path) -> None:
     assert manifest["workflow"] == "baseline"
     assert "realism" in manifest
     assert manifest["realism"]["u_boat_mode_default"] == "moving"
+    assert "objective" in manifest
 
 
 def test_run_rl_train_writes_canonical_artifacts_and_checkpoint(tmp_path: Path) -> None:
@@ -199,6 +208,7 @@ def test_run_rl_train_writes_canonical_artifacts_and_checkpoint(tmp_path: Path) 
     assert "realism" in manifest
     assert "selection" in manifest
     assert manifest["realism"]["u_boat_mode_default"] == "moving"
+    assert "objective" in manifest
 
 
 def test_run_rl_train_builder_mode_writes_selection_metadata(tmp_path: Path) -> None:

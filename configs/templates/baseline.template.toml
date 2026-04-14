@@ -36,6 +36,18 @@ eval_profiles = ["P01","P04","P05","P08","P09","P18","P21","P24","P25","P29"]
 train_seeds = [1939, 1940, 1941]
 eval_seeds = [1942, 1943, 1944]
 
+[objective]
+w_total_value = 1.0
+w_unique_ships_hit = 1.0
+w_repeat_hits = 0.2
+escort_loss_discount = 0.75
+
+[objective.class_value_weights]
+freighter = 1.0
+tanker = 1.5
+escort = 0.5
+decoy = 0.2
+
 [baseline.static_layout]
 type = "rectangular"
 n_rows = 6

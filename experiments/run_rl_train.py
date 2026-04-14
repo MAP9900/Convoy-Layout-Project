@@ -16,6 +16,7 @@ from convoy_sim.feasibility import Environment
 from convoy_sim.game import AttackerStrategy, DefenderStrategy
 from convoy_sim.layouts import make_rectangular_convoy, make_staggered_convoy
 from convoy_sim.noise import NoiseModel
+from convoy_sim.objectives import objective_from_config, objective_to_dict
 from convoy_sim.rl_layout_builder import RLLayoutBuilderConfig, RLLayoutBuilderState
 from convoy_sim.rl_wrapper import RLLayoutBuilderEpisode, RLEpisode
 from convoy_sim.workflows import (
@@ -93,6 +94,8 @@ def _render_layout_kwargs(layout_kwargs: dict[str, Any]) -> dict[str, Any]:
 def _selection_score(summary: dict[str, Any], *, risk_cvar_weight: float) -> float:
     """Return lower-is-better action score on the train split."""
 
+    if "expected_loss" in summary:
+        return float(summary["expected_loss"]) + risk_cvar_weight * float(summary.get("CVaR_90_loss", 0.0))
     return float(summary["expected_hits"]) + risk_cvar_weight * float(summary["CVaR_90"])
 
 
@@ -163,7 +166,7 @@ def _select_best_action_from_train_summaries(
         key=lambda item: (
             item["complexity_cost"],
             item["primary_score"],
-            float(item["summary"]["expected_hits"]),
+            float(item["summary"].get("expected_loss", item["summary"]["expected_hits"])),
             item["name"],
         )
     )
@@ -206,6 +209,7 @@ def run_from_config(config: dict[str, Any], *, project_root: Path) -> Path:
     split_cfg = dict(config.get("splits", {}))
     train_cfg = dict(config.get("training", {}))
     rl_cfg = dict(config.get("rl", {}))
+    objective_cfg = dict(config.get("objective", {}))
     plot_cfg = dict(config.get("plot", {}))
 
     output_root = project_root / str(run_cfg.get("output_root", "results/runs"))
@@ -262,6 +266,7 @@ def run_from_config(config: dict[str, Any], *, project_root: Path) -> Path:
     train_seed = int(train_cfg.get("seed", 0))
     risk_cvar_weight = float(selection_cfg.get("risk_cvar_weight", 0.05))
     complexity_tiebreak_tolerance = float(selection_cfg.get("complexity_tiebreak_tolerance", 0.1))
+    objective = objective_from_config(objective_cfg)
 
     profile_lib = _train_library(DEFAULT_ATTACK_PROFILE_LIBRARY, train_profile_ids)
 
@@ -277,6 +282,7 @@ def run_from_config(config: dict[str, Any], *, project_root: Path) -> Path:
             "max_hits_per_torpedo": max_hits_per_torpedo,
             "noise_model": noise_model,
         },
+        "objective": objective,
         "reward_perspective": "defender",
         "attack_profile_library": profile_lib,
         "use_sampled_attack_profile_for_torpedo_sampler": True,
@@ -374,6 +380,7 @@ def run_from_config(config: dict[str, Any], *, project_root: Path) -> Path:
             noise_model=noise_model,
             env=env_profile,
             max_hits_per_torpedo=max_hits_per_torpedo,
+            objective=objective,
         )
         summary = summarize_profile_rows(rows)
         train_action_rows[action.name] = rows
@@ -401,6 +408,7 @@ def run_from_config(config: dict[str, Any], *, project_root: Path) -> Path:
         noise_model=noise_model,
         env=env_profile,
         max_hits_per_torpedo=max_hits_per_torpedo,
+        objective=objective,
     )
 
     eval_summary = summarize_profile_rows(eval_rows)
@@ -476,6 +484,7 @@ def run_from_config(config: dict[str, Any], *, project_root: Path) -> Path:
             },
             "selection_summary": selection_summary,
             "builder": builder_cfg.to_dict() if builder_cfg is not None and builder_cfg.enabled else None,
+            "objective": objective_to_dict(objective),
         },
     }
 
@@ -527,6 +536,7 @@ def run_from_config(config: dict[str, Any], *, project_root: Path) -> Path:
             },
             "ship_movement_realism_enabled": bool(ship_movement_realism),
         },
+        "objective": objective_to_dict(objective),
         "selection": {
             "risk_cvar_weight": risk_cvar_weight,
             "complexity_tiebreak_tolerance": complexity_tiebreak_tolerance,

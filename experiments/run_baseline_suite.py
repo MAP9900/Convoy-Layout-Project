@@ -12,6 +12,7 @@ from convoy_sim.attack_profiles import DEFAULT_ATTACK_PROFILE_LIBRARY
 from convoy_sim.feasibility import Environment
 from convoy_sim.layouts import make_rectangular_convoy, make_staggered_convoy
 from convoy_sim.noise import NoiseModel
+from convoy_sim.objectives import objective_from_config, objective_to_dict
 from convoy_sim.workflows import (
     evaluate_layout_over_profiles,
     git_sha,
@@ -64,6 +65,7 @@ def run_from_config(config: dict[str, Any], *, project_root: Path) -> Path:
     sim_cfg = dict(config.get("simulation", {}))
     split_cfg = dict(config.get("splits", {}))
     baseline_cfg = dict(config.get("baseline", {}))
+    objective_cfg = dict(config.get("objective", {}))
     plot_cfg = dict(config.get("plot", {}))
 
     output_root = project_root / str(run_cfg.get("output_root", "results/runs"))
@@ -92,6 +94,7 @@ def run_from_config(config: dict[str, Any], *, project_root: Path) -> Path:
         static_layout_kwargs["ship_movement_realism"] = ship_movement_realism
     max_hits_per_torpedo = sim_cfg.get("max_hits_per_torpedo")
     max_hits_per_torpedo = None if max_hits_per_torpedo is None else int(max_hits_per_torpedo)
+    objective = objective_from_config(objective_cfg)
 
     static_rows = evaluate_layout_over_profiles(
         model_name="static_baseline",
@@ -105,6 +108,7 @@ def run_from_config(config: dict[str, Any], *, project_root: Path) -> Path:
         noise_model=noise_model,
         env=env,
         max_hits_per_torpedo=max_hits_per_torpedo,
+        objective=objective,
     )
 
     search_cfg = dict(baseline_cfg.get("heuristic_search", {}))
@@ -130,9 +134,10 @@ def run_from_config(config: dict[str, Any], *, project_root: Path) -> Path:
             noise_model=noise_model,
             env=env,
             max_hits_per_torpedo=max_hits_per_torpedo,
+            objective=objective,
         )
         candidate_summary = summarize_profile_rows(candidate_rows)
-        score = float(candidate_summary["expected_hits"])
+        score = float(candidate_summary["expected_loss"] if objective is not None else candidate_summary["expected_hits"])
         if score < best_train_score:
             best_train_score = score
             best_kwargs = candidate_kwargs
@@ -149,6 +154,7 @@ def run_from_config(config: dict[str, Any], *, project_root: Path) -> Path:
         noise_model=noise_model,
         env=env,
         max_hits_per_torpedo=max_hits_per_torpedo,
+        objective=objective,
     )
 
     all_rows = static_rows + heuristic_rows
@@ -166,8 +172,9 @@ def run_from_config(config: dict[str, Any], *, project_root: Path) -> Path:
             "heuristic_best_layout": {
                 "layout_fn": getattr(static_layout_fn, "__name__", str(static_layout_fn)),
                 "layout_kwargs": {k: (v.tolist() if isinstance(v, np.ndarray) else v) for k, v in best_kwargs.items()},
-                "train_objective_expected_hits": best_train_score,
+                "train_objective_score": best_train_score,
             },
+            "objective": objective_to_dict(objective),
         },
     }
 
@@ -229,6 +236,7 @@ def run_from_config(config: dict[str, Any], *, project_root: Path) -> Path:
             },
             "ship_movement_realism_enabled": bool(ship_movement_realism),
         },
+        "objective": objective_to_dict(objective),
         "layout_plots": {
             "static": str(static_plot_path.relative_to(project_root)) if static_plot_written else None,
             "heuristic_best": str(heuristic_plot_path.relative_to(project_root)) if heuristic_plot_written else None,

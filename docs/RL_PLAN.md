@@ -145,6 +145,14 @@ Recommended direction:
 - lower marginal penalty for repeat hits on the same already-lost ship
 - only treat value-weighted reward as canonical once heterogeneous convoy composition is active
 
+Current implementation status:
+- objective plumbing now supports:
+  - `w_unique_ships_hit`
+  - `w_repeat_hits`
+  - class-weighted value loss
+- baseline/RL workflows can now carry one shared `ObjectiveSpec`
+- next step is benchmark/tuning, not more scoring-plumbing work
+
 ### Longer-Term Reward Additions
 
 - value-weighted loss by ship class

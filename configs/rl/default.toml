@@ -36,6 +36,18 @@ eval_profiles = ["P03", "P08", "P10", "P12", "P13", "P14", "P20", "P23", "P26", 
 train_seeds = [301, 302, 303]
 eval_seeds = [401, 402, 403]
 
+[objective]
+w_total_value = 1.0
+w_unique_ships_hit = 1.0
+w_repeat_hits = 0.2
+escort_loss_discount = 0.75
+
+[objective.class_value_weights]
+freighter = 1.0
+tanker = 1.5
+escort = 0.5
+decoy = 0.2
+
 [training]
 episodes = 300
 epsilon = 0.25
