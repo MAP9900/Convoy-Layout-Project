@@ -431,3 +431,55 @@ Interpretation:
   - the minimal builder search space is now validated
   - selector logic is no longer the main bottleneck
   - the next work should move to richer objectives and harder generalization, not more selector repair
+
+## Mixed-Convoy Diagnostic 1 - Baseline vs RL Before Phase 3B (2026-04-14)
+
+### Run References
+
+- Baseline run dir: `results/runs/baseline/20260414_224222_baseline_default`
+- RL run dir: `results/runs/rl/20260414_224410_rl_default`
+- Results summary: see `docs/RESULTS_LOG.md` (Mixed-Convoy Diagnostic 1)
+
+### What Changed In This Diagnostic
+
+- This was the first baseline/RL run pair after adding seeded fleet profiles and mixed convoy composition.
+- The benchmark convoy was no longer all same-size freighters:
+  - mixed classes were available
+  - within-class hull variation was enabled through seeded fleet realization
+- This run pair was intended as a pre-Phase-3B check of whether the current workflows handle heterogeneous convoys end to end.
+
+### Config / Methodology Notes
+
+- Git SHA: `62c8ee49a5410a6af9dd6707901623e5df69a62f`
+- Mixed convoy support was active via the generated config path.
+- Baseline run retained the canonical split/seed family:
+  - train: `[1939, 1940, 1941]`
+  - eval: `[1942, 1943, 1944]`
+- RL run used the older template seed family instead:
+  - train: `[301, 302, 303]`
+  - eval: `[401, 402, 403]`
+- RL also ran in `flat_action_menu` mode, not the newer builder mode.
+
+### Diagnostic Interpretation
+
+- This pair is informative, but not a strict benchmark comparison because:
+  - baseline and RL seeds differ
+  - RL was not using the current builder path
+- Still, the result is useful in three ways:
+  1. mixed convoy realization now works end to end in canonical scripts
+  2. heuristic baseline remained stronger than current RL under the heterogeneous benchmark
+  3. the summary outputs are still mostly hits-centric:
+     - `expected_hits`, `CVaR_90`, `p_hit_ge_1`
+     - `value_lost` remained `null`
+
+### Why This Pushes Us To Phase 3B
+
+- The benchmark now includes heterogeneous ship classes and hull sizes, so value-focused optimization is finally meaningful.
+- But the optimization/reporting stack is not yet aligned with that benchmark:
+  - RL episode reward still falls back to total value destroyed when no explicit objective is passed
+  - final selection still ranks layouts on `expected_hits + risk * CVaR_90`
+  - summaries do not yet surface the richer value/ship-distribution metrics we need
+- So the clean next move is Phase 3B:
+  - define one canonical defender objective
+  - use it for both RL reward and final selection
+  - expose unique-ships-hit / repeat-hit / weighted-value metrics in artifacts

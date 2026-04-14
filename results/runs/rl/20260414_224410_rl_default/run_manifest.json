@@ -1,0 +1,81 @@
+{
+  "workflow": "rl",
+  "git_sha": "62c8ee49a5410a6af9dd6707901623e5df69a62f",
+  "profile_splits": {
+    "train": [
+      "P01",
+      "P02",
+      "P04",
+      "P05",
+      "P06",
+      "P07",
+      "P09",
+      "P11",
+      "P15",
+      "P16",
+      "P17",
+      "P18",
+      "P19",
+      "P21",
+      "P22",
+      "P24",
+      "P25",
+      "P27",
+      "P28",
+      "P30"
+    ],
+    "eval": [
+      "P03",
+      "P08",
+      "P10",
+      "P12",
+      "P13",
+      "P14",
+      "P20",
+      "P23",
+      "P26",
+      "P29"
+    ]
+  },
+  "seed_sets": {
+    "train": [
+      301,
+      302,
+      303
+    ],
+    "eval": [
+      401,
+      402,
+      403
+    ]
+  },
+  "n_trials_per_seed": 40,
+  "t_max": 400.0,
+  "episodes": 300,
+  "realism": {
+    "u_boat_mode_default": "moving",
+    "noise_model": {
+      "sigma_heading_rad": 0.01,
+      "sigma_launch_delay": 0.05,
+      "sigma_speed_mps": 0.25,
+      "p_dud": 0.02
+    },
+    "environment": {
+      "time_of_day": "night",
+      "visibility_m": 3500.0,
+      "sea_state": 4,
+      "detection_risk_scale": 1.0
+    },
+    "ship_movement_realism_enabled": true
+  },
+  "selection": {
+    "risk_cvar_weight": 0.05,
+    "complexity_tiebreak_tolerance": 0.1,
+    "selected_action": "rect_standard",
+    "selected_action_by_q_value": "rect_standard",
+    "mode": "flat_action_menu"
+  },
+  "layout_plots": {
+    "selected_policy": "results/runs/rl/20260414_224410_rl_default/figures/layout_selected_policy.png"
+  }
+}

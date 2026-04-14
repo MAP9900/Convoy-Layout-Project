@@ -267,3 +267,37 @@
   - stronger reward design
   - broader attack-profile diversity
   - harder evaluation gates beyond matching the current heuristic baseline on one split
+
+## Mixed-Convoy Diagnostic 1 - Baseline vs RL Before Phase 3B (2026-04-14)
+
+- Baseline run:
+  - `results/runs/baseline/20260414_224222_baseline_default`
+  - `static_baseline.expected_hits = 2.565833333333333`
+  - `heuristic_baseline.expected_hits = 2.5083333333333333` (winner)
+- RL run:
+  - `results/runs/rl/20260414_224410_rl_default`
+  - `evaluation.expected_hits = 2.565`
+  - `training.selected_action = rect_standard`
+  - `training.mode = flat_action_menu`
+
+### Conclusion
+
+- On the first mixed-convoy pass, heuristic baseline remained best.
+- RL slightly outperformed the static baseline but still trailed heuristic baseline by `0.05666666666666664` expected hits.
+- This pass confirms that heterogeneous convoy composition changes the benchmark, but the current RL run is still using the older flat action menu rather than the newer builder path.
+
+### Validity Notes
+
+- Both runs use the same git SHA: `62c8ee49a5410a6af9dd6707901623e5df69a62f`.
+- Both runs use the mixed convoy profile family, but this is **not** a strict apples-to-apples benchmark pair because the seed sets differ:
+  - baseline train/eval seeds: `[1939, 1940, 1941]` / `[1942, 1943, 1944]`
+  - RL train/eval seeds: `[301, 302, 303]` / `[401, 402, 403]`
+- RL also used `mode = flat_action_menu`, not the current builder-mode canonical path.
+
+### Interpretation Note
+
+- Treat this as a mixed-convoy diagnostic pass, not as a new canonical benchmark.
+- The main value of this run pair is:
+  - mixed convoy support is now flowing through the baseline/RL workflows
+  - heuristic still provides a stronger reference than current RL under the heterogeneous benchmark
+  - Phase 3B is now better motivated, because the benchmark has mixed classes but the optimization objective is still effectively hits-centric and `value_lost` is not yet exposed in summaries
