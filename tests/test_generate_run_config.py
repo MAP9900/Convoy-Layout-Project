@@ -338,7 +338,7 @@ origin = [0.0, 0.0]
     assert layout["spacing_across"] == 914.4
 
 
-def test_generate_run_config_injects_convoy_profile_into_rl_actions(tmp_path: Path) -> None:
+def test_generate_run_config_injects_common_convoy_profile_fields_into_rl_actions_without_flattening_geometry(tmp_path: Path) -> None:
     template = tmp_path / "rl_template.toml"
     output = tmp_path / "rl_generated.toml"
     template.write_text(
@@ -428,9 +428,110 @@ origin = [0.0, 0.0]
     assert actions[1]["name"] == "action_2"
     assert actions[0]["n_rows"] == 6
     assert actions[0]["n_cols"] == 7
-    assert actions[0]["spacing_along"] == 457.2
-    assert actions[0]["spacing_across"] == 1371.6
+    assert actions[0]["spacing_along"] == 100.0
+    assert actions[0]["spacing_across"] == 100.0
     assert actions[1]["n_rows"] == 6
     assert actions[1]["n_cols"] == 7
-    assert actions[1]["spacing_along"] == 457.2
-    assert actions[1]["spacing_across"] == 1371.6
+    assert actions[1]["spacing_along"] == 90.0
+    assert actions[1]["spacing_across"] == 90.0
+    assert actions[0]["fleet_profile"] == "freighter_heterogeneous_v1"
+    assert actions[1]["fleet_profile"] == "freighter_heterogeneous_v1"
+    assert actions[0]["fleet_seed"] == 1945
+    assert actions[1]["fleet_seed"] == 1945
+
+
+def test_generate_run_config_preserves_rl_builder_mode_when_injecting_convoy_profile(tmp_path: Path) -> None:
+    template = tmp_path / "rl_builder_template.toml"
+    output = tmp_path / "rl_builder_generated.toml"
+    template.write_text(
+        """
+[run]
+name = "rl_default"
+output_root = "results/runs"
+
+[simulation]
+t_max = 400.0
+n_trials_per_seed = 40
+max_hits_per_torpedo = 1
+
+[splits]
+train_profiles = ["P01"]
+eval_profiles = ["P02"]
+train_seeds = [301, 302, 303]
+eval_seeds = [401, 402, 403]
+
+[training]
+episodes = 10
+epsilon = 0.25
+epsilon_decay = 0.99
+epsilon_min = 0.02
+alpha = 0.1
+seed = 7
+
+[rl]
+
+[rl.builder]
+enabled = true
+base_n_rows = 3
+base_n_cols = 4
+speed = 4.0
+heading_rad = 0.0
+length = 120.0
+beam = 18.0
+origin = [0.0, 0.0]
+layout_families = ["rectangular", "staggered"]
+
+[rl.builder.spacing_along_options]
+compact = 90.0
+loose = 110.0
+
+[rl.builder.spacing_across_options]
+compact = 80.0
+loose = 100.0
+
+[rl.builder.family_complexity]
+rectangular = 1.0
+staggered = 1.2
+
+[rl.builder.spacing_along_complexity]
+compact = 0.0
+loose = 0.1
+
+[rl.builder.spacing_across_complexity]
+compact = 0.0
+loose = 0.1
+""".strip()
+        + "\n",
+        encoding="utf-8",
+    )
+
+    subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "experiments.generate_run_config",
+            "--template",
+            str(template),
+            "--output",
+            str(output),
+            "--split-seed",
+            "42",
+            "--n-total",
+            "30",
+            "--n-train",
+            "20",
+            "--convoy-profile",
+            "convoy_layout_mixed_1",
+        ],
+        check=True,
+    )
+
+    cfg = _read_toml(output)
+    builder = cfg["rl"]["builder"]
+    assert builder["enabled"] is True
+    assert builder["base_n_rows"] == 6
+    assert builder["base_n_cols"] == 7
+    assert builder["fleet_profile"] == "mixed_convoy_v1"
+    assert builder["fleet_seed"] == 1947
+    assert builder["spacing_along_options"]["compact"] == 90.0
+    assert builder["spacing_across_options"]["compact"] == 80.0

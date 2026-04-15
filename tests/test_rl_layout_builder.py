@@ -59,3 +59,31 @@ def test_builder_valid_actions_progress_by_step() -> None:
     state3 = builder.apply_action(state2, "across:loose")
     assert builder.is_complete(state3) is True
     assert builder.valid_action_names(state3) == []
+
+
+def test_builder_materialized_action_preserves_fleet_profile_metadata() -> None:
+    builder = RLLayoutBuilderConfig.from_dict(
+        {
+            "enabled": True,
+            "base_n_rows": 2,
+            "base_n_cols": 3,
+            "speed": 5.0,
+            "heading_rad": 0.0,
+            "length": 120.0,
+            "beam": 18.0,
+            "origin": [0.0, 0.0],
+            "fleet_profile": "mixed_convoy_v1",
+            "fleet_seed": 1947,
+            "layout_families": ["rectangular"],
+            "spacing_along_options": {"compact": 350.0},
+            "spacing_across_options": {"standard": 300.0},
+        }
+    )
+    state = RLLayoutBuilderState(
+        family="rectangular",
+        spacing_along_bucket="compact",
+        spacing_across_bucket="standard",
+    )
+    action = builder.materialize_layout_action(state)
+    assert action.layout_kwargs["fleet_profile"] == "mixed_convoy_v1"
+    assert action.layout_kwargs["fleet_seed"] == 1947

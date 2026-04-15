@@ -483,3 +483,58 @@ Interpretation:
   - define one canonical defender objective
   - use it for both RL reward and final selection
   - expose unique-ships-hit / repeat-hit / weighted-value metrics in artifacts
+
+## Mixed-Convoy Test 2 - Matched Seeds With Phase 3B Objective Plumbing (2026-04-14)
+
+### Run References
+
+- Baseline run dir: `results/runs/baseline/20260414_230253_baseline_default`
+- RL run dir: `results/runs/rl/20260414_230605_rl_default`
+- Results summary: see `docs/RESULTS_LOG.md` (Mixed-Convoy Test 2)
+
+### What Changed In This Test
+
+- This was the first matched-seed baseline/RL pair after Phase 3B objective plumbing.
+- Both workflows now parse and stamp the same objective:
+  - `w_total_value = 1.0`
+  - `w_unique_ships_hit = 1.0`
+  - `w_repeat_hits = 0.2`
+  - class value weights for freighter/tanker/escort/decoy
+- Summaries now expose:
+  - `value_lost`
+  - `expected_unique_ships_hit`
+  - `expected_repeat_hits`
+  - `expected_loss`
+  - `CVaR_90_loss`
+
+### Config / Methodology Notes
+
+- Git SHA: `502458b72cf410a4778d5a1103b16e5c4411bc8c`
+- Train/eval profile splits matched.
+- Train/eval seeds matched:
+  - train: `[1939, 1940, 1941]`
+  - eval: `[1942, 1943, 1944]`
+- Mixed convoy support was active via seeded fleet realization.
+
+### Critical RL Caveat
+
+- Even though the objective plumbing was correct, the RL config path for this run was not.
+- The generated RL config used the older flat action template, not the newer builder-mode canonical path.
+- Worse, convoy-profile injection overwrote all three RL actions to the same geometry:
+  - `rect_standard`
+  - `rect_compact`
+  - `staggered_mid`
+  all resolved to the same rectangular mixed-convoy layout fields
+
+This means:
+- RL had effectively no meaningful layout search space in this run
+- the result is valid for testing Phase 3B objective plumbing
+- the result is not valid for judging current builder-mode RL performance
+
+### Interpretation
+
+- Phase 3B plumbing itself succeeded.
+- The immediate next bottleneck is not reward code anymore.
+- It is canonical config generation / benchmarking discipline:
+  - preserve builder mode for RL mixed-convoy runs
+  - or, if using flat actions intentionally, preserve geometric differences instead of overwriting them all with one convoy profile layout block

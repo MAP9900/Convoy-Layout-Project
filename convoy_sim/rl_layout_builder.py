@@ -51,6 +51,8 @@ class RLLayoutBuilderConfig:
     length: float
     beam: float
     origin: np.ndarray
+    fleet_profile: str | None
+    fleet_seed: int | None
     layout_families: tuple[str, ...]
     spacing_along_options: dict[str, float]
     spacing_across_options: dict[str, float]
@@ -89,6 +91,8 @@ class RLLayoutBuilderConfig:
             length=float(cfg.get("length", 150.0)),
             beam=float(cfg.get("beam", 20.0)),
             origin=origin,
+            fleet_profile=(None if cfg.get("fleet_profile") in {None, ""} else str(cfg.get("fleet_profile"))),
+            fleet_seed=(None if cfg.get("fleet_seed") is None else int(cfg.get("fleet_seed"))),
             layout_families=families,
             spacing_along_options=spacing_along_options,
             spacing_across_options=spacing_across_options,
@@ -171,6 +175,10 @@ class RLLayoutBuilderConfig:
             "beam": self.beam,
             "origin": np.asarray(self.origin, dtype=float),
         }
+        if self.fleet_profile is not None:
+            layout_kwargs["fleet_profile"] = self.fleet_profile
+        if self.fleet_seed is not None:
+            layout_kwargs["fleet_seed"] = int(self.fleet_seed)
         if ship_movement_realism:
             layout_kwargs["ship_movement_realism"] = dict(ship_movement_realism)
         complexity_cost = (
@@ -218,6 +226,8 @@ class RLLayoutBuilderConfig:
             "length": self.length,
             "beam": self.beam,
             "origin": self.origin.tolist(),
+            "fleet_profile": self.fleet_profile,
+            "fleet_seed": self.fleet_seed,
             "layout_families": list(self.layout_families),
             "spacing_along_options": dict(self.spacing_along_options),
             "spacing_across_options": dict(self.spacing_across_options),

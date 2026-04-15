@@ -107,6 +107,11 @@ def _apply_convoy_profile(cfg: dict[str, Any], profile_name: str) -> None:
         for k, v in profile.layout_kwargs.items()
         if not callable(v)
     }
+    common_layout_fields = {
+        key: layout_fields[key]
+        for key in ("n_rows", "n_cols", "speed", "heading_rad", "length", "beam", "origin", "fleet_profile", "fleet_seed")
+        if key in layout_fields
+    }
 
     if "baseline" in cfg and isinstance(cfg["baseline"], dict):
         baseline = cfg["baseline"]
@@ -118,14 +123,25 @@ def _apply_convoy_profile(cfg: dict[str, Any], profile_name: str) -> None:
 
     if "rl" in cfg and isinstance(cfg["rl"], dict):
         rl = cfg["rl"]
+        builder = rl.get("builder")
+        if isinstance(builder, dict):
+            builder_cfg = dict(builder)
+            if "n_rows" in layout_fields:
+                builder_cfg["base_n_rows"] = layout_fields["n_rows"]
+            if "n_cols" in layout_fields:
+                builder_cfg["base_n_cols"] = layout_fields["n_cols"]
+            for key in ("speed", "heading_rad", "length", "beam", "origin", "fleet_profile", "fleet_seed"):
+                if key in layout_fields:
+                    builder_cfg[key] = layout_fields[key]
+            rl["builder"] = builder_cfg
+
         actions = list(rl.get("actions", []))
         updated_actions: list[dict[str, Any]] = []
         for action in actions:
             if not isinstance(action, dict):
                 continue
             row = dict(action)
-            row["type"] = layout_type
-            row.update(layout_fields)
+            row.update(common_layout_fields)
             updated_actions.append(row)
         if updated_actions:
             rl["actions"] = updated_actions

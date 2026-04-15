@@ -92,6 +92,10 @@ Last updated: 2026-04-08
   - use `convoy_layout_mixed_1` or a successor mixed profile
   - keep seeded fleet realization matched across baseline and RL
   - treat within-class hull heterogeneity as part of benchmark realism, not RL control
+- [x] Fix canonical RL mixed-convoy config generation:
+  - preserve builder mode when generating RL configs from template
+  - avoid flattening all RL actions to one identical geometry when injecting a convoy profile
+  - mixed-convoy benchmark can now be rerun with meaningful RL layout freedom
 - [ ] Expand attack-profile diversity and harder eval gates after the selector fix:
   - add more attacker geometry/doctrine/range variety
   - add repeated eval seed sets or held-out harder-case pack

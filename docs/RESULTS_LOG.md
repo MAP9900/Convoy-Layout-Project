@@ -301,3 +301,44 @@
   - mixed convoy support is now flowing through the baseline/RL workflows
   - heuristic still provides a stronger reference than current RL under the heterogeneous benchmark
   - Phase 3B is now better motivated, because the benchmark has mixed classes but the optimization objective is still effectively hits-centric and `value_lost` is not yet exposed in summaries
+
+## Mixed-Convoy Test 2 - Matched Seeds With Phase 3B Objective Plumbing (2026-04-14)
+
+- Baseline run:
+  - `results/runs/baseline/20260414_230253_baseline_default`
+  - `static_baseline.expected_loss = 5.5348749999999995`
+  - `heuristic_baseline.expected_loss = 5.5319062500000005` (winner)
+  - `heuristic_baseline.expected_hits = 2.5083333333333333`
+- RL run:
+  - `results/runs/rl/20260414_230605_rl_default`
+  - `evaluation.expected_loss = 5.5348749999999995`
+  - `evaluation.expected_hits = 2.565833333333333`
+  - `training.selected_action = rect_standard`
+  - `training.mode = flat_action_menu`
+
+### Conclusion
+
+- Phase 3B objective plumbing is working: baseline and RL now report mixed-convoy loss metrics including:
+  - `value_lost`
+  - `expected_unique_ships_hit`
+  - `expected_repeat_hits`
+  - `expected_loss`
+  - `CVaR_90_loss`
+- Under this matched-seed mixed-convoy pass, heuristic baseline remained marginally best on the new objective:
+  - RL trailed heuristic baseline by `0.002968750000001518` expected loss
+  - RL matched the static baseline almost exactly on expected loss
+
+### Validity Notes
+
+- Both runs use the same git SHA: `502458b72cf410a4778d5a1103b16e5c4411bc8c`
+- Train/eval profile splits matched across both runs.
+- Train/eval seeds matched across both runs:
+  - Train seeds: `[1939, 1940, 1941]`
+  - Eval seeds: `[1942, 1943, 1944]`
+- Both runs stamp the same mixed-convoy objective config in the manifest.
+
+### Interpretation Note
+
+- Treat this as the first clean Phase 3B benchmark of the new objective plumbing.
+- But it is **not** a clean measure of current RL capability, because the RL side was not using the newer builder path.
+- The generated RL config fell back to the older flat action menu, and all three RL actions resolved to the same mixed-convoy geometry, so RL had effectively no meaningful layout freedom in this run.
