@@ -1,6 +1,6 @@
 # TODO
 
-Last updated: 2026-04-08
+Last updated: 2026-04-15
 
 ## Current Workflow (Canonical)
 
@@ -86,8 +86,11 @@ Last updated: 2026-04-08
 - [ ] Phase 3 RL overhaul: redesign reward:
   - [x] add objective plumbing for `unique_ships_hit`, `repeat_hits`, and weighted value
   - [x] pass one `ObjectiveSpec` through baseline/RL workflows and summaries
-  - [ ] rerun matched mixed-convoy baseline + builder-mode RL benchmark with the new objective
+  - [x] rerun matched mixed-convoy baseline + builder-mode RL benchmark with the new objective
   - [ ] tune weights after the first objective-aligned benchmark
+- [ ] Run direct builder action audit under the new mixed-convoy objective:
+  - verify whether `staggered_loose_loose` is truly the best train/eval builder action
+  - separate objective-quality questions from RL selector/learner behavior
 - [ ] Switch canonical reward-focused benchmarks to heterogeneous convoys:
   - use `convoy_layout_mixed_1` or a successor mixed profile
   - keep seeded fleet realization matched across baseline and RL

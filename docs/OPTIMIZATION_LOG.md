@@ -538,3 +538,73 @@ This means:
 - It is canonical config generation / benchmarking discipline:
   - preserve builder mode for RL mixed-convoy runs
   - or, if using flat actions intentionally, preserve geometric differences instead of overwriting them all with one convoy profile layout block
+
+## Mixed-Convoy Test 3 - Clean Builder Benchmark After RL Config-Path Fix (2026-04-14)
+
+### Run References
+
+- Baseline run dir: `results/runs/baseline/20260414_232723_baseline_default`
+- RL run dir: `results/runs/rl/20260414_233031_rl_default`
+- Results summary: see `docs/RESULTS_LOG.md` (Mixed-Convoy Test 3)
+
+### What Changed In This Test
+
+- This was the first rerun after fixing canonical mixed-convoy RL config generation.
+- The generated RL config now:
+  - preserves builder mode
+  - preserves spacing/layout diversity
+  - injects mixed-convoy fleet metadata without flattening the RL search space
+- So this is the first benchmark where all of the following are simultaneously true:
+  - mixed convoy support is active
+  - Phase 3B objective plumbing is active
+  - RL has meaningful builder-mode layout freedom
+
+### Config / Methodology Notes
+
+- Git SHA: `73cae6dcd36028ba2db7572a040a37a78f31399b`
+- Train/eval profile splits matched.
+- Train/eval seeds matched:
+  - train: `[1939, 1940, 1941]`
+  - eval: `[1942, 1943, 1944]`
+- Objective config matched across both runs:
+  - `w_total_value = 1.0`
+  - `w_unique_ships_hit = 1.0`
+  - `w_repeat_hits = 0.2`
+  - class weights for freighter / tanker / escort / decoy
+- Mixed convoy support was active via seeded fleet realization:
+  - `fleet_profile = mixed_convoy_v1`
+  - `fleet_seed = 1947`
+- RL ran in builder mode:
+  - selected action: `staggered_loose_loose`
+  - raw Q-value winner: `staggered_compact_loose`
+  - selection method: `train_split_risk_aware_objective`
+
+### Methodology Interpretation
+
+- This is the first mixed-convoy RL benchmark in the current stack that is methodologically clean enough to trust.
+- The outcome is also substantively important:
+  - RL did **not** beat heuristic baseline on raw hit count
+  - RL **did** beat heuristic baseline on the actual configured defender objective
+- That means Phase 3B changed the optimization target in a meaningful way rather than just changing reporting fields.
+
+More specifically:
+- heuristic baseline remained slightly better on `expected_hits`
+- RL produced:
+  - lower `expected_loss`
+  - lower `value_lost`
+  - essentially the same `expected_unique_ships_hit`
+  - higher `expected_repeat_hits`
+
+Under the current weights, this is the intended trade:
+- broader distributed damage across the convoy is worse
+- repeated damage on fewer/lower-value ships is relatively cheaper
+
+### What This Means For Next Work
+
+- The main question is no longer whether Phase 3B plumbing works. It does.
+- The next question is whether the current loss weighting expresses the doctrine you actually want.
+
+So the most useful next steps are:
+1. run a direct builder action audit under the same mixed-convoy config to see whether `staggered_loose_loose` is actually the best builder action on train and eval
+2. review/tune objective weights if the current repeat-hit tradeoff feels too permissive
+3. expand attack-profile diversity only after the objective choice is stable enough to benchmark seriously

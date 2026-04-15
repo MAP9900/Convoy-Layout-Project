@@ -342,3 +342,62 @@
 - Treat this as the first clean Phase 3B benchmark of the new objective plumbing.
 - But it is **not** a clean measure of current RL capability, because the RL side was not using the newer builder path.
 - The generated RL config fell back to the older flat action menu, and all three RL actions resolved to the same mixed-convoy geometry, so RL had effectively no meaningful layout freedom in this run.
+
+## Mixed-Convoy Test 3 - Clean Builder Benchmark After RL Config-Path Fix (2026-04-14)
+
+- Baseline run:
+  - `results/runs/baseline/20260414_232723_baseline_default`
+  - `static_baseline.expected_loss = 5.5348749999999995`
+  - `heuristic_baseline.expected_loss = 5.5319062500000005`
+  - `heuristic_baseline.expected_hits = 2.5083333333333333`
+  - `heuristic_baseline.value_lost = 3.2290729166666674`
+- RL run:
+  - `results/runs/rl/20260414_233031_rl_default`
+  - `evaluation.expected_loss = 5.13384375`
+  - `evaluation.expected_hits = 2.8283333333333336`
+  - `evaluation.value_lost = 2.79834375`
+  - `evaluation.expected_unique_ships_hit = 2.2041666666666666`
+  - `evaluation.expected_repeat_hits = 0.6566666666666666`
+  - `training.selected_action = staggered_loose_loose`
+  - `training.selected_action_by_q_value = staggered_compact_loose`
+  - `training.mode = builder`
+
+### Conclusion
+
+- This is the first clean mixed-convoy builder-mode benchmark after:
+  - Phase 3B objective plumbing
+  - the RL mixed-convoy config-generation fix
+- Under the new defender objective, RL now beats both baselines:
+  - RL beat heuristic baseline by `0.3980625000000001` expected loss
+  - RL beat static baseline by `0.4010312499999996` expected loss
+- The tradeoff is important:
+  - RL is worse on raw `expected_hits`
+  - but better on the actual mixed-convoy objective because it concentrates damage more efficiently:
+    - lower `value_lost` than heuristic baseline (`2.79834375` vs `3.2290729166666674`)
+    - slightly lower `expected_unique_ships_hit` than heuristic baseline (`2.2041666666666666` vs `2.206666666666667`)
+    - higher `expected_repeat_hits`, which is acceptable under the current weighting because repeated hits on fewer/lower-value ships are preferred to broader distributed damage
+
+### Validity Notes
+
+- Both runs use the same git SHA: `73cae6dcd36028ba2db7572a040a37a78f31399b`.
+- Train/eval profile splits matched across both runs.
+- Train/eval seeds matched across both runs:
+  - Train seeds: `[1939, 1940, 1941]`
+  - Eval seeds: `[1942, 1943, 1944]`
+- Both runs stamp the same mixed-convoy objective config in the manifest:
+  - `w_total_value = 1.0`
+  - `w_unique_ships_hit = 1.0`
+  - `w_repeat_hits = 0.2`
+  - `escort_loss_discount = 0.75`
+- RL run correctly preserved builder mode and mixed-convoy fleet realization:
+  - `training.mode = builder`
+  - `fleet_profile = mixed_convoy_v1`
+  - `fleet_seed = 1947`
+
+### Interpretation Note
+
+- This is the first result that cleanly validates the current direction of Phase 3B.
+- RL is no longer merely matching heuristic search on `expected_hits`; it is finding a different tradeoff that is better under the more realistic mixed-convoy defender objective.
+- The next question is no longer “does the pipeline work?” It is:
+  - are the current objective weights the right doctrine choice?
+  - does this result hold up under a direct builder action audit and broader attack-profile diversity?
