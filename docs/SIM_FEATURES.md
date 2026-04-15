@@ -478,13 +478,33 @@ Outputs include:
 
 `ObjectiveSpec` controls scalar scoring:
 - value-weight and hit-count weight
+- unique-ships-hit and repeat-hit weights
 - class-specific value weights
 - escort loss discount
+- optional named objective presets with per-run overrides
 - perspective mode (`defender_minimize` / `attacker_maximize`)
 - optional risk alpha in aggregate objective
 
 Default no-objective behavior in many wrappers:
 - uses total value destroyed as baseline scalar
+
+Named presets currently supported:
+- `balanced_default`
+  - canonical default for mixed-convoy RL/baseline tests
+  - `w_total_value = 1.0`
+  - `w_unique_ships_hit = 1.0`
+  - `w_repeat_hits = 0.2`
+- `protect_hulls`
+  - stronger penalty on distributed damage and repeated hits
+- `protect_value`
+  - stronger emphasis on class-weighted value protection
+- `accept_concentration`
+  - intentionally more tolerant of multiple hits on the same ship
+
+Config semantics:
+- set `preset = "..."` under `[objective]` to choose a doctrine preset
+- any explicit weight in `[objective]` overrides the preset value
+- treat presets as starting points, not hard limits
 
 ---
 

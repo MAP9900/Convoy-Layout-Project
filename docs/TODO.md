@@ -86,11 +86,16 @@ Last updated: 2026-04-15
 - [ ] Phase 3 RL overhaul: redesign reward:
   - [x] add objective plumbing for `unique_ships_hit`, `repeat_hits`, and weighted value
   - [x] pass one `ObjectiveSpec` through baseline/RL workflows and summaries
+  - [x] add named doctrine/objective presets with explicit weight overrides
   - [x] rerun matched mixed-convoy baseline + builder-mode RL benchmark with the new objective
   - [ ] tune weights after the first objective-aligned benchmark
-- [ ] Run direct builder action audit under the new mixed-convoy objective:
-  - verify whether `staggered_loose_loose` is truly the best train/eval builder action
-  - separate objective-quality questions from RL selector/learner behavior
+- [x] Run direct builder action audit under the new mixed-convoy objective:
+  - confirmed `staggered_loose_loose` is best on both train and eval under the current weights
+  - selector/learner are no longer the immediate blocker for this benchmark
+- [ ] Decide and tune mixed-convoy objective weights:
+  - review whether the current `repeat_hits` penalty is too weak
+  - decide whether protecting more unique hulls should matter more than minimizing weighted value loss
+  - rerun baseline + RL + action audit after each weight revision, not just RL
 - [ ] Switch canonical reward-focused benchmarks to heterogeneous convoys:
   - use `convoy_layout_mixed_1` or a successor mixed profile
   - keep seeded fleet realization matched across baseline and RL

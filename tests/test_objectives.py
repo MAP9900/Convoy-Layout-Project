@@ -1,7 +1,15 @@
 """Tests for objective scoring helpers."""
 
+import pytest
+
 from convoy_sim.entities import ShipClass
-from convoy_sim.objectives import ObjectiveSpec, objective_from_config, score_trial_result
+from convoy_sim.objectives import (
+    ObjectiveSpec,
+    objective_from_config,
+    objective_preset_names,
+    objective_preset_spec,
+    score_trial_result,
+)
 
 
 def test_objective_loss_increases_with_value() -> None:
@@ -76,3 +84,40 @@ def test_objective_from_config_parses_class_weights() -> None:
     assert obj is not None
     assert obj.class_value_weights is not None
     assert obj.class_value_weights[ShipClass.TANKER] == 1.8
+
+
+def test_objective_preset_parses_default_balanced_weights() -> None:
+    obj = objective_from_config({"preset": "balanced_default"})
+    assert obj is not None
+    assert obj.preset_name == "balanced_default"
+    assert obj.w_total_value == 1.0
+    assert obj.w_unique_ships_hit == 1.0
+    assert obj.w_repeat_hits == 0.2
+    assert obj.class_value_weights is not None
+    assert obj.class_value_weights[ShipClass.TANKER] == 1.5
+
+
+def test_objective_preset_allows_explicit_weight_overrides() -> None:
+    obj = objective_from_config(
+        {
+            "preset": "balanced_default",
+            "w_repeat_hits": 0.5,
+            "class_value_weights": {"tanker": 1.8},
+        }
+    )
+    assert obj is not None
+    assert obj.preset_name == "balanced_default"
+    assert obj.w_repeat_hits == 0.5
+    assert obj.class_value_weights is not None
+    assert obj.class_value_weights[ShipClass.TANKER] == 1.8
+    assert obj.class_value_weights[ShipClass.FREIGHTER] == 1.0
+
+
+def test_unknown_objective_preset_raises_clear_error() -> None:
+    with pytest.raises(ValueError, match="Unknown objective preset"):
+        objective_preset_spec("does_not_exist")
+
+
+def test_objective_preset_names_include_documented_presets() -> None:
+    names = set(objective_preset_names())
+    assert {"balanced_default", "protect_hulls", "protect_value", "accept_concentration"} <= names

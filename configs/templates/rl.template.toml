@@ -37,6 +37,7 @@ train_seeds = [301, 302, 303]
 eval_seeds = [401, 402, 403]
 
 [objective]
+preset = "balanced_default"
 w_total_value = 1.0
 w_unique_ships_hit = 1.0
 w_repeat_hits = 0.2

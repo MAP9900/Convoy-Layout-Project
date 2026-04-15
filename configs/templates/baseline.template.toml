@@ -37,6 +37,7 @@ train_seeds = [1939, 1940, 1941]
 eval_seeds = [1942, 1943, 1944]
 
 [objective]
+preset = "balanced_default"
 w_total_value = 1.0
 w_unique_ships_hit = 1.0
 w_repeat_hits = 0.2

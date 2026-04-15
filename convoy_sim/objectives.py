@@ -12,6 +12,7 @@ from convoy_sim.entities import ShipClass
 class ObjectiveSpec:
     """Objective weights for scoring Monte Carlo outcomes."""
 
+    preset_name: str | None = None
     w_total_value: float = 1.0
     w_total_hits: float = 0.0
     w_unique_ships_hit: float = 0.0
@@ -22,23 +23,118 @@ class ObjectiveSpec:
     risk_alpha: float | None = None
 
 
+OBJECTIVE_PRESETS: dict[str, dict[str, Any]] = {
+    "balanced_default": {
+        "w_total_value": 1.0,
+        "w_total_hits": 0.0,
+        "w_unique_ships_hit": 1.0,
+        "w_repeat_hits": 0.2,
+        "class_value_weights": {
+            ShipClass.FREIGHTER: 1.0,
+            ShipClass.TANKER: 1.5,
+            ShipClass.ESCORT: 0.5,
+            ShipClass.DECOY: 0.2,
+        },
+        "escort_loss_discount": 0.75,
+    },
+    "protect_hulls": {
+        "w_total_value": 1.0,
+        "w_total_hits": 0.0,
+        "w_unique_ships_hit": 1.5,
+        "w_repeat_hits": 0.5,
+        "class_value_weights": {
+            ShipClass.FREIGHTER: 1.0,
+            ShipClass.TANKER: 1.4,
+            ShipClass.ESCORT: 0.6,
+            ShipClass.DECOY: 0.2,
+        },
+        "escort_loss_discount": 0.75,
+    },
+    "protect_value": {
+        "w_total_value": 1.5,
+        "w_total_hits": 0.0,
+        "w_unique_ships_hit": 0.8,
+        "w_repeat_hits": 0.2,
+        "class_value_weights": {
+            ShipClass.FREIGHTER: 1.0,
+            ShipClass.TANKER: 2.0,
+            ShipClass.ESCORT: 0.4,
+            ShipClass.DECOY: 0.2,
+        },
+        "escort_loss_discount": 0.75,
+    },
+    "accept_concentration": {
+        "w_total_value": 1.0,
+        "w_total_hits": 0.0,
+        "w_unique_ships_hit": 1.2,
+        "w_repeat_hits": 0.1,
+        "class_value_weights": {
+            ShipClass.FREIGHTER: 1.0,
+            ShipClass.TANKER: 1.5,
+            ShipClass.ESCORT: 0.5,
+            ShipClass.DECOY: 0.2,
+        },
+        "escort_loss_discount": 0.75,
+    },
+}
+
+
+def objective_preset_names() -> tuple[str, ...]:
+    """Return the known named objective presets."""
+
+    return tuple(sorted(OBJECTIVE_PRESETS))
+
+
+def objective_preset_spec(name: str) -> ObjectiveSpec:
+    """Return the ObjectiveSpec for a named preset."""
+
+    try:
+        raw = OBJECTIVE_PRESETS[str(name)]
+    except KeyError as exc:
+        valid = ", ".join(objective_preset_names())
+        raise ValueError(f"Unknown objective preset '{name}'. Valid presets: {valid}") from exc
+    return ObjectiveSpec(
+        preset_name=str(name),
+        w_total_value=float(raw["w_total_value"]),
+        w_total_hits=float(raw.get("w_total_hits", 0.0)),
+        w_unique_ships_hit=float(raw.get("w_unique_ships_hit", 0.0)),
+        w_repeat_hits=float(raw.get("w_repeat_hits", 0.0)),
+        class_value_weights=dict(raw.get("class_value_weights", {})) or None,
+        escort_loss_discount=float(raw.get("escort_loss_discount", 1.0)),
+        mode=str(raw.get("mode", "defender_minimize")),
+        risk_alpha=(None if raw.get("risk_alpha") is None else float(raw["risk_alpha"])),
+    )
+
+
 def objective_from_config(payload: dict[str, Any] | None) -> ObjectiveSpec | None:
     """Parse an objective config block into an ObjectiveSpec."""
 
     cfg = dict(payload or {})
     if not cfg:
         return None
+    preset_name = cfg.get("preset")
+    base = objective_preset_spec(str(preset_name)) if preset_name else None
     raw_class_weights = dict(cfg.get("class_value_weights", {}))
-    class_weights = {ShipClass(key): float(value) for key, value in raw_class_weights.items()}
+    class_weights = dict(base.class_value_weights or {}) if base else {}
+    class_weights.update({ShipClass(key): float(value) for key, value in raw_class_weights.items()})
     return ObjectiveSpec(
-        w_total_value=float(cfg.get("w_total_value", 1.0)),
-        w_total_hits=float(cfg.get("w_total_hits", 0.0)),
-        w_unique_ships_hit=float(cfg.get("w_unique_ships_hit", 0.0)),
-        w_repeat_hits=float(cfg.get("w_repeat_hits", 0.0)),
+        preset_name=(str(preset_name) if preset_name else None),
+        w_total_value=float(cfg.get("w_total_value", base.w_total_value if base else 1.0)),
+        w_total_hits=float(cfg.get("w_total_hits", base.w_total_hits if base else 0.0)),
+        w_unique_ships_hit=float(
+            cfg.get("w_unique_ships_hit", base.w_unique_ships_hit if base else 0.0)
+        ),
+        w_repeat_hits=float(cfg.get("w_repeat_hits", base.w_repeat_hits if base else 0.0)),
         class_value_weights=class_weights or None,
-        escort_loss_discount=float(cfg.get("escort_loss_discount", 1.0)),
-        mode=str(cfg.get("mode", "defender_minimize")),
-        risk_alpha=(None if cfg.get("risk_alpha") is None else float(cfg.get("risk_alpha"))),
+        escort_loss_discount=float(
+            cfg.get("escort_loss_discount", base.escort_loss_discount if base else 1.0)
+        ),
+        mode=str(cfg.get("mode", base.mode if base else "defender_minimize")),
+        risk_alpha=(
+            None
+            if cfg.get("risk_alpha", base.risk_alpha if base else None) is None
+            else float(cfg.get("risk_alpha", base.risk_alpha if base else None))
+        ),
     )
 
 
@@ -48,6 +144,7 @@ def objective_to_dict(obj: ObjectiveSpec | None) -> dict[str, Any] | None:
     if obj is None:
         return None
     return {
+        "preset_name": obj.preset_name,
         "w_total_value": float(obj.w_total_value),
         "w_total_hits": float(obj.w_total_hits),
         "w_unique_ships_hit": float(obj.w_unique_ships_hit),

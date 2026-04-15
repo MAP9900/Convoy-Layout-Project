@@ -608,3 +608,26 @@ So the most useful next steps are:
 1. run a direct builder action audit under the same mixed-convoy config to see whether `staggered_loose_loose` is actually the best builder action on train and eval
 2. review/tune objective weights if the current repeat-hit tradeoff feels too permissive
 3. expand attack-profile diversity only after the objective choice is stable enough to benchmark seriously
+
+### Follow-Up Diagnostic: Direct Builder Action Audit
+
+- Audit run dir: `results/runs/rl_action_audit/20260415_195930_rl_default_action_audit`
+- Entrypoint:
+  - `python -m experiments.audit_rl_actions --config configs/rl/default.toml`
+
+Key findings:
+- Best train action: `staggered_loose_loose`
+  - train `expected_loss = 5.630276041666667`
+- Best eval action: `staggered_loose_loose`
+  - eval `expected_loss = 5.13384375`
+- Closest meaningful eval competitors:
+  - `staggered_compact_loose`: `expected_loss = 5.420135416666667`
+  - `staggered_standard_loose`: `expected_loss = 5.477854166666667`
+  - `rect_compact_loose` (heuristic-style low-hit layout): `expected_loss = 5.5319062500000005`
+
+Interpretation:
+- The current mixed-convoy RL result is not being propped up by a selector mistake.
+- The direct audit confirms the RL-chosen builder action is the best action in the current bounded builder space on both train and eval.
+- The remaining open question is therefore doctrinal rather than mechanical:
+  - whether the current weighting of `value_lost`, `unique_ships_hit`, and `repeat_hits` matches the protection priority you actually want
+- This shifts the next work away from selector repair and toward objective tuning plus broader benchmark hardening.

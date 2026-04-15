@@ -153,6 +153,108 @@ Current implementation status:
 - baseline/RL workflows can now carry one shared `ObjectiveSpec`
 - next step is benchmark/tuning, not more scoring-plumbing work
 
+### Objective Presets
+
+The reward layer now supports named doctrine presets plus explicit overrides.
+
+Current presets:
+- `balanced_default`
+  - canonical default
+  - favors lower value loss and fewer unique ships hit
+  - tolerates some repeat hits on the same ship
+- `protect_hulls`
+  - stronger penalty on distributed damage across distinct ships
+- `protect_value`
+  - stronger protection priority for high-value classes
+- `accept_concentration`
+  - more tolerant of repeat hits on the same ship
+
+Important rule:
+- presets are starting points, not separate RL algorithms
+- `[objective]` weights can still override preset values per experiment
+- when comparing presets, rerun:
+  - baseline
+  - RL
+  - direct RL action audit
+  under the same seeds and convoy profile
+
+## Current RL Experiment Knobs
+
+Use this as the running checklist when changing RL experiments.
+
+### Benchmark Inputs
+
+- convoy profile:
+  - e.g. `convoy_layout_1`, `convoy_layout_mixed_1`
+- fleet realization:
+  - `fleet_profile`
+  - `fleet_seed`
+- profile split:
+  - `train_profiles`
+  - `eval_profiles`
+- Monte Carlo seeds:
+  - `train_seeds`
+  - `eval_seeds`
+- simulation budget:
+  - `n_trials_per_seed`
+  - `t_max`
+
+### Objective Knobs
+
+- objective preset:
+  - `balanced_default`
+  - `protect_hulls`
+  - `protect_value`
+  - `accept_concentration`
+- explicit objective overrides:
+  - `w_total_value`
+  - `w_total_hits`
+  - `w_unique_ships_hit`
+  - `w_repeat_hits`
+  - `escort_loss_discount`
+  - `class_value_weights`
+
+### RL Training Knobs
+
+- `episodes`
+- `epsilon`
+- `epsilon_decay`
+- `epsilon_min`
+- `alpha`
+- `seed`
+
+### RL Builder Knobs
+
+- `layout_families`
+- `spacing_along_options`
+- `spacing_across_options`
+- `family_complexity`
+- `spacing_along_complexity`
+- `spacing_across_complexity`
+- base convoy geometry:
+  - `base_n_rows`
+  - `base_n_cols`
+  - `speed`
+  - `heading_rad`
+  - `length`
+  - `beam`
+  - `origin`
+
+### RL Selection Knobs
+
+- `risk_cvar_weight`
+- `complexity_tiebreak_tolerance`
+
+### Current Practical Testing Rule
+
+When testing a change, change one family of knobs at a time:
+- objective only
+- builder space only
+- training hyperparameters only
+- attack-profile library only
+
+Otherwise the result becomes hard to interpret.
+
 ### Longer-Term Reward Additions
 
 - value-weighted loss by ship class

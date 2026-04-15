@@ -401,3 +401,22 @@
 - The next question is no longer “does the pipeline work?” It is:
   - are the current objective weights the right doctrine choice?
   - does this result hold up under a direct builder action audit and broader attack-profile diversity?
+
+### Follow-Up Diagnostic Note (added 2026-04-15)
+
+- Direct builder audit run:
+  - `results/runs/rl_action_audit/20260415_195930_rl_default_action_audit`
+- Best train action:
+  - `staggered_loose_loose`
+  - `train expected_loss = 5.630276041666667`
+- Best eval action:
+  - `staggered_loose_loose`
+  - `eval expected_loss = 5.13384375`
+
+Interpretation:
+- The mixed-convoy builder selector is behaving correctly under the current objective.
+- This is no longer a selector bug or train/eval mismatch story.
+- The current RL winner is also the direct audit winner on both train and eval.
+- That means the next question is now squarely about objective choice:
+  - do we want to reward this pattern of lower value loss and lower unique-ships-hit even though raw hit count is higher?
+  - if not, the next change should be weight tuning, not selector or builder repair
