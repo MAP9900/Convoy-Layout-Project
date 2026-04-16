@@ -37,16 +37,16 @@ train_seeds = [1939, 1940, 1941]
 eval_seeds = [1942, 1943, 1944]
 
 [objective]
-preset = "protect_hulls"
-w_total_value = 1.0
-w_unique_ships_hit = 1.5
-w_repeat_hits = 0.5
+preset = "protect_value"
+w_total_value = 1.5
+w_unique_ships_hit = 0.8
+w_repeat_hits = 0.2
 escort_loss_discount = 0.75
 
 [objective.class_value_weights]
 freighter = 1.0
-tanker = 1.4
-escort = 0.6
+tanker = 2.0
+escort = 0.4
 decoy = 0.2
 
 

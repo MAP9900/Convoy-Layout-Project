@@ -343,7 +343,16 @@
 - But it is **not** a clean measure of current RL capability, because the RL side was not using the newer builder path.
 - The generated RL config fell back to the older flat action menu, and all three RL actions resolved to the same mixed-convoy geometry, so RL had effectively no meaningful layout freedom in this run.
 
-## Mixed-Convoy Test 3 - Clean Builder Benchmark After RL Config-Path Fix (2026-04-14)
+## Mixed-Convoy Objective Preset Sweep (Tests 1-4)
+
+Shared benchmark scope for all four entries below:
+- same mixed convoy profile family and seeded fleet realization
+- same train/eval profile split
+- same train/eval seeds
+- same RL builder space and training loop
+- only the `[objective]` preset/weights changed between runs
+
+## Mixed-Convoy Objective Sweep 1 - `balanced_default` (2026-04-14)
 
 - Baseline run:
   - `results/runs/baseline/20260414_232723_baseline_default`
@@ -421,7 +430,7 @@ Interpretation:
   - do we want to reward this pattern of lower value loss and lower unique-ships-hit even though raw hit count is higher?
   - if not, the next change should be weight tuning, not selector or builder repair
 
-## Mixed-Convoy Objective Sweep 1 - `accept_concentration` (2026-04-15)
+## Mixed-Convoy Objective Sweep 2 - `accept_concentration` (2026-04-15)
 
 - Baseline run:
   - `results/runs/baseline/20260415_202354_baseline_default`
@@ -465,7 +474,7 @@ Interpretation:
 - That means the current optimizer is not highly sensitive to this particular shift yet.
 - The next informative contrast is likely `protect_hulls`, because it pushes against concentrated damage much more directly.
 
-## Mixed-Convoy Objective Sweep 2 - `protect_hulls` (2026-04-16)
+## Mixed-Convoy Objective Sweep 3 - `protect_hulls` (2026-04-16)
 
 - Baseline run:
   - `results/runs/baseline/20260416_131751_baseline_default`
@@ -506,4 +515,51 @@ Interpretation:
 - That means the next bottleneck is less likely to be “pick different objective weights” and more likely to be one of:
   - builder space is too coarse to express a truly different hull-protection doctrine
   - current threat library is too narrow to force a different optimal geometry
+  - both
+
+## Mixed-Convoy Objective Sweep 4 - `protect_value` (2026-04-16)
+
+- Baseline run:
+  - `results/runs/baseline/20260416_134617_baseline_default`
+  - `objective.preset_name = protect_value`
+  - `static_baseline.expected_loss = 7.610708333333332`
+  - `heuristic_baseline.expected_loss = 7.6719374999999985`
+  - `static_baseline.expected_hits = 2.565833333333333` (winner)
+  - `static_baseline.value_lost = 3.81525`
+- RL run:
+  - `results/runs/rl/20260416_134923_rl_default`
+  - `objective.preset_name = protect_value`
+  - `evaluation.expected_loss = 6.667291666666666`
+  - `evaluation.expected_hits = 2.8283333333333336`
+  - `evaluation.value_lost = 3.18175`
+  - `evaluation.expected_unique_ships_hit = 2.2041666666666666`
+  - `evaluation.expected_repeat_hits = 0.6566666666666666`
+  - `training.selected_action = staggered_loose_loose`
+  - `training.selected_action_by_q_value = staggered_loose_loose`
+  - `training.mode = builder`
+- RL action audit:
+  - `results/runs/rl_action_audit/20260416_135508_rl_default_action_audit`
+  - `best_train_action = staggered_loose_loose`
+  - `best_eval_action = staggered_loose_loose`
+
+### Conclusion
+
+- Under the value-heavy preset, RL beat both baselines on expected loss:
+  - RL beat static baseline by `0.9434166666666663`
+  - RL beat heuristic baseline by `1.0046458333333321`
+- The winning builder action still did not change:
+  - `staggered_loose_loose` remained best on train
+  - `staggered_loose_loose` remained best on eval
+  - RL selected that same action
+- This sweep also showed a baseline-side change:
+  - static baseline beat heuristic baseline under `protect_value`
+
+### Interpretation Note
+
+- This completes the four-preset matrix.
+- Across all four objective presets, the RL optimizer chose the same qualitative layout and the direct audit confirmed it each time.
+- That is strong evidence that the current bottleneck is not objective-weight tuning by itself.
+- The likely limiting factors now are:
+  - builder space too coarse
+  - attack-profile library too narrow
   - both

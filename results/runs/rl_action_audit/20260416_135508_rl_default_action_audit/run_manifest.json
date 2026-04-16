@@ -1,0 +1,91 @@
+{
+  "workflow": "rl_action_audit",
+  "git_sha": "203d24e8d8acf23548cca8130366c3becb1d2134",
+  "profile_splits": {
+    "train": [
+      "P01",
+      "P02",
+      "P04",
+      "P05",
+      "P06",
+      "P07",
+      "P09",
+      "P11",
+      "P15",
+      "P16",
+      "P17",
+      "P18",
+      "P19",
+      "P21",
+      "P22",
+      "P24",
+      "P25",
+      "P27",
+      "P28",
+      "P30"
+    ],
+    "eval": [
+      "P03",
+      "P08",
+      "P10",
+      "P12",
+      "P13",
+      "P14",
+      "P20",
+      "P23",
+      "P26",
+      "P29"
+    ]
+  },
+  "seed_sets": {
+    "train": [
+      1939,
+      1940,
+      1941
+    ],
+    "eval": [
+      1942,
+      1943,
+      1944
+    ]
+  },
+  "n_trials_per_seed": 40,
+  "t_max": 400.0,
+  "realism": {
+    "u_boat_mode_default": "moving",
+    "noise_model": {
+      "sigma_heading_rad": 0.01,
+      "sigma_launch_delay": 0.05,
+      "sigma_speed_mps": 0.25,
+      "p_dud": 0.02
+    },
+    "environment": {
+      "time_of_day": "night",
+      "visibility_m": 3500.0,
+      "sea_state": 4,
+      "detection_risk_scale": 1.0
+    },
+    "ship_movement_realism_enabled": true
+  },
+  "best_train_action": "staggered_loose_loose",
+  "best_eval_action": "staggered_loose_loose",
+  "selection": {
+    "mode": "builder"
+  },
+  "objective": {
+    "preset_name": "protect_value",
+    "w_total_value": 1.5,
+    "w_total_hits": 0.0,
+    "w_unique_ships_hit": 0.8,
+    "w_repeat_hits": 0.2,
+    "class_value_weights": {
+      "freighter": 1.0,
+      "tanker": 2.0,
+      "escort": 0.4,
+      "decoy": 0.2
+    },
+    "escort_loss_discount": 0.75,
+    "mode": "defender_minimize",
+    "risk_alpha": null
+  }
+}

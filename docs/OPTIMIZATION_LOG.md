@@ -539,13 +539,23 @@ This means:
   - preserve builder mode for RL mixed-convoy runs
   - or, if using flat actions intentionally, preserve geometric differences instead of overwriting them all with one convoy profile layout block
 
-## Mixed-Convoy Test 3 - Clean Builder Benchmark After RL Config-Path Fix (2026-04-14)
+## Mixed-Convoy Objective Preset Sweep (Tests 1-4)
+
+Shared benchmark scope for the four entries below:
+- same mixed convoy profile and seeded fleet realization
+- same train/eval profile split
+- same train/eval seeds
+- same RL builder space
+- same RL training loop
+- only the `[objective]` preset/weights changed between runs
+
+## Mixed-Convoy Objective Sweep 1 - `balanced_default` (2026-04-14)
 
 ### Run References
 
 - Baseline run dir: `results/runs/baseline/20260414_232723_baseline_default`
 - RL run dir: `results/runs/rl/20260414_233031_rl_default`
-- Results summary: see `docs/RESULTS_LOG.md` (Mixed-Convoy Test 3)
+- Results summary: see `docs/RESULTS_LOG.md` (Mixed-Convoy Objective Sweep 1)
 
 ### What Changed In This Test
 
@@ -632,7 +642,7 @@ Interpretation:
   - whether the current weighting of `value_lost`, `unique_ships_hit`, and `repeat_hits` matches the protection priority you actually want
 - This shifts the next work away from selector repair and toward objective tuning plus broader benchmark hardening.
 
-## Mixed-Convoy Objective Sweep 1 - `accept_concentration` (2026-04-15)
+## Mixed-Convoy Objective Sweep 2 - `accept_concentration` (2026-04-15)
 
 ### Run References
 
@@ -680,7 +690,7 @@ What this means:
 - `accept_concentration` did not materially change the optimizer’s qualitative choice in the current builder space.
 - That makes `protect_hulls` the more informative next preset, because it is the first one likely to pressure the optimizer away from `staggered_loose_loose`.
 
-## Mixed-Convoy Objective Sweep 2 - `protect_hulls` (2026-04-16)
+## Mixed-Convoy Objective Sweep 3 - `protect_hulls` (2026-04-16)
 
 ### Run References
 
@@ -734,3 +744,54 @@ What this means:
 
 In other words:
 - if three materially different objective presets all choose the same action, the search space or threat model may simply not be rich enough yet to expose a different optimum.
+
+## Mixed-Convoy Objective Sweep 4 - `protect_value` (2026-04-16)
+
+### Run References
+
+- Baseline run dir: `results/runs/baseline/20260416_134617_baseline_default`
+- RL run dir: `results/runs/rl/20260416_134923_rl_default`
+- Audit run dir: `results/runs/rl_action_audit/20260416_135508_rl_default_action_audit`
+
+### What Changed In This Sweep
+
+- This sweep changed only the objective preset to:
+  - `protect_value`
+  - `w_total_value = 1.5`
+  - `w_unique_ships_hit = 0.8`
+  - `w_repeat_hits = 0.2`
+- Everything else stayed fixed:
+  - same mixed convoy profile / fleet seed
+  - same profile split and seeds
+  - same RL builder space
+  - same training hyperparameters
+
+### Config / Methodology Notes
+
+- Git SHA: `203d24e8d8acf23548cca8130366c3becb1d2134`
+- Train/eval profile splits matched.
+- Train/eval seeds matched:
+  - train: `[1939, 1940, 1941]`
+  - eval: `[1942, 1943, 1944]`
+- RL remained in builder mode.
+- Direct audit was run under the same config immediately after the RL benchmark.
+
+### Methodology Interpretation
+
+- The result is again internally consistent:
+  - RL selected `staggered_loose_loose`
+  - the direct audit also found `staggered_loose_loose` best on both train and eval
+- So this sweep is also not a selector artifact.
+
+Substantive interpretation:
+- This preset increased class-value emphasis the most, especially for tankers.
+- Even then, the winning builder action still did not change.
+- RL beat both baselines on the configured objective, and under this preset the static baseline beat the heuristic baseline.
+
+What this means:
+- The four-preset sweep is now complete.
+- Since all four materially different doctrine presets converged on the same best builder action, further small objective-weight changes are unlikely to reveal a different optimum in the current setup.
+- The more likely next bottlenecks are:
+  1. richer builder controls
+  2. broader attack-profile diversity
+  3. then, only after that, another doctrine sweep if needed

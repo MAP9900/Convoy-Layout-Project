@@ -95,6 +95,7 @@ Last updated: 2026-04-15
 - [ ] Decide and tune mixed-convoy objective weights:
   - [x] run `accept_concentration` preset sweep
   - [x] run `protect_hulls` preset sweep
+  - [x] run `protect_value` preset sweep
   - review whether the current `repeat_hits` penalty is too weak
   - decide whether protecting more unique hulls should matter more than minimizing weighted value loss
   - rerun baseline + RL + action audit after each weight revision, not just RL
