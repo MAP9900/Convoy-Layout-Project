@@ -420,3 +420,90 @@ Interpretation:
 - That means the next question is now squarely about objective choice:
   - do we want to reward this pattern of lower value loss and lower unique-ships-hit even though raw hit count is higher?
   - if not, the next change should be weight tuning, not selector or builder repair
+
+## Mixed-Convoy Objective Sweep 1 - `accept_concentration` (2026-04-15)
+
+- Baseline run:
+  - `results/runs/baseline/20260415_202354_baseline_default`
+  - `objective.preset_name = accept_concentration`
+  - `static_baseline.expected_loss = 5.932958333333334`
+  - `heuristic_baseline.expected_loss = 5.92515625`
+  - `heuristic_baseline.expected_hits = 2.5083333333333333`
+  - `heuristic_baseline.value_lost = 3.2290729166666674`
+- RL run:
+  - `results/runs/rl/20260415_202706_rl_default`
+  - `objective.preset_name = accept_concentration`
+  - `evaluation.expected_loss = 5.5090104166666665`
+  - `evaluation.expected_hits = 2.8283333333333336`
+  - `evaluation.value_lost = 2.79834375`
+  - `evaluation.expected_unique_ships_hit = 2.2041666666666666`
+  - `evaluation.expected_repeat_hits = 0.6566666666666666`
+  - `training.selected_action = staggered_loose_loose`
+  - `training.selected_action_by_q_value = rect_loose_loose`
+  - `training.mode = builder`
+- RL action audit:
+  - `results/runs/rl_action_audit/20260415_203258_rl_default_action_audit`
+  - `best_train_action = staggered_loose_loose`
+  - `best_eval_action = staggered_loose_loose`
+
+### Conclusion
+
+- This sweep confirms the current RL winner remains stable under the `accept_concentration` doctrine preset.
+- RL still beats the heuristic baseline on the configured defender objective:
+  - RL beat heuristic baseline by `0.4161458333333333` expected loss
+- The action pattern did not change from the earlier `balanced_default` mixed-convoy result:
+  - best train action = best eval action = `staggered_loose_loose`
+  - RL selected that same action
+
+### Interpretation Note
+
+- Lowering the repeat-hit penalty and slightly increasing the unique-ships-hit penalty did not change the winning layout family in the current builder space.
+- Compared with the earlier `balanced_default` run:
+  - the doctrine preference became more explicit
+  - the same RL layout remained best
+  - the RL-vs-heuristic advantage on expected loss widened slightly
+- That means the current optimizer is not highly sensitive to this particular shift yet.
+- The next informative contrast is likely `protect_hulls`, because it pushes against concentrated damage much more directly.
+
+## Mixed-Convoy Objective Sweep 2 - `protect_hulls` (2026-04-16)
+
+- Baseline run:
+  - `results/runs/baseline/20260416_131751_baseline_default`
+  - `objective.preset_name = protect_hulls`
+  - `static_baseline.expected_loss = 6.678399999999999`
+  - `heuristic_baseline.expected_loss = 6.652104166666666`
+  - `heuristic_baseline.expected_hits = 2.5083333333333333`
+  - `heuristic_baseline.value_lost = 3.1016874999999997`
+- RL run:
+  - `results/runs/rl/20260416_132446_rl_default`
+  - `objective.preset_name = protect_hulls`
+  - `evaluation.expected_loss = 6.356270833333332`
+  - `evaluation.expected_hits = 2.8283333333333336`
+  - `evaluation.value_lost = 2.7216875`
+  - `evaluation.expected_unique_ships_hit = 2.2041666666666666`
+  - `evaluation.expected_repeat_hits = 0.6566666666666666`
+  - `training.selected_action = staggered_loose_loose`
+  - `training.selected_action_by_q_value = rect_loose_compact`
+  - `training.mode = builder`
+- RL action audit:
+  - `results/runs/rl_action_audit/20260416_133033_rl_default_action_audit`
+  - `best_train_action = staggered_loose_loose`
+  - `best_eval_action = staggered_loose_loose`
+
+### Conclusion
+
+- Even under the much more anti-dispersion `protect_hulls` preset, RL still beats the heuristic baseline on expected loss:
+  - RL beat heuristic baseline by `0.29583333333333384` expected loss
+- The winning builder action still did not change:
+  - `staggered_loose_loose` remained best on train
+  - `staggered_loose_loose` remained best on eval
+  - RL selected that same action
+
+### Interpretation Note
+
+- This is the strongest evidence so far that the current mixed-convoy winner is robust within the present builder space.
+- Across `balanced_default`, `accept_concentration`, and now `protect_hulls`, the optimizer keeps landing on the same qualitative layout choice.
+- That means the next bottleneck is less likely to be “pick different objective weights” and more likely to be one of:
+  - builder space is too coarse to express a truly different hull-protection doctrine
+  - current threat library is too narrow to force a different optimal geometry
+  - both

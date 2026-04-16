@@ -1,0 +1,510 @@
+config:
+  run:
+    name: "rl_default"
+    output_root: "results/runs"
+  simulation:
+    t_max: 400.0
+    n_trials_per_seed: 40
+    max_hits_per_torpedo: 1
+    noise:
+      sigma_heading_rad: 0.01
+      sigma_launch_delay: 0.05
+      sigma_speed_mps: 0.25
+      p_dud: 0.02
+    environment:
+      time_of_day: "night"
+      visibility_m: 3500.0
+      sea_state: 4
+      detection_risk_scale: 1.0
+    ship_movement_realism:
+      position_jitter_std_m: 8.0
+      heading_jitter_std_rad: 0.015
+      deviation_offset_cap_m: 12.0
+      enable_slot_swaps: false
+      max_swap_fraction: 0.0
+      freighter_scale: 1.0
+      tanker_scale: 0.9
+      escort_scale: 0.6
+      decoy_scale: 1.1
+  splits:
+    train_profiles:
+      - "P01"
+      - "P02"
+      - "P04"
+      - "P05"
+      - "P06"
+      - "P07"
+      - "P09"
+      - "P11"
+      - "P15"
+      - "P16"
+      - "P17"
+      - "P18"
+      - "P19"
+      - "P21"
+      - "P22"
+      - "P24"
+      - "P25"
+      - "P27"
+      - "P28"
+      - "P30"
+    eval_profiles:
+      - "P03"
+      - "P08"
+      - "P10"
+      - "P12"
+      - "P13"
+      - "P14"
+      - "P20"
+      - "P23"
+      - "P26"
+      - "P29"
+    train_seeds:
+      - 1939
+      - 1940
+      - 1941
+    eval_seeds:
+      - 1942
+      - 1943
+      - 1944
+  objective:
+    preset: "accept_concentration"
+    w_total_value: 1.0
+    w_unique_ships_hit: 1.2
+    w_repeat_hits: 0.1
+    escort_loss_discount: 0.75
+    class_value_weights:
+      freighter: 1.0
+      tanker: 1.5
+      escort: 0.5
+      decoy: 0.2
+  training:
+    episodes: 300
+    epsilon: 0.25
+    epsilon_decay: 0.995
+    epsilon_min: 0.02
+    alpha: 0.12
+    seed: 7
+  rl:
+    builder:
+      enabled: true
+      base_n_rows: 6
+      base_n_cols: 7
+      speed: 5.0
+      heading_rad: 0.0
+      length: 150.0
+      beam: 20.0
+      origin:
+        - 0.0
+        - 0.0
+      layout_families:
+        - "rectangular"
+        - "staggered"
+      fleet_profile: "mixed_convoy_v1"
+      fleet_seed: 1947
+      spacing_along_options:
+        compact: 365.76
+        standard: 457.2
+        loose: 548.64
+      spacing_across_options:
+        compact: 914.4
+        standard: 1143.0
+        loose: 1371.6
+      family_complexity:
+        rectangular: 1.0
+        staggered: 1.15
+      spacing_along_complexity:
+        compact: 0.0
+        standard: 0.1
+        loose: 0.2
+      spacing_across_complexity:
+        compact: 0.0
+        standard: 0.05
+        loose: 0.15
+    selection:
+      risk_cvar_weight: 0.05
+      complexity_tiebreak_tolerance: 0.1
+  split_meta:
+    method: "random_partition"
+    split_seed: 1945
+    n_total: 30
+    n_train: 20
+    n_eval: 10
+    generated_utc: "2026-04-14T23:27:23Z"
+    profile_prefix: "P"
+    profile_width: 2
+resolved:
+  selected_action: "staggered_loose_loose"
+  selected_action_by_q_value: "rect_loose_loose"
+  selected_layout_fn: "make_staggered_convoy"
+  selected_layout_kwargs:
+    n_rows: 6
+    n_cols: 7
+    spacing_along: 548.64
+    spacing_across: 1371.6
+    speed: 5.0
+    heading_rad: 0.0
+    length: 150.0
+    beam: 20.0
+    origin:
+      - 0.0
+      - 0.0
+    fleet_profile: "mixed_convoy_v1"
+    fleet_seed: 1947
+    ship_movement_realism:
+      position_jitter_std_m: 8.0
+      heading_jitter_std_rad: 0.015
+      deviation_offset_cap_m: 12.0
+      enable_slot_swaps: false
+      max_swap_fraction: 0.0
+      freighter_scale: 1.0
+      tanker_scale: 0.9
+      escort_scale: 0.6
+      decoy_scale: 1.1
+  selection_summary:
+    risk_cvar_weight: 0.05
+    complexity_tiebreak_tolerance: 0.1
+    selection_mode: "builder"
+    effective_complexity_tiebreak_tolerance: 0.006418959119587119
+    ranked_train_actions:
+      -
+        name: "staggered_loose_loose"
+        primary_score: 6.418959119587119
+        complexity_cost: 1.4999999999999998
+        train_summary:
+          profiles: 20
+          samples: 2400
+          expected_hits: 2.7625
+          CVaR_90: 3.432708865633022
+          VaR_90: 3.7141666666666673
+          p_hit_ge_1: 0.9904166666666668
+          value_lost: 3.2171093749999997
+          expected_unique_ships_hit: 2.3020833333333335
+          expected_repeat_hits: 0.5554166666666667
+          expected_loss: 6.035151041666666
+          CVaR_90_loss: 7.676161558409069
+      -
+        name: "rect_compact_loose"
+        primary_score: 6.769433813396365
+        complexity_cost: 1.15
+        train_summary:
+          profiles: 20
+          samples: 2400
+          expected_hits: 2.5233333333333334
+          CVaR_90: 3.1654607428745356
+          VaR_90: 3.856666666666667
+          p_hit_ge_1: 0.9858333333333335
+          value_lost: 3.2684062499999995
+          expected_unique_ships_hit: 2.537083333333333
+          expected_repeat_hits: 0.5295833333333333
+          expected_loss: 6.365864583333334
+          CVaR_90_loss: 8.07138460126062
+      -
+        name: "staggered_loose_standard"
+        primary_score: 7.025317581145705
+        complexity_cost: 1.4
+        train_summary:
+          profiles: 20
+          samples: 2400
+          expected_hits: 2.9354166666666663
+          CVaR_90: 3.615569679849341
+          VaR_90: 3.691666666666667
+          p_hit_ge_1: 0.99875
+          value_lost: 3.4057812499999995
+          expected_unique_ships_hit: 2.6087499999999997
+          expected_repeat_hits: 0.5891666666666667
+          expected_loss: 6.595197916666666
+          CVaR_90_loss: 8.60239328958079
+      -
+        name: "rect_standard_loose"
+        primary_score: 7.109641590471273
+        complexity_cost: 1.25
+        train_summary:
+          profiles: 20
+          samples: 2400
+          expected_hits: 2.7645833333333334
+          CVaR_90: 3.3817706466469266
+          VaR_90: 3.9091666666666667
+          p_hit_ge_1: 0.9933333333333334
+          value_lost: 3.434432291666666
+          expected_unique_ships_hit: 2.667916666666667
+          expected_repeat_hits: 0.5537500000000001
+          expected_loss: 6.691307291666666
+          CVaR_90_loss: 8.366685976092137
+      -
+        name: "rect_loose_loose"
+        primary_score: 7.119364687241448
+        complexity_cost: 1.3499999999999999
+        train_summary:
+          profiles: 20
+          samples: 2400
+          expected_hits: 2.9745833333333334
+          CVaR_90: 3.584771061828686
+          VaR_90: 3.7866666666666666
+          p_hit_ge_1: 0.9962500000000002
+          value_lost: 3.4638802083333333
+          expected_unique_ships_hit: 2.6562499999999996
+          expected_repeat_hits: 0.5758333333333333
+          expected_loss: 6.708963541666667
+          CVaR_90_loss: 8.208022911495616
+      -
+        name: "staggered_standard_loose"
+        primary_score: 7.2744703274998095
+        complexity_cost: 1.4
+        train_summary:
+          profiles: 20
+          samples: 2400
+          expected_hits: 2.9345833333333333
+          CVaR_90: 3.5313332788383094
+          VaR_90: 3.9166666666666665
+          p_hit_ge_1: 0.9962500000000001
+          value_lost: 3.5802239583333333
+          expected_unique_ships_hit: 2.6704166666666667
+          expected_repeat_hits: 0.5520833333333333
+          expected_loss: 6.839932291666666
+          CVaR_90_loss: 8.690760716662867
+      -
+        name: "staggered_compact_loose"
+        primary_score: 7.409348557215353
+        complexity_cost: 1.2999999999999998
+        train_summary:
+          profiles: 20
+          samples: 2400
+          expected_hits: 2.9933333333333336
+          CVaR_90: 3.6178591091091095
+          VaR_90: 3.9008333333333334
+          p_hit_ge_1: 0.9962500000000002
+          value_lost: 3.643958333333333
+          expected_unique_ships_hit: 2.7191666666666667
+          expected_repeat_hits: 0.6333333333333334
+          expected_loss: 6.970291666666665
+          CVaR_90_loss: 8.781137810973748
+      -
+        name: "staggered_standard_standard"
+        primary_score: 7.6539580204045485
+        complexity_cost: 1.3
+        train_summary:
+          profiles: 20
+          samples: 2400
+          expected_hits: 3.0595833333333333
+          CVaR_90: 3.7752051019156285
+          VaR_90: 3.6991666666666667
+          p_hit_ge_1: 0.99875
+          value_lost: 3.694166666666667
+          expected_unique_ships_hit: 2.878333333333333
+          expected_repeat_hits: 0.41625000000000006
+          expected_loss: 7.189791666666667
+          CVaR_90_loss: 9.283327074757619
+      -
+        name: "rect_loose_standard"
+        primary_score: 7.659027655062436
+        complexity_cost: 1.25
+        train_summary:
+          profiles: 20
+          samples: 2400
+          expected_hits: 3.0266666666666664
+          CVaR_90: 3.5780870781579175
+          VaR_90: 3.8641666666666667
+          p_hit_ge_1: 0.9895833333333334
+          value_lost: 3.78775
+          expected_unique_ships_hit: 2.8124999999999996
+          expected_repeat_hits: 0.5208333333333334
+          expected_loss: 7.214833333333333
+          CVaR_90_loss: 8.88388643458207
+      -
+        name: "rect_compact_standard"
+        primary_score: 7.935573758067694
+        complexity_cost: 1.05
+        train_summary:
+          profiles: 20
+          samples: 2400
+          expected_hits: 2.638333333333334
+          CVaR_90: 3.2699007369566275
+          VaR_90: 3.7366666666666672
+          p_hit_ge_1: 0.9875
+          value_lost: 3.9376718749999995
+          expected_unique_ships_hit: 2.900833333333333
+          expected_repeat_hits: 0.39625
+          expected_loss: 7.458296874999999
+          CVaR_90_loss: 9.545537661353896
+      -
+        name: "staggered_compact_standard"
+        primary_score: 8.23378721005074
+        complexity_cost: 1.2
+        train_summary:
+          profiles: 20
+          samples: 2400
+          expected_hits: 3.2579166666666666
+          CVaR_90: 3.8211999022482894
+          VaR_90: 3.9166666666666665
+          p_hit_ge_1: 0.9970833333333333
+          value_lost: 3.977036458333333
+          expected_unique_ships_hit: 3.1037500000000002
+          expected_repeat_hits: 0.595
+          expected_loss: 7.761036458333334
+          CVaR_90_loss: 9.45501503434813
+      -
+        name: "rect_standard_standard"
+        primary_score: 8.40774353505291
+        complexity_cost: 1.1500000000000001
+        train_summary:
+          profiles: 20
+          samples: 2400
+          expected_hits: 2.8916666666666666
+          CVaR_90: 3.6155152279708007
+          VaR_90: 3.8758333333333335
+          p_hit_ge_1: 0.9983333333333334
+          value_lost: 4.116145833333333
+          expected_unique_ships_hit: 3.1341666666666668
+          expected_repeat_hits: 0.33666666666666667
+          expected_loss: 7.9108125000000005
+          CVaR_90_loss: 9.938620701058202
+      -
+        name: "rect_loose_compact"
+        primary_score: 8.569732907244093
+        complexity_cost: 1.2
+        train_summary:
+          profiles: 20
+          samples: 2400
+          expected_hits: 3.3083333333333345
+          CVaR_90: 3.807043956043956
+          VaR_90: 3.8941666666666666
+          p_hit_ge_1: 1.0
+          value_lost: 4.219697916666666
+          expected_unique_ships_hit: 3.1704166666666667
+          expected_repeat_hits: 0.5475
+          expected_loss: 8.078947916666667
+          CVaR_90_loss: 9.815699811548516
+      -
+        name: "staggered_loose_compact"
+        primary_score: 8.674136115541778
+        complexity_cost: 1.3499999999999999
+        train_summary:
+          profiles: 20
+          samples: 2400
+          expected_hits: 3.042916666666667
+          CVaR_90: 3.6055692055692057
+          VaR_90: 3.8033333333333332
+          p_hit_ge_1: 0.9995833333333334
+          value_lost: 4.400041666666667
+          expected_unique_ships_hit: 3.100416666666667
+          expected_repeat_hits: 0.4883333333333333
+          expected_loss: 8.169375
+          CVaR_90_loss: 10.095222310835538
+      -
+        name: "rect_standard_compact"
+        primary_score: 8.745562745348803
+        complexity_cost: 1.1
+        train_summary:
+          profiles: 20
+          samples: 2400
+          expected_hits: 3.099583333333333
+          CVaR_90: 3.6677007459412025
+          VaR_90: 3.8116666666666665
+          p_hit_ge_1: 0.9983333333333334
+          value_lost: 4.243854166666667
+          expected_unique_ships_hit: 3.2795833333333335
+          expected_repeat_hits: 0.42333333333333323
+          expected_loss: 8.2216875
+          CVaR_90_loss: 10.47750490697605
+      -
+        name: "rect_compact_compact"
+        primary_score: 9.053178020006499
+        complexity_cost: 1.0
+        train_summary:
+          profiles: 20
+          samples: 2400
+          expected_hits: 2.9258333333333333
+          CVaR_90: 3.4639754856614244
+          VaR_90: 3.9166666666666665
+          p_hit_ge_1: 0.9962500000000001
+          value_lost: 4.351239583333333
+          expected_unique_ships_hit: 3.432083333333334
+          expected_repeat_hits: 0.38625000000000004
+          expected_loss: 8.508364583333332
+          CVaR_90_loss: 10.896268733463334
+      -
+        name: "staggered_standard_compact"
+        primary_score: 9.744883891008657
+        complexity_cost: 1.25
+        train_summary:
+          profiles: 20
+          samples: 2400
+          expected_hits: 3.3583333333333334
+          CVaR_90: 3.8513333333333337
+          VaR_90: 3.8716666666666666
+          p_hit_ge_1: 0.9995833333333334
+          value_lost: 4.814604166666667
+          expected_unique_ships_hit: 3.6029166666666668
+          expected_repeat_hits: 0.36625
+          expected_loss: 9.174729166666667
+          CVaR_90_loss: 11.403094486839786
+      -
+        name: "staggered_compact_compact"
+        primary_score: 10.095224528792128
+        complexity_cost: 1.15
+        train_summary:
+          profiles: 20
+          samples: 2400
+          expected_hits: 3.3670833333333325
+          CVaR_90: 3.8582923497267756
+          VaR_90: 3.9166666666666665
+          p_hit_ge_1: 0.9995833333333334
+          value_lost: 4.947916666666666
+          expected_unique_ships_hit: 3.7712500000000007
+          expected_repeat_hits: 0.34375
+          expected_loss: 9.507791666666666
+          CVaR_90_loss: 11.748657242509243
+    builder_greedy_trace:
+      - "family:rectangular"
+      - "along:loose"
+      - "across:loose"
+  builder:
+    enabled: true
+    base_n_rows: 6
+    base_n_cols: 7
+    speed: 5.0
+    heading_rad: 0.0
+    length: 150.0
+    beam: 20.0
+    origin:
+      - 0.0
+      - 0.0
+    fleet_profile: "mixed_convoy_v1"
+    fleet_seed: 1947
+    layout_families:
+      - "rectangular"
+      - "staggered"
+    spacing_along_options:
+      compact: 365.76
+      standard: 457.2
+      loose: 548.64
+    spacing_across_options:
+      compact: 914.4
+      standard: 1143.0
+      loose: 1371.6
+    family_complexity:
+      rectangular: 1.0
+      staggered: 1.15
+    spacing_along_complexity:
+      compact: 0.0
+      standard: 0.1
+      loose: 0.2
+    spacing_across_complexity:
+      compact: 0.0
+      standard: 0.05
+      loose: 0.15
+  objective:
+    preset_name: "accept_concentration"
+    w_total_value: 1.0
+    w_total_hits: 0.0
+    w_unique_ships_hit: 1.2
+    w_repeat_hits: 0.1
+    class_value_weights:
+      freighter: 1.0
+      tanker: 1.5
+      escort: 0.5
+      decoy: 0.2
+    escort_loss_discount: 0.75
+    mode: "defender_minimize"
+    risk_alpha: null

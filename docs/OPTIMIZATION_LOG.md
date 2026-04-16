@@ -631,3 +631,106 @@ Interpretation:
 - The remaining open question is therefore doctrinal rather than mechanical:
   - whether the current weighting of `value_lost`, `unique_ships_hit`, and `repeat_hits` matches the protection priority you actually want
 - This shifts the next work away from selector repair and toward objective tuning plus broader benchmark hardening.
+
+## Mixed-Convoy Objective Sweep 1 - `accept_concentration` (2026-04-15)
+
+### Run References
+
+- Baseline run dir: `results/runs/baseline/20260415_202354_baseline_default`
+- RL run dir: `results/runs/rl/20260415_202706_rl_default`
+- Audit run dir: `results/runs/rl_action_audit/20260415_203258_rl_default_action_audit`
+
+### What Changed In This Sweep
+
+- This was the first direct objective-preset tuning pass after adding named presets.
+- The preset used was:
+  - `accept_concentration`
+  - `w_total_value = 1.0`
+  - `w_unique_ships_hit = 1.2`
+  - `w_repeat_hits = 0.1`
+- Everything else stayed fixed:
+  - same mixed convoy profile / fleet seed
+  - same train/eval split
+  - same RL builder space
+  - same training hyperparameters
+
+### Config / Methodology Notes
+
+- Git SHA: `cba94333c35fd1e06344de31aaec1e370c3d31ac`
+- Train/eval profile splits matched.
+- Train/eval seeds matched:
+  - train: `[1939, 1940, 1941]`
+  - eval: `[1942, 1943, 1944]`
+- RL remained in builder mode.
+- Direct audit was run under the same config immediately after the RL benchmark.
+
+### Methodology Interpretation
+
+- The result is clean and internally consistent:
+  - RL selected `staggered_loose_loose`
+  - the direct audit also found `staggered_loose_loose` best on both train and eval
+- So this sweep is not confounded by selector error.
+
+Substantive interpretation:
+- Compared with the earlier `balanced_default` result, the preferred layout did not change.
+- The same builder action remained optimal, which suggests the current winner is robust to a moderate shift toward accepting concentrated damage.
+- RL still beat the heuristic baseline on the configured objective, and the margin widened slightly.
+
+What this means:
+- `accept_concentration` did not materially change the optimizer’s qualitative choice in the current builder space.
+- That makes `protect_hulls` the more informative next preset, because it is the first one likely to pressure the optimizer away from `staggered_loose_loose`.
+
+## Mixed-Convoy Objective Sweep 2 - `protect_hulls` (2026-04-16)
+
+### Run References
+
+- Baseline run dir: `results/runs/baseline/20260416_131751_baseline_default`
+- RL run dir: `results/runs/rl/20260416_132446_rl_default`
+- Audit run dir: `results/runs/rl_action_audit/20260416_133033_rl_default_action_audit`
+
+### What Changed In This Sweep
+
+- This sweep changed only the objective preset to:
+  - `protect_hulls`
+  - `w_total_value = 1.0`
+  - `w_unique_ships_hit = 1.5`
+  - `w_repeat_hits = 0.5`
+- Everything else stayed fixed:
+  - same mixed convoy profile / fleet seed
+  - same profile split and seeds
+  - same RL builder space
+  - same training hyperparameters
+
+### Config / Methodology Notes
+
+- Git SHA: `cba94333c35fd1e06344de31aaec1e370c3d31ac`
+- Train/eval profile splits matched.
+- Train/eval seeds matched:
+  - train: `[1939, 1940, 1941]`
+  - eval: `[1942, 1943, 1944]`
+- RL remained in builder mode.
+- Direct audit was run under the same config immediately after the RL benchmark.
+
+### Methodology Interpretation
+
+- The result is again internally consistent:
+  - RL selected `staggered_loose_loose`
+  - the direct audit also found `staggered_loose_loose` best on both train and eval
+- So, again, this is not a selector artifact.
+
+Substantive interpretation:
+- This was the first preset likely to pressure the optimizer away from concentrated-damage-friendly layouts.
+- It still did not change the winning action.
+- RL remained better than heuristic baseline on the configured objective even with:
+  - stronger penalty on unique ships hit
+  - much stronger penalty on repeat hits
+
+What this means:
+- The current winner appears robust across the present doctrine presets, not just under one convenient weighting.
+- That shifts the likely next bottleneck away from reward weights alone.
+- The next meaningful places to look are:
+  1. builder-space richness
+  2. attack-profile diversity
+
+In other words:
+- if three materially different objective presets all choose the same action, the search space or threat model may simply not be rich enough yet to expose a different optimum.
