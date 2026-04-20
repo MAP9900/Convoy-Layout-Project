@@ -264,6 +264,9 @@ def test_builder_episode_returns_terminal_reward_only_after_final_choice() -> No
             "beam": 10.0,
             "origin": [0.0, 0.0],
             "layout_families": ["rectangular", "staggered"],
+            "row_patterns": {"uniform": [2]},
+            "row_offset_policies": ["none"],
+            "class_placement_policies": ["mixed_balanced"],
             "spacing_along_options": {"compact": 100.0, "loose": 150.0},
             "spacing_across_options": {"compact": 90.0, "loose": 120.0},
         }
@@ -288,16 +291,34 @@ def test_builder_episode_returns_terminal_reward_only_after_final_choice() -> No
     assert reward1 == 0.0
     assert done1 is False
     assert obs1["builder_state"]["family"] == "rectangular"
-    assert obs1["valid_defender_actions"] == ["along:compact", "along:loose"]
+    assert obs1["valid_defender_actions"] == ["pattern:uniform"]
 
-    obs2, reward2, done2, _info2 = env.step(env.action_space.to_index("along:compact"), 0)
+    obs2, reward2, done2, _info2 = env.step(env.action_space.to_index("pattern:uniform"), 0)
     assert reward2 == 0.0
     assert done2 is False
-    assert obs2["builder_state"]["spacing_along_bucket"] == "compact"
-    assert obs2["valid_defender_actions"] == ["across:compact", "across:loose"]
+    assert obs2["builder_state"]["row_pattern"] == "uniform"
+    assert obs2["valid_defender_actions"] == ["offset:none"]
 
-    obs3, reward3, done3, info3 = env.step(env.action_space.to_index("across:loose"), 0)
-    assert isinstance(reward3, float)
-    assert done3 is True
-    assert obs3["defender_action"] == "rect_compact_loose"
-    assert info3["materialized_action"]["name"] == "rect_compact_loose"
+    obs3, reward3, done3, _info3 = env.step(env.action_space.to_index("offset:none"), 0)
+    assert reward3 == 0.0
+    assert done3 is False
+    assert obs3["builder_state"]["row_offset_policy"] == "none"
+    assert obs3["valid_defender_actions"] == ["placement:mixed_balanced"]
+
+    obs4, reward4, done4, _info4 = env.step(env.action_space.to_index("placement:mixed_balanced"), 0)
+    assert reward4 == 0.0
+    assert done4 is False
+    assert obs4["builder_state"]["class_placement_policy"] == "mixed_balanced"
+    assert obs4["valid_defender_actions"] == ["along:compact", "along:loose"]
+
+    obs5, reward5, done5, _info5 = env.step(env.action_space.to_index("along:compact"), 0)
+    assert reward5 == 0.0
+    assert done5 is False
+    assert obs5["builder_state"]["spacing_along_bucket"] == "compact"
+    assert obs5["valid_defender_actions"] == ["across:compact", "across:loose"]
+
+    obs6, reward6, done6, info6 = env.step(env.action_space.to_index("across:loose"), 0)
+    assert isinstance(reward6, float)
+    assert done6 is True
+    assert obs6["defender_action"] == "rect_uniform_none_mixed_balanced_compact_loose"
+    assert info6["materialized_action"]["name"] == "rect_uniform_none_mixed_balanced_compact_loose"

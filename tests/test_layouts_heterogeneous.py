@@ -101,6 +101,59 @@ def test_mixed_fleet_profile_assigns_multiple_ship_classes() -> None:
     assert counts[ShipClass.ESCORT] > 0
 
 
+def test_row_counts_change_row_ship_distribution() -> None:
+    ships = make_rectangular_convoy(
+        n_rows=3,
+        n_cols=3,
+        row_counts=[2, 4, 2],
+        spacing_along=300.0,
+        spacing_across=200.0,
+        speed=5.0,
+        heading_rad=0.0,
+        length=120.0,
+        beam=20.0,
+        origin=as_vec(0.0, 0.0),
+    )
+    counts_by_x = Counter(round(float(ship.position[0]), 6) for ship in ships)
+    assert sorted(counts_by_x.values()) == [2, 2, 4]
+
+
+def test_class_placement_policy_changes_high_value_slots() -> None:
+    centered = make_rectangular_convoy(
+        n_rows=6,
+        n_cols=7,
+        row_counts=[6, 7, 8, 8, 7, 6],
+        spacing_along=300.0,
+        spacing_across=200.0,
+        speed=5.0,
+        heading_rad=0.0,
+        length=120.0,
+        beam=20.0,
+        origin=as_vec(0.0, 0.0),
+        fleet_profile="mixed_convoy_v1",
+        fleet_seed=1947,
+        class_placement_policy="high_value_center",
+    )
+    rear_center = make_rectangular_convoy(
+        n_rows=6,
+        n_cols=7,
+        row_counts=[6, 7, 8, 8, 7, 6],
+        spacing_along=300.0,
+        spacing_across=200.0,
+        speed=5.0,
+        heading_rad=0.0,
+        length=120.0,
+        beam=20.0,
+        origin=as_vec(0.0, 0.0),
+        fleet_profile="mixed_convoy_v1",
+        fleet_seed=1947,
+        class_placement_policy="high_value_rear_center",
+    )
+    centered_tankers = sorted(round(float(ship.position[0]), 6) for ship in centered if ship.ship_class == ShipClass.TANKER)
+    rear_tankers = sorted(round(float(ship.position[0]), 6) for ship in rear_center if ship.ship_class == ShipClass.TANKER)
+    assert centered_tankers != rear_tankers
+
+
 def test_jitter_preserves_heading_speed() -> None:
     role_map = perimeter_escorts(n_rows=2, n_cols=2)
     ships = make_rectangular_convoy(

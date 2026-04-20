@@ -69,6 +69,14 @@ length = 150.0
 beam = 20.0
 origin = [0.0, 0.0]
 layout_families = ["rectangular", "staggered"]
+fleet_profile = "mixed_convoy_v1"
+fleet_seed = 1947
+row_offset_policies = ["none", "centered_alt"]
+class_placement_policies = ["mixed_balanced", "high_value_center"]
+
+[rl.builder.row_patterns]
+uniform_6x7 = [7, 7, 7, 7, 7, 7]
+center_heavy_6 = [6, 7, 8, 8, 7, 6]
 
 [rl.builder.spacing_along_options]
 compact = 365.76
@@ -83,6 +91,18 @@ loose = 1371.6
 [rl.builder.family_complexity]
 rectangular = 1.0
 staggered = 1.15
+
+[rl.builder.row_pattern_complexity]
+uniform_6x7 = 0.0
+center_heavy_6 = 0.15
+
+[rl.builder.row_offset_complexity]
+none = 0.0
+centered_alt = 0.1
+
+[rl.builder.class_placement_complexity]
+mixed_balanced = 0.0
+high_value_center = 0.12
 
 [rl.builder.spacing_along_complexity]
 compact = 0.0

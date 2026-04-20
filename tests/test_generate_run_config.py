@@ -480,6 +480,12 @@ length = 120.0
 beam = 18.0
 origin = [0.0, 0.0]
 layout_families = ["rectangular", "staggered"]
+row_offset_policies = ["none", "centered_alt"]
+class_placement_policies = ["mixed_balanced", "high_value_center"]
+
+[rl.builder.row_patterns]
+uniform = [4, 4, 4]
+center_heavy = [3, 4, 5]
 
 [rl.builder.spacing_along_options]
 compact = 90.0
@@ -533,5 +539,8 @@ loose = 0.1
     assert builder["base_n_cols"] == 7
     assert builder["fleet_profile"] == "mixed_convoy_v1"
     assert builder["fleet_seed"] == 1947
+    assert builder["row_patterns"]["uniform"] == [4, 4, 4]
+    assert builder["row_offset_policies"] == ["none", "centered_alt"]
+    assert builder["class_placement_policies"] == ["mixed_balanced", "high_value_center"]
     assert builder["spacing_along_options"]["compact"] == 90.0
     assert builder["spacing_across_options"]["compact"] == 80.0

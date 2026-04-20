@@ -1,6 +1,6 @@
 # TODO
 
-Last updated: 2026-04-15
+Last updated: 2026-04-20
 
 ## Current Workflow (Canonical)
 
@@ -77,10 +77,11 @@ Last updated: 2026-04-15
   - current selector switched from `rect_compact_loose` to `rect_compact_standard` because of the complexity tolerance tie-break
   - tighten or redesign tie-break logic so a clearly better train objective is not discarded in builder mode
   - rerun RL and confirm builder mode can recover the audited best layout
-- [ ] Expand Phase 2 RL layout-builder controls beyond the minimal slice:
-  - row pattern vectors (e.g., `4,5,5,4`)
-  - ship-class placement controls
-  - convoy speed and zig-zag controls
+- [x] Expand Phase 2 RL layout-builder controls beyond the minimal slice:
+  - add bounded row pattern templates
+  - add bounded row offset policies
+  - add bounded ship-class placement policies
+  - keep speed and zig-zag deferred for now
 - [ ] Define and enforce hard layout boundaries in config (separation, footprint, class counts, feasibility).
 - [ ] Add action masking / feasibility-first handling for invalid RL layouts.
 - [ ] Phase 3 RL overhaul: redesign reward:
@@ -111,6 +112,9 @@ Last updated: 2026-04-15
   - add more attacker geometry/doctrine/range variety
   - add repeated eval seed sets or held-out harder-case pack
   - use the expanded profile library to test whether builder-mode RL still matches or exceeds heuristic baseline
+- [ ] Rerun mixed-convoy baseline + builder-mode RL + action audit after the builder expansion slice:
+  - confirm whether row pattern / row offset / class placement control changes the winning RL layout
+  - if the winner still does not move, treat attack-profile diversity as the primary next bottleneck
 - [ ] Phase 4 RL overhaul: replace tabular RL selector with stronger learner while preserving artifact schema.
 - [ ] Expand RL training threat diversity beyond the current narrow setup.
 - [ ] Add compact RL observation/state vector for geometry/composition/threat context.

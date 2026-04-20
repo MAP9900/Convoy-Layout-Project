@@ -53,6 +53,13 @@ FLEET_PROFILE_SPECS: dict[str, dict[str, Any]] = {
     },
 }
 
+VALID_CLASS_PLACEMENT_POLICIES = (
+    "mixed_balanced",
+    "high_value_center",
+    "high_value_rear_center",
+    "escort_perimeter",
+)
+
 
 def sample_hull_variant(ship_class: ShipClass, rng: np.random.Generator) -> dict[str, float]:
     """Return one weighted hull variant for the requested ship class."""
@@ -72,8 +79,10 @@ def build_fleet_assignment_maps(
     *,
     n_rows: int,
     n_cols: int,
+    row_counts: list[int] | tuple[int, ...] | None = None,
     fleet_profile: str | None,
     fleet_seed: int | None,
+    class_placement_policy: str | None = None,
 ) -> tuple[Callable[[int, int], ShipClass] | None, Callable[[int, int], dict[str, float]] | None]:
     """Return deterministic class/override maps for a seeded fleet realization."""
 
@@ -84,8 +93,15 @@ def build_fleet_assignment_maps(
 
     spec = FLEET_PROFILE_SPECS[fleet_profile]
     rng = np.random.default_rng(0 if fleet_seed is None else int(fleet_seed))
-    slots = [(row_idx, col_idx) for row_idx in range(n_rows) for col_idx in range(n_cols)]
+    actual_row_counts = _resolve_row_counts(n_rows=n_rows, n_cols=n_cols, row_counts=row_counts)
+    slots = [(row_idx, col_idx) for row_idx, count in enumerate(actual_row_counts) for col_idx in range(count)]
     assigned: dict[tuple[int, int], ShipClass] = {}
+    placement_policy = str(class_placement_policy or spec.get("class_placement_policy", "mixed_balanced"))
+    if placement_policy not in VALID_CLASS_PLACEMENT_POLICIES:
+        raise ValueError(
+            f"Unknown class_placement_policy: {placement_policy}. "
+            f"Valid policies: {sorted(VALID_CLASS_PLACEMENT_POLICIES)}"
+        )
 
     class_counts: dict[ShipClass, int] = {
         ShipClass(ship_class): int(count)
@@ -95,14 +111,20 @@ def build_fleet_assignment_maps(
 
     escort_count = int(class_counts.get(ShipClass.ESCORT, 0))
     if escort_count > 0:
-        perimeter_slots = [slot for slot in slots if _is_perimeter_cell(*slot, n_rows=n_rows, n_cols=n_cols)]
+        perimeter_slots = [
+            slot for slot in slots if _is_perimeter_cell(slot[0], slot[1], row_counts=actual_row_counts)
+        ]
         chosen_escorts = _sample_cells(perimeter_slots, escort_count, rng)
         for slot in chosen_escorts:
             assigned[slot] = ShipClass.ESCORT
 
     tanker_count = int(class_counts.get(ShipClass.TANKER, 0))
     if tanker_count > 0:
-        tanker_pool = [slot for slot in _core_priority_cells(n_rows=n_rows, n_cols=n_cols) if slot not in assigned]
+        tanker_pool = [
+            slot
+            for slot in _priority_cells_for_policy(actual_row_counts, placement_policy=placement_policy)
+            if slot not in assigned
+        ]
         chosen_tankers = tanker_pool[:tanker_count]
         if len(chosen_tankers) < tanker_count:
             raise ValueError("Not enough open cells to assign tanker slots for fleet profile")
@@ -126,8 +148,24 @@ def build_fleet_assignment_maps(
     return ship_class_map, ship_overrides_map
 
 
-def _is_perimeter_cell(row_idx: int, col_idx: int, *, n_rows: int, n_cols: int) -> bool:
-    return row_idx in {0, n_rows - 1} or col_idx in {0, n_cols - 1}
+def _resolve_row_counts(
+    *,
+    n_rows: int,
+    n_cols: int,
+    row_counts: list[int] | tuple[int, ...] | None,
+) -> list[int]:
+    if row_counts is None:
+        if n_rows <= 0 or n_cols <= 0:
+            raise ValueError("n_rows and n_cols must be positive")
+        return [int(n_cols)] * int(n_rows)
+    resolved = [int(value) for value in row_counts]
+    if not resolved or any(value <= 0 for value in resolved):
+        raise ValueError("row_counts must be a non-empty sequence of positive integers")
+    return resolved
+
+
+def _is_perimeter_cell(row_idx: int, col_idx: int, *, row_counts: list[int]) -> bool:
+    return row_idx in {0, len(row_counts) - 1} or col_idx in {0, row_counts[row_idx] - 1}
 
 
 def _sample_cells(
@@ -143,17 +181,64 @@ def _sample_cells(
     return [cells[idx] for idx in indices]
 
 
-def _core_priority_cells(*, n_rows: int, n_cols: int) -> list[tuple[int, int]]:
-    row_center = (n_rows - 1) / 2.0
-    col_center = (n_cols - 1) / 2.0
-    slots = [(row_idx, col_idx) for row_idx in range(n_rows) for col_idx in range(n_cols)]
+def _priority_cells_for_policy(
+    row_counts: list[int],
+    *,
+    placement_policy: str,
+) -> list[tuple[int, int]]:
+    if placement_policy == "high_value_center":
+        return _center_priority_cells(row_counts)
+    if placement_policy == "high_value_rear_center":
+        return _rear_center_priority_cells(row_counts)
+    if placement_policy == "escort_perimeter":
+        return _center_priority_cells(row_counts)
+    return _distributed_core_priority_cells(row_counts)
+
+
+def _slot_center_distance(slot: tuple[int, int], row_counts: list[int]) -> tuple[float, float, float]:
+    row_idx, col_idx = slot
+    row_center = (len(row_counts) - 1) / 2.0
+    col_center = (row_counts[row_idx] - 1) / 2.0
+    row_delta = abs(row_idx - row_center)
+    col_delta = abs(col_idx - col_center)
+    return row_delta + col_delta, row_delta, col_delta
+
+
+def _center_priority_cells(row_counts: list[int]) -> list[tuple[int, int]]:
+    slots = [(row_idx, col_idx) for row_idx, count in enumerate(row_counts) for col_idx in range(count)]
+    slots.sort(key=lambda slot: _slot_center_distance(slot, row_counts))
+    return slots
+
+
+def _rear_center_priority_cells(row_counts: list[int]) -> list[tuple[int, int]]:
+    slots = [(row_idx, col_idx) for row_idx, count in enumerate(row_counts) for col_idx in range(count)]
     slots.sort(
         key=lambda slot: (
-            abs(slot[0] - row_center) + abs(slot[1] - col_center),
-            abs(slot[0] - row_center),
-            abs(slot[1] - col_center),
+            slot[0],
+            abs(slot[1] - (row_counts[slot[0]] - 1) / 2.0),
+            *_slot_center_distance(slot, row_counts),
         )
     )
+    return slots
+
+
+def _distributed_core_priority_cells(row_counts: list[int]) -> list[tuple[int, int]]:
+    row_center = (len(row_counts) - 1) / 2.0
+    ordered_rows = sorted(range(len(row_counts)), key=lambda row_idx: (abs(row_idx - row_center), row_idx))
+    row_queues: dict[int, list[int]] = {
+        row_idx: sorted(
+            range(row_counts[row_idx]),
+            key=lambda col_idx: abs(col_idx - (row_counts[row_idx] - 1) / 2.0),
+        )
+        for row_idx in ordered_rows
+    }
+    slots: list[tuple[int, int]] = []
+    while any(row_queues.values()):
+        for row_idx in ordered_rows:
+            queue = row_queues[row_idx]
+            if not queue:
+                continue
+            slots.append((row_idx, queue.pop(0)))
     return slots
 
 

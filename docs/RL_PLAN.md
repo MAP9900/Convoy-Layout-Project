@@ -1,6 +1,6 @@
 # RL Plan
 
-Last updated: 2026-04-08
+Last updated: 2026-04-20
 
 ## Purpose
 
@@ -178,6 +178,58 @@ Important rule:
   - direct RL action audit
   under the same seeds and convoy profile
 
+### Current Preset Reference
+
+Use these exact values when running an objective sweep.
+
+`balanced_default`
+- `w_total_value = 1.0`
+- `w_total_hits = 0.0`
+- `w_unique_ships_hit = 1.0`
+- `w_repeat_hits = 0.2`
+- `escort_loss_discount = 0.75`
+- class weights:
+  - `freighter = 1.0`
+  - `tanker = 1.5`
+  - `escort = 0.5`
+  - `decoy = 0.2`
+
+`protect_hulls`
+- `w_total_value = 1.0`
+- `w_total_hits = 0.0`
+- `w_unique_ships_hit = 1.5`
+- `w_repeat_hits = 0.5`
+- `escort_loss_discount = 0.75`
+- class weights:
+  - `freighter = 1.0`
+  - `tanker = 1.4`
+  - `escort = 0.6`
+  - `decoy = 0.2`
+
+`protect_value`
+- `w_total_value = 1.5`
+- `w_total_hits = 0.0`
+- `w_unique_ships_hit = 0.8`
+- `w_repeat_hits = 0.2`
+- `escort_loss_discount = 0.75`
+- class weights:
+  - `freighter = 1.0`
+  - `tanker = 2.0`
+  - `escort = 0.4`
+  - `decoy = 0.2`
+
+`accept_concentration`
+- `w_total_value = 1.0`
+- `w_total_hits = 0.0`
+- `w_unique_ships_hit = 1.2`
+- `w_repeat_hits = 0.1`
+- `escort_loss_discount = 0.75`
+- class weights:
+  - `freighter = 1.0`
+  - `tanker = 1.5`
+  - `escort = 0.5`
+  - `decoy = 0.2`
+
 ## Current RL Experiment Knobs
 
 Use this as the running checklist when changing RL experiments.
@@ -226,9 +278,15 @@ Use this as the running checklist when changing RL experiments.
 ### RL Builder Knobs
 
 - `layout_families`
+- `row_patterns`
+- `row_offset_policies`
+- `class_placement_policies`
 - `spacing_along_options`
 - `spacing_across_options`
 - `family_complexity`
+- `row_pattern_complexity`
+- `row_offset_complexity`
+- `class_placement_complexity`
 - `spacing_along_complexity`
 - `spacing_across_complexity`
 - base convoy geometry:
@@ -352,18 +410,26 @@ Candidate decision sequence:
 5. choose class placement policy
 6. choose speed / zig-zag doctrine if included in this phase
 
-Implemented minimal slice:
-- multi-step builder with 3 bounded decisions only:
+Implemented builder slices:
+- minimal slice:
   1. layout family
   2. along-spacing bucket
   3. across-spacing bucket
+- bounded expansion slice:
+  1. layout family
+  2. row pattern
+  3. row offset policy
+  4. class placement policy
+  5. along-spacing bucket
+  6. across-spacing bucket
 - canonical RL config now enables this builder path
 - legacy flat `[[rl.actions]]` path remains supported as a fallback for regression checks
 
 Next expansion inside Phase 2:
 - add hard constraint metadata and masking
-- extend from spacing buckets to bounded row-pattern controls
-- defer ship-class placement and zig-zag until the minimal builder is stable
+- add footprint and separation guardrails as explicit builder feasibility checks
+- consider a second bounded row-offset family beyond `centered_alt`
+- defer convoy speed / zig-zag controls until geometry and placement controls are stable
 
 Phase 3A prerequisite now implemented:
 - config-friendly seeded fleet profiles
@@ -443,9 +509,9 @@ Acceptance gates:
 Move to the next Phase 2 expansion step, not PPO yet.
 
 Reason:
-- the builder minimal slice is now in place
-- the next bottleneck is still control richness and feasibility handling
-- reward redesign should happen against the builder path rather than the old flat action menu
+- the builder now covers family, row pattern, row offset, class placement, and spacing
+- the next bottleneck is explicit feasibility handling and broader threat diversity
+- reward redesign has already been wired and swept across presets against the builder path
 
 ## Logging Contract
 

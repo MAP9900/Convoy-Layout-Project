@@ -53,6 +53,39 @@ def test_build_fleet_assignment_maps_is_seeded_and_reproducible() -> None:
     assert overrides_map_a(1, 1) == overrides_map_b(1, 1)
 
 
+def test_build_fleet_assignment_maps_respects_placement_policy() -> None:
+    balanced_map, _ = build_fleet_assignment_maps(
+        n_rows=6,
+        n_cols=7,
+        row_counts=[6, 7, 8, 8, 7, 6],
+        fleet_profile="mixed_convoy_v1",
+        fleet_seed=1947,
+        class_placement_policy="mixed_balanced",
+    )
+    rear_map, _ = build_fleet_assignment_maps(
+        n_rows=6,
+        n_cols=7,
+        row_counts=[6, 7, 8, 8, 7, 6],
+        fleet_profile="mixed_convoy_v1",
+        fleet_seed=1947,
+        class_placement_policy="high_value_rear_center",
+    )
+    assert balanced_map is not None and rear_map is not None
+    balanced_tankers = {
+        (row_idx, col_idx)
+        for row_idx, count in enumerate([6, 7, 8, 8, 7, 6])
+        for col_idx in range(count)
+        if balanced_map(row_idx, col_idx) == ShipClass.TANKER
+    }
+    rear_tankers = {
+        (row_idx, col_idx)
+        for row_idx, count in enumerate([6, 7, 8, 8, 7, 6])
+        for col_idx in range(count)
+        if rear_map(row_idx, col_idx) == ShipClass.TANKER
+    }
+    assert balanced_tankers != rear_tankers
+
+
 def test_effective_hit_radius_override() -> None:
     ship = Ship(
         id="S2",
