@@ -795,3 +795,57 @@ What this means:
   1. richer builder controls
   2. broader attack-profile diversity
   3. then, only after that, another doctrine sweep if needed
+
+## Builder Expansion Check - `balanced_default` (2026-04-20)
+
+### Run References
+
+- Baseline run dir: `results/runs/baseline/20260420_230238_baseline_default`
+- RL run dir: `results/runs/rl/20260420_230545_rl_default`
+- Audit run dir: `results/runs/rl_action_audit/20260420_235509_rl_default_action_audit`
+
+### What Changed In This Check
+
+- This run kept the mixed-convoy `balanced_default` objective but used the expanded builder space:
+  - layout family
+  - row pattern
+  - row offset policy
+  - class placement policy
+  - along-spacing bucket
+  - across-spacing bucket
+- Compared with the earlier four-preset sweep, the builder is no longer limited to the older spacing-only structure.
+
+### Config / Methodology Notes
+
+- Git SHA: `93773f0d0d08c5eb1bda09f3df5d1e5e60fe6e07`
+- Train/eval profile splits matched.
+- Train/eval seeds matched:
+  - train: `[1939, 1940, 1941]`
+  - eval: `[1942, 1943, 1944]`
+- RL remained in builder mode.
+- Objective preset was restored to `balanced_default`.
+- Direct audit was run under the same config immediately after the RL benchmark.
+
+### Methodology Interpretation
+
+- The richer builder space changed the optimization outcome materially.
+- RL selected `staggered_center_heavy_6_none_mixed_balanced_loose_loose`, which is a new winner relative to the earlier `staggered_loose_loose` pattern.
+- That means the added controls are not cosmetic; they are expressive enough to change the preferred layout doctrine.
+
+Direct audit changed the diagnosis in an important way:
+- best train action: `staggered_center_heavy_6_none_mixed_balanced_loose_loose`
+  - train `expected_loss = 3.931911458333334`
+- best eval action: `rect_uniform_6x7_centered_alt_mixed_balanced_loose_loose`
+  - eval `expected_loss = 4.36471875`
+
+What this means:
+- RL is still beating both baselines under the configured objective.
+- But this is no longer a “winner is stable on both train and eval” story.
+- The new bottleneck is train/eval generalization inside the richer builder space, not missing geometric freedom.
+
+Practical implication:
+- the next improvement should not be more objective-preset sweeping right away
+- it should be benchmark hardening:
+  1. broader attack-profile diversity
+  2. stronger validation/eval gating
+  3. potentially separate validation-based final action selection rather than pure train-split ranking

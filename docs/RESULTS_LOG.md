@@ -563,3 +563,52 @@ Interpretation:
   - builder space too coarse
   - attack-profile library too narrow
   - both
+
+## Builder Expansion Check - `balanced_default` (2026-04-20)
+
+- Baseline run:
+  - `results/runs/baseline/20260420_230238_baseline_default`
+  - `objective.preset_name = balanced_default`
+  - `static_baseline.expected_loss = 6.437916666666666`
+  - `heuristic_baseline.expected_loss = 6.1704791666666665`
+  - `heuristic_baseline.expected_hits = 2.505833333333334`
+  - `heuristic_baseline.value_lost = 3.7259791666666664`
+- RL run:
+  - `results/runs/rl/20260420_230545_rl_default`
+  - `objective.preset_name = balanced_default`
+  - `evaluation.expected_loss = 4.934937500000001`
+  - `evaluation.expected_hits = 2.434166666666667`
+  - `evaluation.value_lost = 2.8684374999999998`
+  - `evaluation.expected_unique_ships_hit = 1.9383333333333332`
+  - `evaluation.expected_repeat_hits = 0.6408333333333334`
+  - `training.selected_action = staggered_center_heavy_6_none_mixed_balanced_loose_loose`
+  - `training.selected_action_by_q_value = staggered_center_heavy_6_centered_alt_high_value_center_standard_standard`
+  - `training.mode = builder`
+- RL action audit:
+  - `results/runs/rl_action_audit/20260420_235509_rl_default_action_audit`
+  - `best_train_action = staggered_center_heavy_6_none_mixed_balanced_loose_loose`
+  - `best_eval_action = rect_uniform_6x7_centered_alt_mixed_balanced_loose_loose`
+  - `best_eval_action.expected_loss = 4.36471875`
+
+### Conclusion
+
+- The bounded builder expansion mattered. RL no longer converged on the earlier `staggered_loose_loose` winner; it selected a new `center_heavy` staggered layout.
+- RL still beat both baselines on the configured defender objective:
+  - RL beat heuristic baseline by `1.2355416666666657` expected loss
+  - RL beat static baseline by `1.5029791666666652` expected loss
+- However, the direct audit no longer agrees on train and eval:
+  - best train action = `staggered_center_heavy_6_none_mixed_balanced_loose_loose`
+  - best eval action = `rect_uniform_6x7_centered_alt_mixed_balanced_loose_loose`
+- So this run validates the richer builder space, but it also reintroduced train/eval mismatch.
+
+### Interpretation Note
+
+- This is the first clear sign that the builder-space expansion is expressive enough to surface a different geometry doctrine.
+- The immediate bottleneck is no longer “RL has no freedom.”
+- The current issue is generalization:
+  - the selected action is strongest on the train split
+  - another action is better on eval under the same objective
+- That pushes the next work toward:
+  - broader attack-profile diversity
+  - harder validation/eval gates
+  - possibly a held-out validation split for final RL action selection

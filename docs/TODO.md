@@ -112,9 +112,14 @@ Last updated: 2026-04-20
   - add more attacker geometry/doctrine/range variety
   - add repeated eval seed sets or held-out harder-case pack
   - use the expanded profile library to test whether builder-mode RL still matches or exceeds heuristic baseline
-- [ ] Rerun mixed-convoy baseline + builder-mode RL + action audit after the builder expansion slice:
-  - confirm whether row pattern / row offset / class placement control changes the winning RL layout
-  - if the winner still does not move, treat attack-profile diversity as the primary next bottleneck
+- [x] Rerun mixed-convoy baseline + builder-mode RL + action audit after the builder expansion slice:
+  - row pattern / row offset / class placement control did change the winning RL layout
+  - RL now selects `staggered_center_heavy_6_none_mixed_balanced_loose_loose`
+  - direct audit no longer agrees on train and eval winner, so the next bottleneck is generalization rather than missing builder freedom
+- [ ] Add stronger validation/eval gating for RL builder runs:
+  - consider a held-out validation split for final action selection
+  - add repeated eval seed sets or a harder held-out profile pack
+  - use this to measure train/eval mismatch after builder-space changes
 - [ ] Phase 4 RL overhaul: replace tabular RL selector with stronger learner while preserving artifact schema.
 - [ ] Expand RL training threat diversity beyond the current narrow setup.
 - [ ] Add compact RL observation/state vector for geometry/composition/threat context.
