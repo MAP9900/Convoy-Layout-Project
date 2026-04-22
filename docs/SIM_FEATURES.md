@@ -225,7 +225,7 @@ Important boundary:
 
 ## 8.1 AttackProfile Library
 
-`DEFAULT_ATTACK_PROFILE_LIBRARY` currently contains 30 scaffolded profiles (`P01`..`P30`) with weighted sampling support.
+`DEFAULT_ATTACK_PROFILE_LIBRARY` currently contains 60 scaffolded profiles (`P01`..`P60`) with weighted sampling support.
 
 For faster library expansion, use:
 - `python -m experiments.generate_attack_profile_scaffold --start-index 31 --count 30 --output results/diag/generated_attack_profiles.json`

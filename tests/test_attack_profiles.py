@@ -13,9 +13,9 @@ from convoy_sim.attack_profiles import (
 
 
 def test_default_library_has_25_profiles() -> None:
-    assert len(DEFAULT_ATTACK_PROFILE_LIBRARY.profiles) == 30
+    assert len(DEFAULT_ATTACK_PROFILE_LIBRARY.profiles) == 60
     assert DEFAULT_ATTACK_PROFILE_LIBRARY.profile_ids()[0] == "P01"
-    assert DEFAULT_ATTACK_PROFILE_LIBRARY.profile_ids()[-1] == "P30"
+    assert DEFAULT_ATTACK_PROFILE_LIBRARY.profile_ids()[-1] == "P60"
 
 
 def test_placeholder_library_roundtrip() -> None:
