@@ -207,6 +207,7 @@ def _greedy_builder_state(
 def run_from_config(config: dict[str, Any], *, project_root: Path) -> Path:
     started_at = time.perf_counter()
     run_cfg = dict(config.get("run", {}))
+    runtime_cfg = dict(config.get("runtime", {}))
     sim_cfg = dict(config.get("simulation", {}))
     split_cfg = dict(config.get("splits", {}))
     train_cfg = dict(config.get("training", {}))
@@ -223,6 +224,9 @@ def run_from_config(config: dict[str, Any], *, project_root: Path) -> Path:
     eval_seeds = [int(x) for x in split_cfg.get("eval_seeds", [1])]
 
     n_trials_per_seed = int(sim_cfg.get("n_trials_per_seed", 50))
+    rl_ranking_n_trials_per_seed = int(
+        runtime_cfg.get("rl_ranking_n_trials_per_seed", n_trials_per_seed)
+    )
     t_max = float(sim_cfg.get("t_max", 400.0))
     noise_model = NoiseModel.from_dict(dict(sim_cfg.get("noise", {})))
     env_cfg = dict(sim_cfg.get("environment", {}))
@@ -380,7 +384,7 @@ def run_from_config(config: dict[str, Any], *, project_root: Path) -> Path:
             library=profile_lib,
             profile_ids=train_profile_ids,
             seeds=train_seeds,
-            n_trials_per_seed=n_trials_per_seed,
+            n_trials_per_seed=rl_ranking_n_trials_per_seed,
             t_max=t_max,
             noise_model=noise_model,
             env=env_profile,
@@ -502,6 +506,10 @@ def run_from_config(config: dict[str, Any], *, project_root: Path) -> Path:
         "training": training_summary,
         "selection": selection_summary,
         "evaluation": eval_summary,
+        "runtime_budgets": {
+            "rl_ranking_n_trials_per_seed": rl_ranking_n_trials_per_seed,
+            "final_eval_n_trials_per_seed": n_trials_per_seed,
+        },
         "timing": {
             "training_seconds": training_seconds,
             "train_ranking_seconds": train_ranking_seconds,
@@ -556,6 +564,10 @@ def run_from_config(config: dict[str, Any], *, project_root: Path) -> Path:
             "ship_movement_realism_enabled": bool(ship_movement_realism),
         },
         "objective": objective_to_dict(objective),
+        "runtime_budgets": {
+            "rl_ranking_n_trials_per_seed": rl_ranking_n_trials_per_seed,
+            "final_eval_n_trials_per_seed": n_trials_per_seed,
+        },
         "timing": {
             "training_seconds": training_seconds,
             "train_ranking_seconds": train_ranking_seconds,

@@ -64,6 +64,7 @@ def _render_layout_kwargs(layout_kwargs: dict[str, Any]) -> dict[str, Any]:
 def run_from_config(config: dict[str, Any], *, project_root: Path) -> Path:
     started_at = time.perf_counter()
     run_cfg = dict(config.get("run", {}))
+    runtime_cfg = dict(config.get("runtime", {}))
     sim_cfg = dict(config.get("simulation", {}))
     split_cfg = dict(config.get("splits", {}))
     baseline_cfg = dict(config.get("baseline", {}))
@@ -82,6 +83,9 @@ def run_from_config(config: dict[str, Any], *, project_root: Path) -> Path:
     eval_seeds = [int(x) for x in split_cfg.get("eval_seeds", [1])]
 
     n_trials_per_seed = int(sim_cfg.get("n_trials_per_seed", 50))
+    baseline_search_n_trials_per_seed = int(
+        runtime_cfg.get("baseline_search_n_trials_per_seed", n_trials_per_seed)
+    )
     t_max = float(sim_cfg.get("t_max", 400.0))
     noise_model = NoiseModel.from_dict(dict(sim_cfg.get("noise", {})))
     env_cfg = dict(sim_cfg.get("environment", {}))
@@ -136,7 +140,7 @@ def run_from_config(config: dict[str, Any], *, project_root: Path) -> Path:
             library=DEFAULT_ATTACK_PROFILE_LIBRARY,
             profile_ids=train_profile_ids,
             seeds=train_seeds,
-            n_trials_per_seed=n_trials_per_seed,
+            n_trials_per_seed=baseline_search_n_trials_per_seed,
             t_max=t_max,
             noise_model=noise_model,
             env=env,
@@ -192,6 +196,10 @@ def run_from_config(config: dict[str, Any], *, project_root: Path) -> Path:
         "static_baseline": static_summary,
         "heuristic_baseline": heuristic_summary,
         "winner": winner,
+        "runtime_budgets": {
+            "baseline_search_n_trials_per_seed": baseline_search_n_trials_per_seed,
+            "final_eval_n_trials_per_seed": n_trials_per_seed,
+        },
         "timing": {
             "static_eval_seconds": static_eval_seconds,
             "heuristic_search_seconds": heuristic_search_seconds,
@@ -254,6 +262,10 @@ def run_from_config(config: dict[str, Any], *, project_root: Path) -> Path:
             "ship_movement_realism_enabled": bool(ship_movement_realism),
         },
         "objective": objective_to_dict(objective),
+        "runtime_budgets": {
+            "baseline_search_n_trials_per_seed": baseline_search_n_trials_per_seed,
+            "final_eval_n_trials_per_seed": n_trials_per_seed,
+        },
         "timing": {
             "static_eval_seconds": static_eval_seconds,
             "heuristic_search_seconds": heuristic_search_seconds,

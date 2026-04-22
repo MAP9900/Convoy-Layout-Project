@@ -114,6 +114,9 @@ def test_run_baseline_suite_writes_canonical_artifacts(tmp_path: Path) -> None:
     assert metrics["winner"] in {"static_baseline", "heuristic_baseline"}
     assert REQUIRED_SUMMARY_KEYS <= set(metrics["static_baseline"])
     assert REQUIRED_SUMMARY_KEYS <= set(metrics["heuristic_baseline"])
+    assert {"baseline_search_n_trials_per_seed", "final_eval_n_trials_per_seed"} <= set(
+        metrics["runtime_budgets"]
+    )
     assert {
         "static_eval_seconds",
         "heuristic_search_seconds",
@@ -128,6 +131,7 @@ def test_run_baseline_suite_writes_canonical_artifacts(tmp_path: Path) -> None:
     assert "realism" in manifest
     assert manifest["realism"]["u_boat_mode_default"] == "moving"
     assert "objective" in manifest
+    assert "runtime_budgets" in manifest
 
 
 def test_run_rl_train_writes_canonical_artifacts_and_checkpoint(tmp_path: Path) -> None:
@@ -196,7 +200,7 @@ def test_run_rl_train_writes_canonical_artifacts_and_checkpoint(tmp_path: Path) 
     assert {row["model_name"] for row in rows} == {"rl_policy"}
 
     metrics = _read_json(run_dir / "metrics_summary.json")
-    assert {"training", "selection", "evaluation", "timing"} <= set(metrics)
+    assert {"training", "selection", "evaluation", "runtime_budgets", "timing"} <= set(metrics)
     assert {
         "episodes",
         "epsilon_final",
@@ -207,6 +211,9 @@ def test_run_rl_train_writes_canonical_artifacts_and_checkpoint(tmp_path: Path) 
     } <= set(metrics["training"])
     assert {"risk_cvar_weight", "complexity_tiebreak_tolerance", "ranked_train_actions"} <= set(metrics["selection"])
     assert REQUIRED_SUMMARY_KEYS <= set(metrics["evaluation"])
+    assert {"rl_ranking_n_trials_per_seed", "final_eval_n_trials_per_seed"} <= set(
+        metrics["runtime_budgets"]
+    )
     assert {
         "training_seconds",
         "train_ranking_seconds",
@@ -225,6 +232,7 @@ def test_run_rl_train_writes_canonical_artifacts_and_checkpoint(tmp_path: Path) 
     assert "selection" in manifest
     assert manifest["realism"]["u_boat_mode_default"] == "moving"
     assert "objective" in manifest
+    assert "runtime_budgets" in manifest
 
 
 def test_run_rl_train_builder_mode_writes_selection_metadata(tmp_path: Path) -> None:

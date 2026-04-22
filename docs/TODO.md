@@ -158,6 +158,29 @@ Last updated: 2026-04-20
 
 - [ ] Keep `docs/RL_PLAN.md` updated whenever RL state/action/reward/constraint design changes.
 
+## Performance Plan
+
+- [x] Phase 0: measure first
+  - add runtime instrumentation to baseline / RL / audit entrypoints
+  - write timing summaries into run artifacts before changing behavior
+- [x] Phase 1: cheap training, expensive final eval
+  - add reduced-budget baseline train-search evaluation
+  - add reduced-budget RL train-time action ranking
+  - keep final eval at full `n_trials_per_seed`
+- [x] Phase 2: validation funnel
+  - add cheap-first audit screening
+  - promote only top-K train/eval candidates to full-budget audit
+- [ ] Phase 3: early stopping / elimination
+  - stop evaluating clearly dominated candidates early during search/audit
+- [ ] Phase 4: caching
+  - cache deterministic builder materialization and seeded fleet realization
+- [ ] Phase 5: parallelize expensive independent work
+  - audit per-action evaluation
+  - heuristic baseline candidate evaluation
+- [ ] Phase 6: smarter validation-based final selection
+  - add held-out validation split for final RL action choice
+  - keep full eval only for shortlisted candidates
+
 ## Historical Realism Backlog
 
 - [x] Add bounded station-keeping randomness:

@@ -7,6 +7,9 @@ t_max = 400.0
 n_trials_per_seed = 40
 max_hits_per_torpedo = 1
 
+[runtime]
+baseline_search_n_trials_per_seed = 16
+
 [simulation.noise]
 sigma_heading_rad = 0.01
 sigma_launch_delay = 0.05

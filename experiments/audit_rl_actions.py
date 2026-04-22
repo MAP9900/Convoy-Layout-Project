@@ -41,6 +41,10 @@ _LAYOUTS = {
 }
 
 
+def _summary_objective_value(summary: dict[str, Any]) -> float:
+    return float(summary.get("expected_loss", summary["expected_hits"]))
+
+
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Audit configured RL actions directly on train/eval splits")
     parser.add_argument(
@@ -110,6 +114,8 @@ def _write_action_summary_csv(path: Path, rows: list[dict[str, Any]]) -> None:
         "expected_repeat_hits",
         "expected_loss",
         "CVaR_90_loss",
+        "summary_budget",
+        "n_trials_per_seed",
         "complexity_cost",
         "layout_type",
     ]
@@ -123,6 +129,7 @@ def _write_action_summary_csv(path: Path, rows: list[dict[str, Any]]) -> None:
 def run_from_config(config: dict[str, Any], *, project_root: Path) -> Path:
     started_at = time.perf_counter()
     run_cfg = dict(config.get("run", {}))
+    runtime_cfg = dict(config.get("runtime", {}))
     sim_cfg = dict(config.get("simulation", {}))
     split_cfg = dict(config.get("splits", {}))
     rl_cfg = dict(config.get("rl", {}))
@@ -139,6 +146,9 @@ def run_from_config(config: dict[str, Any], *, project_root: Path) -> Path:
     eval_seeds = [int(x) for x in split_cfg.get("eval_seeds", [1])]
 
     n_trials_per_seed = int(sim_cfg.get("n_trials_per_seed", 50))
+    audit_screen_n_trials_per_seed = int(
+        runtime_cfg.get("audit_screen_n_trials_per_seed", n_trials_per_seed)
+    )
     t_max = float(sim_cfg.get("t_max", 400.0))
     noise_model = NoiseModel.from_dict(dict(sim_cfg.get("noise", {})))
     env_cfg = dict(sim_cfg.get("environment", {}))
@@ -156,6 +166,13 @@ def run_from_config(config: dict[str, Any], *, project_root: Path) -> Path:
     actions, builder_cfg = _resolve_candidate_actions(
         rl_cfg,
         ship_movement_realism=ship_movement_realism or None,
+    )
+    audit_top_k_full_eval = max(
+        1,
+        min(
+            int(runtime_cfg.get("audit_top_k_full_eval", len(actions))),
+            len(actions),
+        ),
     )
 
     plot_xlim = tuple(float(x) for x in plot_cfg["xlim"]) if "xlim" in plot_cfg else (-5000.0, 5000.0)
@@ -179,7 +196,7 @@ def run_from_config(config: dict[str, Any], *, project_root: Path) -> Path:
             library=DEFAULT_ATTACK_PROFILE_LIBRARY,
             profile_ids=train_profile_ids,
             seeds=train_seeds,
-            n_trials_per_seed=n_trials_per_seed,
+            n_trials_per_seed=audit_screen_n_trials_per_seed,
             t_max=t_max,
             noise_model=noise_model,
             env=env_profile,
@@ -193,58 +210,16 @@ def run_from_config(config: dict[str, Any], *, project_root: Path) -> Path:
             library=DEFAULT_ATTACK_PROFILE_LIBRARY,
             profile_ids=eval_profile_ids,
             seeds=eval_seeds,
-            n_trials_per_seed=n_trials_per_seed,
+            n_trials_per_seed=audit_screen_n_trials_per_seed,
             t_max=t_max,
             noise_model=noise_model,
             env=env_profile,
             max_hits_per_torpedo=max_hits_per_torpedo,
             objective=objective,
         )
-        all_profile_rows.extend(train_rows)
-        all_profile_rows.extend(eval_rows)
-
         train_summary = summarize_profile_rows(train_rows)
         eval_summary = summarize_profile_rows(eval_rows)
         layout_type = getattr(action.layout_fn, "__name__", str(action.layout_fn))
-
-        summary_rows.append(
-            {
-                "action_name": action.name,
-                "split": "train",
-                "profiles": train_summary["profiles"],
-                "samples": train_summary["samples"],
-                "expected_hits": train_summary["expected_hits"],
-                "CVaR_90": train_summary["CVaR_90"],
-                "VaR_90": train_summary["VaR_90"],
-                "p_hit_ge_1": train_summary["p_hit_ge_1"],
-                "value_lost": train_summary["value_lost"],
-                "expected_unique_ships_hit": train_summary["expected_unique_ships_hit"],
-                "expected_repeat_hits": train_summary["expected_repeat_hits"],
-                "expected_loss": train_summary["expected_loss"],
-                "CVaR_90_loss": train_summary["CVaR_90_loss"],
-                "complexity_cost": action.complexity_cost,
-                "layout_type": layout_type,
-            }
-        )
-        summary_rows.append(
-            {
-                "action_name": action.name,
-                "split": "eval",
-                "profiles": eval_summary["profiles"],
-                "samples": eval_summary["samples"],
-                "expected_hits": eval_summary["expected_hits"],
-                "CVaR_90": eval_summary["CVaR_90"],
-                "VaR_90": eval_summary["VaR_90"],
-                "p_hit_ge_1": eval_summary["p_hit_ge_1"],
-                "value_lost": eval_summary["value_lost"],
-                "expected_unique_ships_hit": eval_summary["expected_unique_ships_hit"],
-                "expected_repeat_hits": eval_summary["expected_repeat_hits"],
-                "expected_loss": eval_summary["expected_loss"],
-                "CVaR_90_loss": eval_summary["CVaR_90_loss"],
-                "complexity_cost": action.complexity_cost,
-                "layout_type": layout_type,
-            }
-        )
 
         ships = action.layout_fn(**_render_layout_kwargs(action.layout_kwargs))
         plot_path = figures_dir / f"{action.name}.png"
@@ -268,8 +243,11 @@ def run_from_config(config: dict[str, Any], *, project_root: Path) -> Path:
                     k: (v.tolist() if isinstance(v, np.ndarray) else v)
                     for k, v in action.layout_kwargs.items()
                 },
+                "_train_rows": train_rows,
+                "_eval_rows": eval_rows,
                 "train_summary": train_summary,
                 "eval_summary": eval_summary,
+                "summary_budget": "screen_only",
                 "figure": str(plot_path.relative_to(project_root)) if plot_written else None,
             }
         )
@@ -282,13 +260,119 @@ def run_from_config(config: dict[str, Any], *, project_root: Path) -> Path:
         )
     evaluation_seconds = time.perf_counter() - evaluation_started
 
-    best_train = min(action_reports, key=lambda item: float(item["train_summary"].get("expected_loss", item["train_summary"]["expected_hits"])))
-    best_eval = min(action_reports, key=lambda item: float(item["eval_summary"].get("expected_loss", item["eval_summary"]["expected_hits"])))
+    train_sorted = sorted(action_reports, key=lambda item: _summary_objective_value(item["train_summary"]))
+    eval_sorted = sorted(action_reports, key=lambda item: _summary_objective_value(item["eval_summary"]))
+    promoted_names = {
+        item["name"] for item in train_sorted[:audit_top_k_full_eval]
+    } | {
+        item["name"] for item in eval_sorted[:audit_top_k_full_eval]
+    }
+
+    if audit_screen_n_trials_per_seed < n_trials_per_seed:
+        full_eval_started = time.perf_counter()
+        for action, report in zip(actions, action_reports, strict=True):
+            if report["name"] not in promoted_names:
+                continue
+            train_rows = evaluate_layout_over_profiles(
+                model_name=f"{action.name}_train",
+                layout_fn=action.layout_fn,
+                layout_kwargs=action.layout_kwargs,
+                library=DEFAULT_ATTACK_PROFILE_LIBRARY,
+                profile_ids=train_profile_ids,
+                seeds=train_seeds,
+                n_trials_per_seed=n_trials_per_seed,
+                t_max=t_max,
+                noise_model=noise_model,
+                env=env_profile,
+                max_hits_per_torpedo=max_hits_per_torpedo,
+                objective=objective,
+            )
+            eval_rows = evaluate_layout_over_profiles(
+                model_name=f"{action.name}_eval",
+                layout_fn=action.layout_fn,
+                layout_kwargs=action.layout_kwargs,
+                library=DEFAULT_ATTACK_PROFILE_LIBRARY,
+                profile_ids=eval_profile_ids,
+                seeds=eval_seeds,
+                n_trials_per_seed=n_trials_per_seed,
+                t_max=t_max,
+                noise_model=noise_model,
+                env=env_profile,
+                max_hits_per_torpedo=max_hits_per_torpedo,
+                objective=objective,
+            )
+            report["_train_rows"] = train_rows
+            report["_eval_rows"] = eval_rows
+            report["train_summary"] = summarize_profile_rows(train_rows)
+            report["eval_summary"] = summarize_profile_rows(eval_rows)
+            report["summary_budget"] = "full"
+        full_eval_seconds = time.perf_counter() - full_eval_started
+    else:
+        full_eval_seconds = 0.0
+        for report in action_reports:
+            report["summary_budget"] = "full"
+
+    for report in action_reports:
+        all_profile_rows.extend(report["_train_rows"])
+        all_profile_rows.extend(report["_eval_rows"])
+        summary_rows.append(
+            {
+                "action_name": report["name"],
+                "split": "train",
+                "profiles": report["train_summary"]["profiles"],
+                "samples": report["train_summary"]["samples"],
+                "expected_hits": report["train_summary"]["expected_hits"],
+                "CVaR_90": report["train_summary"]["CVaR_90"],
+                "VaR_90": report["train_summary"]["VaR_90"],
+                "p_hit_ge_1": report["train_summary"]["p_hit_ge_1"],
+                "value_lost": report["train_summary"]["value_lost"],
+                "expected_unique_ships_hit": report["train_summary"]["expected_unique_ships_hit"],
+                "expected_repeat_hits": report["train_summary"]["expected_repeat_hits"],
+                "expected_loss": report["train_summary"]["expected_loss"],
+                "CVaR_90_loss": report["train_summary"]["CVaR_90_loss"],
+                "summary_budget": report["summary_budget"],
+                "n_trials_per_seed": (
+                    n_trials_per_seed if report["summary_budget"] == "full" else audit_screen_n_trials_per_seed
+                ),
+                "complexity_cost": report["complexity_cost"],
+                "layout_type": report["layout_type"],
+            }
+        )
+        summary_rows.append(
+            {
+                "action_name": report["name"],
+                "split": "eval",
+                "profiles": report["eval_summary"]["profiles"],
+                "samples": report["eval_summary"]["samples"],
+                "expected_hits": report["eval_summary"]["expected_hits"],
+                "CVaR_90": report["eval_summary"]["CVaR_90"],
+                "VaR_90": report["eval_summary"]["VaR_90"],
+                "p_hit_ge_1": report["eval_summary"]["p_hit_ge_1"],
+                "value_lost": report["eval_summary"]["value_lost"],
+                "expected_unique_ships_hit": report["eval_summary"]["expected_unique_ships_hit"],
+                "expected_repeat_hits": report["eval_summary"]["expected_repeat_hits"],
+                "expected_loss": report["eval_summary"]["expected_loss"],
+                "CVaR_90_loss": report["eval_summary"]["CVaR_90_loss"],
+                "summary_budget": report["summary_budget"],
+                "n_trials_per_seed": (
+                    n_trials_per_seed if report["summary_budget"] == "full" else audit_screen_n_trials_per_seed
+                ),
+                "complexity_cost": report["complexity_cost"],
+                "layout_type": report["layout_type"],
+            }
+        )
+
+    best_train = min(action_reports, key=lambda item: _summary_objective_value(item["train_summary"]))
+    best_eval = min(action_reports, key=lambda item: _summary_objective_value(item["eval_summary"]))
+    serializable_action_reports = [
+        {k: v for k, v in report.items() if not k.startswith("_")}
+        for report in action_reports
+    ]
 
     resolved = {
         "config": config,
         "resolved": {
-            "actions": action_reports,
+            "actions": serializable_action_reports,
             "best_train_action": best_train["name"],
             "best_eval_action": best_eval["name"],
             "builder": builder_cfg.to_dict() if builder_cfg is not None and builder_cfg.enabled else None,
@@ -313,9 +397,15 @@ def run_from_config(config: dict[str, Any], *, project_root: Path) -> Path:
             "CVaR_90_loss": best_eval["eval_summary"].get("CVaR_90_loss"),
             "train_expected_hits": best_eval["train_summary"]["expected_hits"],
         },
-        "actions": action_reports,
+        "actions": serializable_action_reports,
+        "runtime_budgets": {
+            "audit_screen_n_trials_per_seed": audit_screen_n_trials_per_seed,
+            "audit_top_k_full_eval": audit_top_k_full_eval,
+            "final_eval_n_trials_per_seed": n_trials_per_seed,
+        },
         "timing": {
             "evaluation_seconds": evaluation_seconds,
+            "full_eval_seconds": full_eval_seconds,
             "total_seconds": time.perf_counter() - started_at,
             "candidate_action_count": len(actions),
             "per_action_seconds": action_timing_rows,
@@ -352,8 +442,14 @@ def run_from_config(config: dict[str, Any], *, project_root: Path) -> Path:
             "mode": "builder" if builder_cfg is not None and builder_cfg.enabled else "flat_action_menu",
         },
         "objective": objective_to_dict(objective),
+        "runtime_budgets": {
+            "audit_screen_n_trials_per_seed": audit_screen_n_trials_per_seed,
+            "audit_top_k_full_eval": audit_top_k_full_eval,
+            "final_eval_n_trials_per_seed": n_trials_per_seed,
+        },
         "timing": {
             "evaluation_seconds": evaluation_seconds,
+            "full_eval_seconds": full_eval_seconds,
             "total_seconds": time.perf_counter() - started_at,
             "candidate_action_count": len(actions),
         },
