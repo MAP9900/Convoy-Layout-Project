@@ -227,6 +227,11 @@ Important boundary:
 
 `DEFAULT_ATTACK_PROFILE_LIBRARY` currently contains 30 scaffolded profiles (`P01`..`P30`) with weighted sampling support.
 
+For faster library expansion, use:
+- `python -m experiments.generate_attack_profile_scaffold --start-index 31 --count 30 --output results/diag/generated_attack_profiles.py`
+- default output is paste-ready Python `AttackProfile(...)` entries; `--format json` emits a machine-readable payload instead
+- generated profiles default to a moving U-boat with `u_boat_initial_speed_mps = 2.0`
+
 Profile supports:
 - spread mode: `fan` or `parallel`
 - torpedo count, speed, run time
@@ -245,6 +250,10 @@ Fields include:
 - launch reference time
 - motion legs (duration/heading/speed tuples)
 - optional turn-rate / accel bounds
+
+Canonical V2 baseline/RL runs currently stamp `u_boat_mode_default=moving` in their manifests. If a profile omits explicit motion overrides, it still uses:
+- `u_boat_mode = "moving"`
+- `u_boat_initial_speed_mps = 2.0`
 
 ## 8.3 Bow-Launch Realism (Current)
 

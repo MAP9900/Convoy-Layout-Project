@@ -262,6 +262,17 @@ def test_default_library_profiles_no_longer_depend_on_legacy_bearing_compat() ->
     assert all(not profile.uses_legacy_bearing_compat() for profile in DEFAULT_ATTACK_PROFILE_LIBRARY.profiles)
 
 
+def test_default_library_profiles_pin_current_realism_defaults_explicitly() -> None:
+    assert all(profile.spread_doctrine == "uniform_divergent" for profile in DEFAULT_ATTACK_PROFILE_LIBRARY.profiles)
+    assert all(profile.u_boat_mode == "moving" for profile in DEFAULT_ATTACK_PROFILE_LIBRARY.profiles)
+    assert all(np.isclose(profile.u_boat_initial_speed_mps, 2.0) for profile in DEFAULT_ATTACK_PROFILE_LIBRARY.profiles)
+    assert all(np.isclose(profile.sub_length_m, 67.0) for profile in DEFAULT_ATTACK_PROFILE_LIBRARY.profiles)
+    assert all(np.isclose(profile.sub_beam_m, 6.5) for profile in DEFAULT_ATTACK_PROFILE_LIBRARY.profiles)
+    assert all(profile.launch_from == "bow" for profile in DEFAULT_ATTACK_PROFILE_LIBRARY.profiles)
+    assert all(np.isclose(profile.max_bow_offset_deg, 15.0) for profile in DEFAULT_ATTACK_PROFILE_LIBRARY.profiles)
+    assert all(np.isclose(profile.gyro_straight_run_m, 30.0) for profile in DEFAULT_ATTACK_PROFILE_LIBRARY.profiles)
+
+
 @pytest.mark.parametrize(
     ("spread_doctrine", "spread_rad", "per_offsets"),
     [
