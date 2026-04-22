@@ -849,3 +849,60 @@ Practical implication:
   1. broader attack-profile diversity
   2. stronger validation/eval gating
   3. potentially separate validation-based final action selection rather than pure train-split ranking
+
+## Runtime Optimization Check 1 - Budget Staging (2026-04-22)
+
+### Run References
+
+- Baseline run dir: `results/runs/baseline/20260422_153413_baseline_default`
+- RL run dir: `results/runs/rl/20260422_153544_rl_default`
+- Audit run dir: `results/runs/rl_action_audit/20260422_154511_rl_default_action_audit`
+
+### What Changed In This Check
+
+- This check introduced runtime-budget staging while preserving full final benchmark eval:
+  - baseline heuristic train-search used `runtime.baseline_search_n_trials_per_seed = 16`
+  - RL train-time action ranking used `runtime.rl_ranking_n_trials_per_seed = 8`
+  - audit used a staged funnel:
+    - `runtime.audit_screen_n_trials_per_seed = 8`
+    - `runtime.audit_top_k_full_eval = 24`
+  - final eval still used `simulation.n_trials_per_seed = 40`
+
+### Config / Methodology Notes
+
+- The selected RL policy and the direct-audit winners were unchanged from the prior builder-expansion check:
+  - RL selected `staggered_center_heavy_6_none_mixed_balanced_loose_loose`
+  - best train action remained `staggered_center_heavy_6_none_mixed_balanced_loose_loose`
+  - best eval action remained `rect_uniform_6x7_centered_alt_mixed_balanced_loose_loose`
+- Defender-objective outcomes were also unchanged for the compared runs:
+  - heuristic baseline `expected_loss = 6.1704791666666665`
+  - RL `expected_loss = 4.934937500000001`
+
+### Timing Outcome
+
+- Baseline:
+  - before: about `184.5s`
+  - after: about `90.4s`
+  - main savings came from heuristic train-search
+- RL:
+  - before: about `2746.5s`
+  - after: about `565.5s`
+  - training loop was never the bottleneck
+  - main savings came from reducing train-time action ranking cost
+- Audit:
+  - before: about `4018.9s`
+  - after: about `1795.4s`
+  - screening all 144 actions cheaply, then promoting top-K, cut wall-clock substantially
+
+### Methodology Interpretation
+
+- This runtime slice worked as intended:
+  - speed improved materially
+  - current benchmark conclusions did not change
+- The timing data confirms the real cost structure:
+  - simulation-heavy candidate ranking dominates RL runtime
+  - the epsilon-greedy/tabular update loop is negligible by comparison
+- So the next performance work should continue to target:
+  1. candidate evaluation budgets
+  2. staged validation/eval funnels
+  3. only later, caching or parallel audit/baseline evaluation

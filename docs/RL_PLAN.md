@@ -292,6 +292,11 @@ Use this as the running checklist when changing RL experiments.
   - `evaluation_seconds`
   - `per_action_seconds`
   - `total_seconds`
+- runtime budget knobs:
+  - `baseline_search_n_trials_per_seed`
+  - `rl_ranking_n_trials_per_seed`
+  - `audit_screen_n_trials_per_seed`
+  - `audit_top_k_full_eval`
 
 ### RL Builder Knobs
 
@@ -335,6 +340,19 @@ For runtime work specifically:
 - add instrumentation first
 - rerun once
 - optimize the biggest measured bucket, not the guessed one
+
+Current canonical runtime behavior:
+- final benchmark eval still uses full `simulation.n_trials_per_seed`
+- RL train-time ranking can use a cheaper budget via `runtime.rl_ranking_n_trials_per_seed`
+- baseline heuristic train-search can use a cheaper budget via `runtime.baseline_search_n_trials_per_seed`
+- RL action audit now defaults to a staged funnel:
+  - screen all actions at `runtime.audit_screen_n_trials_per_seed`
+  - promote top-K train/eval candidates to full-budget reevaluation via `runtime.audit_top_k_full_eval`
+
+To restore the old full-fidelity audit behavior:
+- set `runtime.audit_screen_n_trials_per_seed = simulation.n_trials_per_seed`
+- set `runtime.audit_top_k_full_eval` to the full candidate-action count
+  - for the current canonical builder space, that is `144`
 
 ### Longer-Term Reward Additions
 

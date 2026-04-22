@@ -130,10 +130,14 @@ Last updated: 2026-04-20
   - RL bottleneck: train-time action ranking over 144 builder actions (`~2735s`), not the tabular episode loop (`~2.5s`)
   - audit total: about `4019s`
   - audit bottleneck: full cross-product evaluation of 144 actions (`~27.9s` per action on average)
-- [ ] Phase 1 runtime optimization:
+- [x] Phase 1 runtime optimization:
   - reduce train-time ranking cost before touching RL episode logic
   - add cheaper training-time evaluation budget for RL action ranking
   - add staged/top-K audit funnel before evaluating all candidates at full cost
+- [ ] Phase 2 runtime optimization:
+  - add stronger validation-based final action selection
+  - consider a cheap validation pass before full eval
+  - use this to attack the current train/eval mismatch in the richer builder space
 - [ ] Phase 4 RL overhaul: replace tabular RL selector with stronger learner while preserving artifact schema.
 - [ ] Expand RL training threat diversity beyond the current narrow setup.
 - [ ] Add compact RL observation/state vector for geometry/composition/threat context.

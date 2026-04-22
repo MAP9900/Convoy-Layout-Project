@@ -612,3 +612,27 @@ Interpretation:
   - broader attack-profile diversity
   - harder validation/eval gates
   - possibly a held-out validation split for final RL action selection
+
+### Runtime Optimization Note (added 2026-04-22)
+
+- Runtime-budget staging was then applied without changing the substantive result:
+  - baseline run: `results/runs/baseline/20260422_153413_baseline_default`
+  - RL run: `results/runs/rl/20260422_153544_rl_default`
+  - audit run: `results/runs/rl_action_audit/20260422_154511_rl_default_action_audit`
+- Outcome stability:
+  - heuristic baseline remained at `expected_loss = 6.1704791666666665`
+  - RL remained at `expected_loss = 4.934937500000001`
+  - RL still selected `staggered_center_heavy_6_none_mixed_balanced_loose_loose`
+  - audit still found:
+    - best train action = `staggered_center_heavy_6_none_mixed_balanced_loose_loose`
+    - best eval action = `rect_uniform_6x7_centered_alt_mixed_balanced_loose_loose`
+- Runtime reduction:
+  - baseline total dropped from about `184.5s` to about `90.4s`
+  - RL total dropped from about `2746.5s` to about `565.5s`
+  - audit total dropped from about `4018.9s` to about `1795.4s`
+
+Interpretation:
+- The first runtime-optimization slice preserved the current benchmark conclusions.
+- The next bottleneck remains methodological rather than computational:
+  - better validation/eval gating
+  - broader attack-profile diversity

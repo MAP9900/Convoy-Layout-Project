@@ -42,7 +42,7 @@ Primary simulation feature reference:
 
 - `experiments/run_baseline_suite.py`: Canonical baseline runner (config-first, artifact schema output). (`canonical`)
 - `experiments/run_rl_train.py`: Canonical RL runner (config-first train/eval + checkpoint output; supports flat action menu or builder mode). (`canonical`)
-- `experiments/audit_rl_actions.py`: Direct audit of configured RL actions or builder-materialized layouts on train/eval splits. (`diagnostic`)
+- `experiments/audit_rl_actions.py`: Direct audit of configured RL actions or builder-materialized layouts on train/eval splits. By default this now uses a staged screen-plus-promote funnel controlled by the RL `[runtime]` block. (`diagnostic`)
 - `experiments/generate_run_config.py`: Reproducible full TOML generator for baseline/RL run configs and profile splits. (`canonical`)
 - `experiments/audit_attack_profiles.py`: Attack-profile geometry plausibility audit. (`diagnostic`)
 - `experiments/render_attack_profile_previews.py`: Profile frame rendering + audit/hit CSV outputs. (`diagnostic`)
@@ -161,6 +161,22 @@ Primary simulation feature reference:
 - `docs/RESULTS_LOG.md` (`canonical`)
 - `docs/OPTIMIZATION_LOG.md` (`canonical`)
 - `docs/SCRIPTS.md` (`canonical`)
+
+## Runtime Budget Notes
+
+- Final benchmark eval still uses full `simulation.n_trials_per_seed`.
+- Baseline heuristic train-search can use a cheaper budget with:
+  - `runtime.baseline_search_n_trials_per_seed`
+- RL train-time action ranking can use a cheaper budget with:
+  - `runtime.rl_ranking_n_trials_per_seed`
+- RL action audit now defaults to a staged funnel:
+  - screen all actions with `runtime.audit_screen_n_trials_per_seed`
+  - rerun only top-K train/eval candidates at full budget with `runtime.audit_top_k_full_eval`
+
+To force the old full-fidelity audit behavior:
+- set `runtime.audit_screen_n_trials_per_seed = simulation.n_trials_per_seed`
+- set `runtime.audit_top_k_full_eval` to the full action count
+  - current canonical builder count: `144`
 
 ## Lifecycle Tag Legend
 
