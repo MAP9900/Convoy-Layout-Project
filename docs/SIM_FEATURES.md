@@ -228,9 +228,11 @@ Important boundary:
 `DEFAULT_ATTACK_PROFILE_LIBRARY` currently contains 30 scaffolded profiles (`P01`..`P30`) with weighted sampling support.
 
 For faster library expansion, use:
-- `python -m experiments.generate_attack_profile_scaffold --start-index 31 --count 30 --output results/diag/generated_attack_profiles.py`
-- default output is paste-ready Python `AttackProfile(...)` entries; `--format json` emits a machine-readable payload instead
-- generated profiles default to a moving U-boat with `u_boat_initial_speed_mps = 2.0`
+- `python -m experiments.generate_attack_profile_scaffold --start-index 31 --count 30 --output results/diag/generated_attack_profiles.json`
+- default output is a machine-readable JSON payload; `--format python` emits paste-ready `AttackProfile(...)` entries instead
+- generated profiles always keep the modern explicit schema
+- generated profiles sample `u_boat_initial_speed_mps` from `1.0` to `2.0` m/s in `0.1` steps
+- generated profiles are filtered through the existing geometry plausibility audit against the selected convoy profile before being emitted
 
 Profile supports:
 - spread mode: `fan` or `parallel`

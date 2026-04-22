@@ -766,7 +766,7 @@ def build_scaffolded_attack_profile_library() -> AttackProfileLibrary:
         _scaffolded_fan_profile(profile_id="P17", name="profile_17", u_pos=(-500.0, -1900.0), base_bearing_rad=1.309, spread_rad=0.1047, launch_delay_s=1.2, salvo_interval_s=2.0, u_boat_initial_speed_mps=1.0),
         _scaffolded_fan_profile(profile_id="P18", name="profile_18", u_pos=(250.0, -2500.0), base_bearing_rad=1.6705, spread_rad=0.0873, launch_delay_s=1.0, salvo_interval_s=2.0, u_boat_initial_speed_mps=1.7),
         _scaffolded_fan_profile(profile_id="P19", name="profile_19", u_pos=(-150.0, 1900.0), base_bearing_rad=4.88692, spread_rad=0.0873, launch_delay_s=2.5, salvo_interval_s=2.0, u_boat_initial_speed_mps=1.4),
-        _scaffolded_fan_profile(profile_id="P20", name="profile_20", u_pos=(350.0, -2100.0), base_bearing_rad=1.7360, spread_rad=0.0698, launch_delay_s=1.9, salvo_interval_s=2.0, u_boat_initial_speed_mps=1.8,
+        _scaffolded_fan_profile(profile_id="P20", name="profile_20", u_pos=(350.0, -2100.0), base_bearing_rad=1.7360, spread_rad=0.0698, launch_delay_s=1.9, salvo_interval_s=2.0, u_boat_initial_speed_mps=1.8),
         _scaffolded_fan_profile(profile_id="P21", name="profile_21", u_pos=(0.0, 1100.0), base_bearing_rad=4.7124, spread_rad=0.1047, launch_delay_s=1.4, salvo_interval_s=2.0, u_boat_initial_speed_mps=1.8),
         _scaffolded_fan_profile(profile_id="P22", name="profile_22", u_pos=(-2800.0, 200.0), base_bearing_rad=6.19592, spread_rad=0.1047, launch_delay_s=0.9, salvo_interval_s=3.0, u_boat_initial_speed_mps=2.0),
         _scaffolded_fan_profile(profile_id="P23", name="profile_23", u_pos=(-3200.0, 900.0), base_bearing_rad=6.0090, spread_rad=0.0873, launch_delay_s=0.5, salvo_interval_s=3.0, u_boat_initial_speed_mps=1.6),

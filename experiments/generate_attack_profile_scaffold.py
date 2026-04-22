@@ -9,6 +9,8 @@ from typing import Sequence
 import numpy as np
 
 from convoy_sim.attack_profiles import AttackProfile
+from convoy_sim.profile_audit import AuditThresholds, audit_attack_profiles
+from scenarios.convoy_profiles import get_convoy_layout_profile, list_convoy_layout_profiles
 
 
 @dataclass(frozen=True)
@@ -106,10 +108,11 @@ SALVO_PRESETS: tuple[SalvoPreset, ...] = (
 TORPEDO_SPEED_MPS = 15.4333
 TORPEDO_MAX_RUN_TIME_S = 486.0
 DEFAULT_WEIGHT = 1.0
-DEFAULT_U_BOAT_SPEED_MPS = 2.0
+DEFAULT_U_BOAT_SPEED_OPTIONS_MPS = tuple(round(v, 1) for v in np.arange(1.0, 2.01, 0.1))
 DEFAULT_SUB_LENGTH_M = 67.0
 DEFAULT_SUB_BEAM_M = 6.5
 DEFAULT_MAX_BOW_OFFSET_DEG = 15.0
+DEFAULT_ACCEPTED_LABELS = ("credible_hit_threat", "credible_near_miss")
 
 
 def _wrap_angle_rad(angle: float) -> float:
@@ -131,7 +134,10 @@ def generate_attack_profile_scaffolds(
     count: int = 30,
     seed: int = 1945,
     weight: float = DEFAULT_WEIGHT,
-) -> list[AttackProfile]:
+    convoy_profile: str = "convoy_layout_1",
+    accepted_labels: Sequence[str] = DEFAULT_ACCEPTED_LABELS,
+    thresholds: AuditThresholds | None = None,
+) -> tuple[list[AttackProfile], list[dict[str, object]]]:
     if start_index <= 0:
         raise ValueError("start_index must be positive")
     if count <= 0:
@@ -140,16 +146,31 @@ def generate_attack_profile_scaffolds(
         raise ValueError("weight must be non-negative")
 
     specs = _all_profile_specs()
-    if count > len(specs):
-        raise ValueError(
-            f"count={count} exceeds available scaffold combinations ({len(specs)}); add more presets first"
-        )
-
     rng = np.random.default_rng(seed)
-    order = list(rng.permutation(len(specs))[:count])
+    ships = get_convoy_layout_profile(convoy_profile).build_ships()
+    accepted = set(accepted_labels)
+    if not accepted:
+        raise ValueError("accepted_labels must not be empty")
+
+    max_attempts = max(count * 20, len(specs) * 2)
     profiles: list[AttackProfile] = []
-    for idx, spec_index in enumerate(order, start=start_index):
-        approach, range_preset, salvo = specs[int(spec_index)]
+    accepted_audit_rows: list[dict[str, object]] = []
+    used_signatures: set[tuple[str, str, str, float]] = set()
+    next_index = start_index
+    attempts = 0
+
+    while len(profiles) < count:
+        if attempts >= max_attempts:
+            raise ValueError(
+                f"Unable to generate {count} plausible profiles after {attempts} attempts; "
+                "broaden presets or relax audit thresholds."
+            )
+        attempts += 1
+        approach, range_preset, salvo = specs[int(rng.integers(0, len(specs)))]
+        u_boat_initial_speed_mps = float(rng.choice(DEFAULT_U_BOAT_SPEED_OPTIONS_MPS))
+        signature = (approach.name, range_preset.name, salvo.name, u_boat_initial_speed_mps)
+        if signature in used_signatures:
+            continue
         angle_rad = float(np.deg2rad(approach.angle_deg + rng.uniform(-4.0, 4.0)))
         radius_m = float(range_preset.radius_m + rng.uniform(-180.0, 180.0))
         u_pos = (
@@ -159,8 +180,8 @@ def generate_attack_profile_scaffolds(
         bearing_to_origin = float(np.arctan2(-u_pos[1], -u_pos[0]))
         base_bearing_rad = _wrap_angle_rad(bearing_to_origin + float(np.deg2rad(rng.uniform(-4.0, 4.0))))
         profile = AttackProfile(
-            profile_id=f"P{idx:02d}",
-            name=f"profile_{idx:02d}_{approach.name}_{range_preset.name}_{salvo.name}",
+            profile_id=f"P{next_index:02d}",
+            name=f"profile_{next_index:02d}_{approach.name}_{range_preset.name}_{salvo.name}",
             weight=float(weight),
             mode="fan",
             u_pos=u_pos,
@@ -175,15 +196,21 @@ def generate_attack_profile_scaffolds(
             salvo_interval_s=float(salvo.salvo_interval_s),
             u_boat_mode="moving",
             u_boat_initial_heading_rad=base_bearing_rad,
-            u_boat_initial_speed_mps=DEFAULT_U_BOAT_SPEED_MPS,
+            u_boat_initial_speed_mps=u_boat_initial_speed_mps,
             sub_length_m=DEFAULT_SUB_LENGTH_M,
             sub_beam_m=DEFAULT_SUB_BEAM_M,
             launch_from="bow",
             max_bow_offset_deg=DEFAULT_MAX_BOW_OFFSET_DEG,
             gyro_straight_run_m=float(salvo.gyro_straight_run_m),
         )
+        audit_row = audit_attack_profiles([profile], ships, thresholds=thresholds)[0]
+        if str(audit_row["suggested_label"]) not in accepted:
+            continue
+        used_signatures.add(signature)
         profiles.append(profile)
-    return profiles
+        accepted_audit_rows.append(audit_row)
+        next_index += 1
+    return profiles, accepted_audit_rows
 
 
 def _format_float(value: float) -> str:
@@ -250,8 +277,25 @@ def render_profiles_as_python(profiles: Sequence[AttackProfile]) -> str:
     return "\n".join(lines)
 
 
-def render_profiles_as_json(profiles: Sequence[AttackProfile]) -> str:
-    payload = {"profiles": [profile.to_dict() for profile in profiles]}
+def render_profiles_as_json(
+    profiles: Sequence[AttackProfile],
+    *,
+    audit_rows: Sequence[dict[str, object]],
+    seed: int,
+    convoy_profile: str,
+    accepted_labels: Sequence[str],
+) -> str:
+    payload = {
+        "generator_meta": {
+            "seed": int(seed),
+            "convoy_profile": str(convoy_profile),
+            "accepted_labels": [str(label) for label in accepted_labels],
+            "u_boat_initial_speed_mps_options": [float(v) for v in DEFAULT_U_BOAT_SPEED_OPTIONS_MPS],
+            "profile_count": len(profiles),
+        },
+        "profiles": [profile.to_dict() for profile in profiles],
+        "audit_rows": list(audit_rows),
+    }
     return json.dumps(payload, indent=2) + "\n"
 
 
@@ -266,8 +310,20 @@ def _parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--format",
         choices=("python", "json"),
-        default="python",
-        help="Output format. `python` is paste-friendly for attack_profiles.py; `json` is machine-friendly.",
+        default="json",
+        help="Output format. `json` is the primary dataset artifact; `python` is paste-friendly for attack_profiles.py.",
+    )
+    parser.add_argument(
+        "--convoy-profile",
+        choices=list_convoy_layout_profiles(),
+        default="convoy_layout_1",
+        help="Convoy profile used for generation-time geometry plausibility audit.",
+    )
+    parser.add_argument(
+        "--accepted-labels",
+        type=str,
+        default="credible_hit_threat,credible_near_miss",
+        help="Comma-separated audit labels accepted during generation.",
     )
     parser.add_argument(
         "--output",
@@ -280,14 +336,23 @@ def _parse_args() -> argparse.Namespace:
 
 def main() -> None:
     args = _parse_args()
-    profiles = generate_attack_profile_scaffolds(
+    accepted_labels = tuple(item.strip() for item in str(args.accepted_labels).split(",") if item.strip())
+    profiles, audit_rows = generate_attack_profile_scaffolds(
         start_index=int(args.start_index),
         count=int(args.count),
         seed=int(args.seed),
         weight=float(args.weight),
+        convoy_profile=str(args.convoy_profile),
+        accepted_labels=accepted_labels,
     )
     if args.format == "json":
-        rendered = render_profiles_as_json(profiles)
+        rendered = render_profiles_as_json(
+            profiles,
+            audit_rows=audit_rows,
+            seed=int(args.seed),
+            convoy_profile=str(args.convoy_profile),
+            accepted_labels=accepted_labels,
+        )
     else:
         rendered = render_profiles_as_python(profiles)
     if args.output is None:
