@@ -1,0 +1,2641 @@
+{
+  "training": {
+    "episodes": 300,
+    "epsilon_final": 0.055573049960186756,
+    "avg_reward_last_50": -5.930999999999999,
+    "selected_action": "staggered_center_heavy_6_none_mixed_balanced_loose_loose",
+    "selected_action_by_q_value": "staggered_center_heavy_6_centered_alt_high_value_center_standard_standard",
+    "selection_method": "train_split_risk_aware_objective",
+    "mode": "builder"
+  },
+  "selection": {
+    "risk_cvar_weight": 0.05,
+    "complexity_tiebreak_tolerance": 0.1,
+    "selection_mode": "builder",
+    "effective_complexity_tiebreak_tolerance": 0.004200878044138357,
+    "ranked_train_actions": [
+      {
+        "name": "staggered_center_heavy_6_none_mixed_balanced_loose_loose",
+        "primary_score": 4.200878044138356,
+        "complexity_cost": 1.6499999999999997,
+        "train_summary": {
+          "profiles": 20,
+          "samples": 2400,
+          "expected_hits": 1.797916666666667,
+          "CVaR_90": 2.262404505518054,
+          "VaR_90": 3.5775,
+          "p_hit_ge_1": 0.7191666666666666,
+          "value_lost": 2.2271614583333337,
+          "expected_unique_ships_hit": 1.6199999999999999,
+          "expected_repeat_hits": 0.42374999999999996,
+          "expected_loss": 3.931911458333334,
+          "CVaR_90_loss": 5.3793317161004515
+        }
+      },
+      {
+        "name": "staggered_center_heavy_6_none_high_value_center_loose_loose",
+        "primary_score": 4.693892816865628,
+        "complexity_cost": 1.7699999999999998,
+        "train_summary": {
+          "profiles": 20,
+          "samples": 2400,
+          "expected_hits": 1.8454166666666665,
+          "CVaR_90": 2.2634146065281553,
+          "VaR_90": 3.7675,
+          "p_hit_ge_1": 0.72125,
+          "value_lost": 2.682786458333333,
+          "expected_unique_ships_hit": 1.6325000000000003,
+          "expected_repeat_hits": 0.4466666666666666,
+          "expected_loss": 4.404619791666667,
+          "CVaR_90_loss": 5.78546050397924
+        }
+      },
+      {
+        "name": "staggered_center_heavy_6_centered_alt_mixed_balanced_loose_loose",
+        "primary_score": 4.877845224573569,
+        "complexity_cost": 1.7499999999999998,
+        "train_summary": {
+          "profiles": 20,
+          "samples": 2400,
+          "expected_hits": 2.1270833333333337,
+          "CVaR_90": 2.7940425527504607,
+          "VaR_90": 3.4816666666666674,
+          "p_hit_ge_1": 0.8441666666666666,
+          "value_lost": 2.535260416666667,
+          "expected_unique_ships_hit": 1.9575,
+          "expected_repeat_hits": 0.42541666666666667,
+          "expected_loss": 4.57784375,
+          "CVaR_90_loss": 6.000029491471385
+        }
+      },
+      {
+        "name": "staggered_center_heavy_6_centered_alt_mixed_balanced_loose_standard",
+        "primary_score": 4.917515691600067,
+        "complexity_cost": 1.65,
+        "train_summary": {
+          "profiles": 20,
+          "samples": 2400,
+          "expected_hits": 2.247916666666667,
+          "CVaR_90": 2.8512757907091677,
+          "VaR_90": 3.6241666666666674,
+          "p_hit_ge_1": 0.8324999999999999,
+          "value_lost": 2.502390625,
+          "expected_unique_ships_hit": 2.0095833333333335,
+          "expected_repeat_hits": 0.43374999999999997,
+          "expected_loss": 4.598723958333333,
+          "CVaR_90_loss": 6.375834665334666
+        }
+      },
+      {
+        "name": "staggered_uniform_6x7_centered_alt_high_value_center_loose_loose",
+        "primary_score": 5.235457475296896,
+        "complexity_cost": 1.72,
+        "train_summary": {
+          "profiles": 20,
+          "samples": 2400,
+          "expected_hits": 2.3016666666666667,
+          "CVaR_90": 2.9609431883377666,
+          "VaR_90": 3.9091666666666667,
+          "p_hit_ge_1": 0.8858333333333333,
+          "value_lost": 2.8165,
+          "expected_unique_ships_hit": 2.02,
+          "expected_repeat_hits": 0.43499999999999994,
+          "expected_loss": 4.9235,
+          "CVaR_90_loss": 6.239149505937933
+        }
+      },
+      {
+        "name": "rect_uniform_6x7_centered_alt_high_value_center_loose_loose",
+        "primary_score": 5.332759781584122,
+        "complexity_cost": 1.57,
+        "train_summary": {
+          "profiles": 20,
+          "samples": 2400,
+          "expected_hits": 2.4316666666666666,
+          "CVaR_90": 3.0348176552981387,
+          "VaR_90": 3.7533333333333334,
+          "p_hit_ge_1": 0.9387500000000001,
+          "value_lost": 2.8256249999999996,
+          "expected_unique_ships_hit": 2.0983333333333336,
+          "expected_repeat_hits": 0.43249999999999994,
+          "expected_loss": 5.010458333333333,
+          "CVaR_90_loss": 6.446028965015785
+        }
+      },
+      {
+        "name": "staggered_center_heavy_6_centered_alt_mixed_balanced_standard_loose",
+        "primary_score": 5.36679336744827,
+        "complexity_cost": 1.65,
+        "train_summary": {
+          "profiles": 20,
+          "samples": 2400,
+          "expected_hits": 2.560416666666667,
+          "CVaR_90": 3.174225418744406,
+          "VaR_90": 3.9166666666666665,
+          "p_hit_ge_1": 0.9391666666666667,
+          "value_lost": 2.7759895833333332,
+          "expected_unique_ships_hit": 2.1354166666666665,
+          "expected_repeat_hits": 0.6325000000000001,
+          "expected_loss": 5.037906250000001,
+          "CVaR_90_loss": 6.577742348965385
+        }
+      },
+      {
+        "name": "staggered_center_heavy_6_none_mixed_balanced_standard_loose",
+        "primary_score": 5.415395878055033,
+        "complexity_cost": 1.5499999999999998,
+        "train_summary": {
+          "profiles": 20,
+          "samples": 2400,
+          "expected_hits": 1.9895833333333333,
+          "CVaR_90": 2.523135241951032,
+          "VaR_90": 3.7300000000000004,
+          "p_hit_ge_1": 0.71375,
+          "value_lost": 2.924489583333333,
+          "expected_unique_ships_hit": 2.1079166666666667,
+          "expected_repeat_hits": 0.28208333333333335,
+          "expected_loss": 5.0888229166666665,
+          "CVaR_90_loss": 6.531459227767334
+        }
+      },
+      {
+        "name": "rect_center_heavy_6_centered_alt_mixed_balanced_loose_loose",
+        "primary_score": 5.4201799836488025,
+        "complexity_cost": 1.5999999999999999,
+        "train_summary": {
+          "profiles": 20,
+          "samples": 2400,
+          "expected_hits": 2.23875,
+          "CVaR_90": 2.916834566995368,
+          "VaR_90": 3.460833333333334,
+          "p_hit_ge_1": 0.9083333333333332,
+          "value_lost": 2.94853125,
+          "expected_unique_ships_hit": 2.04,
+          "expected_repeat_hits": 0.4725,
+          "expected_loss": 5.083031250000001,
+          "CVaR_90_loss": 6.7429746729760325
+        }
+      },
+      {
+        "name": "staggered_center_heavy_6_centered_alt_high_value_center_loose_loose",
+        "primary_score": 5.441898998454917,
+        "complexity_cost": 1.8699999999999999,
+        "train_summary": {
+          "profiles": 20,
+          "samples": 2400,
+          "expected_hits": 2.1862500000000002,
+          "CVaR_90": 2.7867471690339785,
+          "VaR_90": 3.6950000000000003,
+          "p_hit_ge_1": 0.8387499999999999,
+          "value_lost": 3.0118020833333334,
+          "expected_unique_ships_hit": 2.01375,
+          "expected_repeat_hits": 0.44749999999999995,
+          "expected_loss": 5.1150520833333335,
+          "CVaR_90_loss": 6.536938302431667
+        }
+      },
+      {
+        "name": "staggered_center_heavy_6_none_mixed_balanced_loose_standard",
+        "primary_score": 5.446149663777239,
+        "complexity_cost": 1.5499999999999998,
+        "train_summary": {
+          "profiles": 20,
+          "samples": 2400,
+          "expected_hits": 2.2283333333333335,
+          "CVaR_90": 2.8087316655173944,
+          "VaR_90": 3.4650000000000003,
+          "p_hit_ge_1": 0.84375,
+          "value_lost": 2.9360052083333334,
+          "expected_unique_ships_hit": 2.0858333333333334,
+          "expected_repeat_hits": 0.4533333333333333,
+          "expected_loss": 5.112505208333333,
+          "CVaR_90_loss": 6.672889108878101
+        }
+      },
+      {
+        "name": "staggered_uniform_6x7_centered_alt_mixed_balanced_loose_loose",
+        "primary_score": 5.586555272959993,
+        "complexity_cost": 1.5999999999999999,
+        "train_summary": {
+          "profiles": 20,
+          "samples": 2400,
+          "expected_hits": 2.3795833333333327,
+          "CVaR_90": 2.9229557764441045,
+          "VaR_90": 3.8716666666666666,
+          "p_hit_ge_1": 0.8883333333333333,
+          "value_lost": 3.118453125,
+          "expected_unique_ships_hit": 2.055416666666667,
+          "expected_repeat_hits": 0.4520833333333333,
+          "expected_loss": 5.264286458333332,
+          "CVaR_90_loss": 6.445376292533209
+        }
+      },
+      {
+        "name": "staggered_center_heavy_6_centered_alt_high_value_center_loose_standard",
+        "primary_score": 5.604831570090132,
+        "complexity_cost": 1.77,
+        "train_summary": {
+          "profiles": 20,
+          "samples": 2400,
+          "expected_hits": 2.3316666666666666,
+          "CVaR_90": 2.943675784002819,
+          "VaR_90": 3.6541666666666672,
+          "p_hit_ge_1": 0.8391666666666667,
+          "value_lost": 3.091,
+          "expected_unique_ships_hit": 2.0633333333333335,
+          "expected_repeat_hits": 0.46958333333333335,
+          "expected_loss": 5.2482500000000005,
+          "CVaR_90_loss": 7.131631401802627
+        }
+      },
+      {
+        "name": "staggered_uniform_6x7_centered_alt_mixed_balanced_standard_loose",
+        "primary_score": 5.605858848991019,
+        "complexity_cost": 1.5,
+        "train_summary": {
+          "profiles": 20,
+          "samples": 2400,
+          "expected_hits": 2.475416666666667,
+          "CVaR_90": 3.078848615988852,
+          "VaR_90": 3.9091666666666667,
+          "p_hit_ge_1": 0.9320833333333333,
+          "value_lost": 3.0483177083333333,
+          "expected_unique_ships_hit": 2.1041666666666665,
+          "expected_repeat_hits": 0.5745833333333332,
+          "expected_loss": 5.267401041666666,
+          "CVaR_90_loss": 6.769156146487066
+        }
+      },
+      {
+        "name": "staggered_center_heavy_6_centered_alt_mixed_balanced_loose_compact",
+        "primary_score": 5.610859559892226,
+        "complexity_cost": 1.5999999999999999,
+        "train_summary": {
+          "profiles": 20,
+          "samples": 2400,
+          "expected_hits": 2.375,
+          "CVaR_90": 2.981074513760956,
+          "VaR_90": 3.9166666666666665,
+          "p_hit_ge_1": 0.9225000000000001,
+          "value_lost": 2.7585625,
+          "expected_unique_ships_hit": 2.4258333333333337,
+          "expected_repeat_hits": 0.34541666666666665,
+          "expected_loss": 5.253479166666667,
+          "CVaR_90_loss": 7.147607864511201
+        }
+      },
+      {
+        "name": "staggered_center_heavy_6_centered_alt_high_value_center_standard_loose",
+        "primary_score": 5.6894961514231746,
+        "complexity_cost": 1.77,
+        "train_summary": {
+          "profiles": 20,
+          "samples": 2400,
+          "expected_hits": 2.5908333333333333,
+          "CVaR_90": 3.1763337499171658,
+          "VaR_90": 3.9166666666666665,
+          "p_hit_ge_1": 0.9400000000000001,
+          "value_lost": 3.0662812500000003,
+          "expected_unique_ships_hit": 2.148333333333333,
+          "expected_repeat_hits": 0.6454166666666666,
+          "expected_loss": 5.343697916666667,
+          "CVaR_90_loss": 6.915964695130152
+        }
+      },
+      {
+        "name": "staggered_uniform_6x7_centered_alt_high_value_center_standard_loose",
+        "primary_score": 5.693392239768829,
+        "complexity_cost": 1.62,
+        "train_summary": {
+          "profiles": 20,
+          "samples": 2400,
+          "expected_hits": 2.5374999999999996,
+          "CVaR_90": 3.1306273172245582,
+          "VaR_90": 3.819166666666667,
+          "p_hit_ge_1": 0.9270833333333334,
+          "value_lost": 3.09221875,
+          "expected_unique_ships_hit": 2.1358333333333333,
+          "expected_repeat_hits": 0.6008333333333333,
+          "expected_loss": 5.348218749999999,
+          "CVaR_90_loss": 6.903469795376596
+        }
+      },
+      {
+        "name": "staggered_center_heavy_6_centered_alt_mixed_balanced_standard_standard",
+        "primary_score": 5.78460219471814,
+        "complexity_cost": 1.55,
+        "train_summary": {
+          "profiles": 20,
+          "samples": 2400,
+          "expected_hits": 2.600416666666667,
+          "CVaR_90": 3.2691163289147753,
+          "VaR_90": 3.9,
+          "p_hit_ge_1": 0.9491666666666667,
+          "value_lost": 2.942192708333333,
+          "expected_unique_ships_hit": 2.390833333333333,
+          "expected_repeat_hits": 0.4895833333333333,
+          "expected_loss": 5.430942708333333,
+          "CVaR_90_loss": 7.073189727696122
+        }
+      },
+      {
+        "name": "rect_center_heavy_6_none_mixed_balanced_compact_loose",
+        "primary_score": 5.834589120651062,
+        "complexity_cost": 1.2999999999999998,
+        "train_summary": {
+          "profiles": 20,
+          "samples": 2400,
+          "expected_hits": 2.565833333333333,
+          "CVaR_90": 3.1408646146575756,
+          "VaR_90": 3.9166666666666665,
+          "p_hit_ge_1": 0.9324999999999999,
+          "value_lost": 3.127807291666666,
+          "expected_unique_ships_hit": 2.220833333333333,
+          "expected_repeat_hits": 0.6191666666666668,
+          "expected_loss": 5.4724739583333335,
+          "CVaR_90_loss": 7.242303246354567
+        }
+      },
+      {
+        "name": "staggered_center_heavy_6_centered_alt_mixed_balanced_compact_loose",
+        "primary_score": 5.8398712080232915,
+        "complexity_cost": 1.5499999999999998,
+        "train_summary": {
+          "profiles": 20,
+          "samples": 2400,
+          "expected_hits": 2.661666666666666,
+          "CVaR_90": 3.3176382197849987,
+          "VaR_90": 3.9166666666666665,
+          "p_hit_ge_1": 0.98375,
+          "value_lost": 2.9506875000000004,
+          "expected_unique_ships_hit": 2.4137500000000003,
+          "expected_repeat_hits": 0.6137500000000001,
+          "expected_loss": 5.4871875,
+          "CVaR_90_loss": 7.053674160465829
+        }
+      },
+      {
+        "name": "rect_center_heavy_6_none_mixed_balanced_loose_standard",
+        "primary_score": 5.9231714805733935,
+        "complexity_cost": 1.4,
+        "train_summary": {
+          "profiles": 20,
+          "samples": 2400,
+          "expected_hits": 2.4054166666666665,
+          "CVaR_90": 3.0742653838588816,
+          "VaR_90": 3.470833333333334,
+          "p_hit_ge_1": 0.8583333333333334,
+          "value_lost": 3.3021979166666666,
+          "expected_unique_ships_hit": 2.1879166666666667,
+          "expected_repeat_hits": 0.39125,
+          "expected_loss": 5.5683645833333335,
+          "CVaR_90_loss": 7.096137944801198
+        }
+      },
+      {
+        "name": "rect_uniform_6x7_centered_alt_high_value_center_standard_loose",
+        "primary_score": 5.943839950939943,
+        "complexity_cost": 1.4700000000000002,
+        "train_summary": {
+          "profiles": 20,
+          "samples": 2400,
+          "expected_hits": 2.6054166666666667,
+          "CVaR_90": 3.2290981741123588,
+          "VaR_90": 3.77,
+          "p_hit_ge_1": 0.9445833333333333,
+          "value_lost": 3.1731354166666668,
+          "expected_unique_ships_hit": 2.319166666666667,
+          "expected_repeat_hits": 0.5295833333333333,
+          "expected_loss": 5.59821875,
+          "CVaR_90_loss": 6.912424018798866
+        }
+      },
+      {
+        "name": "staggered_center_heavy_6_none_high_value_center_standard_loose",
+        "primary_score": 5.946588698954685,
+        "complexity_cost": 1.67,
+        "train_summary": {
+          "profiles": 20,
+          "samples": 2400,
+          "expected_hits": 2.08625,
+          "CVaR_90": 2.5658041091534813,
+          "VaR_90": 3.8091666666666666,
+          "p_hit_ge_1": 0.7137499999999999,
+          "value_lost": 3.3618854166666674,
+          "expected_unique_ships_hit": 2.16875,
+          "expected_repeat_hits": 0.3070833333333333,
+          "expected_loss": 5.592052083333333,
+          "CVaR_90_loss": 7.090732312427027
+        }
+      },
+      {
+        "name": "rect_uniform_6x7_centered_alt_high_value_center_compact_loose",
+        "primary_score": 5.961470630298467,
+        "complexity_cost": 1.37,
+        "train_summary": {
+          "profiles": 20,
+          "samples": 2400,
+          "expected_hits": 2.6858333333333335,
+          "CVaR_90": 3.311323299710711,
+          "VaR_90": 3.9091666666666667,
+          "p_hit_ge_1": 0.9466666666666667,
+          "value_lost": 3.173375,
+          "expected_unique_ships_hit": 2.3162499999999997,
+          "expected_repeat_hits": 0.6024999999999999,
+          "expected_loss": 5.610124999999999,
+          "CVaR_90_loss": 7.026912605969359
+        }
+      },
+      {
+        "name": "staggered_uniform_6x7_none_high_value_center_loose_loose",
+        "primary_score": 5.988066943494488,
+        "complexity_cost": 1.6199999999999999,
+        "train_summary": {
+          "profiles": 20,
+          "samples": 2400,
+          "expected_hits": 2.7625,
+          "CVaR_90": 3.432708865633022,
+          "VaR_90": 3.7141666666666673,
+          "p_hit_ge_1": 0.9904166666666668,
+          "value_lost": 3.2171093749999997,
+          "expected_unique_ships_hit": 2.3020833333333335,
+          "expected_repeat_hits": 0.5554166666666667,
+          "expected_loss": 5.630276041666667,
+          "CVaR_90_loss": 7.155818036556416
+        }
+      },
+      {
+        "name": "staggered_center_heavy_6_none_mixed_balanced_compact_loose",
+        "primary_score": 6.058030677642787,
+        "complexity_cost": 1.4499999999999997,
+        "train_summary": {
+          "profiles": 20,
+          "samples": 2400,
+          "expected_hits": 2.27,
+          "CVaR_90": 2.755258117027919,
+          "VaR_90": 3.7516666666666665,
+          "p_hit_ge_1": 0.7666666666666667,
+          "value_lost": 3.295515625,
+          "expected_unique_ships_hit": 2.3225000000000007,
+          "expected_repeat_hits": 0.41625000000000006,
+          "expected_loss": 5.701265625,
+          "CVaR_90_loss": 7.13530105285574
+        }
+      },
+      {
+        "name": "staggered_uniform_6x7_centered_alt_mixed_balanced_compact_loose",
+        "primary_score": 6.061611911972832,
+        "complexity_cost": 1.4,
+        "train_summary": {
+          "profiles": 20,
+          "samples": 2400,
+          "expected_hits": 2.632083333333333,
+          "CVaR_90": 3.1820756693708168,
+          "VaR_90": 3.9166666666666665,
+          "p_hit_ge_1": 0.9141666666666666,
+          "value_lost": 3.2397890625000003,
+          "expected_unique_ships_hit": 2.320416666666667,
+          "expected_repeat_hits": 0.6666666666666667,
+          "expected_loss": 5.6935390625,
+          "CVaR_90_loss": 7.361456989456622
+        }
+      },
+      {
+        "name": "rect_uniform_6x7_centered_alt_mixed_balanced_loose_loose",
+        "primary_score": 6.075509621075923,
+        "complexity_cost": 1.45,
+        "train_summary": {
+          "profiles": 20,
+          "samples": 2400,
+          "expected_hits": 2.5183333333333335,
+          "CVaR_90": 3.1302317913789452,
+          "VaR_90": 3.7908333333333335,
+          "p_hit_ge_1": 0.9441666666666668,
+          "value_lost": 3.459619791666667,
+          "expected_unique_ships_hit": 2.166666666666667,
+          "expected_repeat_hits": 0.4583333333333333,
+          "expected_loss": 5.717953124999999,
+          "CVaR_90_loss": 7.151129921518484
+        }
+      },
+      {
+        "name": "staggered_uniform_6x7_centered_alt_high_value_center_compact_loose",
+        "primary_score": 6.112914987427418,
+        "complexity_cost": 1.52,
+        "train_summary": {
+          "profiles": 20,
+          "samples": 2400,
+          "expected_hits": 2.6558333333333333,
+          "CVaR_90": 3.172249808514291,
+          "VaR_90": 3.9166666666666665,
+          "p_hit_ge_1": 0.9087500000000001,
+          "value_lost": 3.3156979166666667,
+          "expected_unique_ships_hit": 2.2991666666666664,
+          "expected_repeat_hits": 0.7116666666666667,
+          "expected_loss": 5.757197916666667,
+          "CVaR_90_loss": 7.114341415215021
+        }
+      },
+      {
+        "name": "rect_center_heavy_6_none_mixed_balanced_standard_loose",
+        "primary_score": 6.114871305077671,
+        "complexity_cost": 1.4,
+        "train_summary": {
+          "profiles": 20,
+          "samples": 2400,
+          "expected_hits": 2.740416666666666,
+          "CVaR_90": 3.4407394883593163,
+          "VaR_90": 3.4066666666666667,
+          "p_hit_ge_1": 0.9662500000000002,
+          "value_lost": 3.308020833333333,
+          "expected_unique_ships_hit": 2.305416666666667,
+          "expected_repeat_hits": 0.6375,
+          "expected_loss": 5.7409375,
+          "CVaR_90_loss": 7.478676101553407
+        }
+      },
+      {
+        "name": "staggered_center_heavy_6_centered_alt_high_value_center_compact_loose",
+        "primary_score": 6.1376630800726835,
+        "complexity_cost": 1.67,
+        "train_summary": {
+          "profiles": 20,
+          "samples": 2400,
+          "expected_hits": 2.7095833333333332,
+          "CVaR_90": 3.317101893091589,
+          "VaR_90": 3.9166666666666665,
+          "p_hit_ge_1": 0.9854166666666666,
+          "value_lost": 3.2256666666666676,
+          "expected_unique_ships_hit": 2.413333333333333,
+          "expected_repeat_hits": 0.6579166666666667,
+          "expected_loss": 5.7705833333333345,
+          "CVaR_90_loss": 7.341594934786971
+        }
+      },
+      {
+        "name": "rect_center_heavy_6_centered_alt_mixed_balanced_standard_loose",
+        "primary_score": 6.143291976459347,
+        "complexity_cost": 1.5,
+        "train_summary": {
+          "profiles": 20,
+          "samples": 2400,
+          "expected_hits": 2.510416666666667,
+          "CVaR_90": 2.981273326214095,
+          "VaR_90": 3.9016666666666664,
+          "p_hit_ge_1": 0.9112500000000001,
+          "value_lost": 3.3445520833333333,
+          "expected_unique_ships_hit": 2.3120833333333333,
+          "expected_repeat_hits": 0.5158333333333334,
+          "expected_loss": 5.7598020833333345,
+          "CVaR_90_loss": 7.669797862520251
+        }
+      },
+      {
+        "name": "rect_center_heavy_6_centered_alt_high_value_center_loose_loose",
+        "primary_score": 6.161302623431656,
+        "complexity_cost": 1.72,
+        "train_summary": {
+          "profiles": 20,
+          "samples": 2400,
+          "expected_hits": 2.3154166666666667,
+          "CVaR_90": 2.830813916368718,
+          "VaR_90": 3.595833333333334,
+          "p_hit_ge_1": 0.9054166666666665,
+          "value_lost": 3.571687500000001,
+          "expected_unique_ships_hit": 2.10375,
+          "expected_repeat_hits": 0.5091666666666667,
+          "expected_loss": 5.777270833333334,
+          "CVaR_90_loss": 7.680635801966436
+        }
+      },
+      {
+        "name": "rect_center_heavy_6_none_mixed_balanced_loose_loose",
+        "primary_score": 6.162877219620865,
+        "complexity_cost": 1.4999999999999998,
+        "train_summary": {
+          "profiles": 20,
+          "samples": 2400,
+          "expected_hits": 2.779166666666667,
+          "CVaR_90": 3.368786546576336,
+          "VaR_90": 3.7983333333333333,
+          "p_hit_ge_1": 0.9870833333333333,
+          "value_lost": 3.41571875,
+          "expected_unique_ships_hit": 2.2475,
+          "expected_repeat_hits": 0.7370833333333334,
+          "expected_loss": 5.810635416666667,
+          "CVaR_90_loss": 7.044836059083975
+        }
+      },
+      {
+        "name": "staggered_center_heavy_6_none_high_value_center_loose_standard",
+        "primary_score": 6.199342009374805,
+        "complexity_cost": 1.67,
+        "train_summary": {
+          "profiles": 20,
+          "samples": 2400,
+          "expected_hits": 2.3216666666666668,
+          "CVaR_90": 2.819135359046088,
+          "VaR_90": 3.680833333333333,
+          "p_hit_ge_1": 0.8441666666666666,
+          "value_lost": 3.5670468750000004,
+          "expected_unique_ships_hit": 2.158333333333333,
+          "expected_repeat_hits": 0.46499999999999997,
+          "expected_loss": 5.818380208333332,
+          "CVaR_90_loss": 7.619236020829453
+        }
+      },
+      {
+        "name": "staggered_center_heavy_6_centered_alt_high_value_center_standard_standard",
+        "primary_score": 6.257743272463,
+        "complexity_cost": 1.6700000000000002,
+        "train_summary": {
+          "profiles": 20,
+          "samples": 2400,
+          "expected_hits": 2.6224999999999996,
+          "CVaR_90": 3.3132783882783885,
+          "VaR_90": 3.9091666666666667,
+          "p_hit_ge_1": 0.9383333333333332,
+          "value_lost": 3.3637656250000005,
+          "expected_unique_ships_hit": 2.41125,
+          "expected_repeat_hits": 0.5133333333333334,
+          "expected_loss": 5.877682291666668,
+          "CVaR_90_loss": 7.6012196159266505
+        }
+      },
+      {
+        "name": "rect_uniform_6x7_none_high_value_center_compact_loose",
+        "primary_score": 6.286211057009062,
+        "complexity_cost": 1.27,
+        "train_summary": {
+          "profiles": 20,
+          "samples": 2400,
+          "expected_hits": 2.5233333333333334,
+          "CVaR_90": 3.1654607428745356,
+          "VaR_90": 3.856666666666667,
+          "p_hit_ge_1": 0.9858333333333335,
+          "value_lost": 3.2684062499999995,
+          "expected_unique_ships_hit": 2.537083333333333,
+          "expected_repeat_hits": 0.5295833333333333,
+          "expected_loss": 5.911406249999999,
+          "CVaR_90_loss": 7.496096140181271
+        }
+      },
+      {
+        "name": "rect_center_heavy_6_centered_alt_mixed_balanced_loose_standard",
+        "primary_score": 6.35740139846143,
+        "complexity_cost": 1.5,
+        "train_summary": {
+          "profiles": 20,
+          "samples": 2400,
+          "expected_hits": 2.7183333333333333,
+          "CVaR_90": 3.2699125439330343,
+          "VaR_90": 3.9091666666666667,
+          "p_hit_ge_1": 0.985,
+          "value_lost": 3.4150052083333335,
+          "expected_unique_ships_hit": 2.4337500000000003,
+          "expected_repeat_hits": 0.61,
+          "expected_loss": 5.970755208333332,
+          "CVaR_90_loss": 7.732923802561961
+        }
+      },
+      {
+        "name": "rect_uniform_6x7_centered_alt_mixed_balanced_standard_loose",
+        "primary_score": 6.360526650290305,
+        "complexity_cost": 1.35,
+        "train_summary": {
+          "profiles": 20,
+          "samples": 2400,
+          "expected_hits": 2.6750000000000003,
+          "CVaR_90": 3.234187097983619,
+          "VaR_90": 3.5933333333333337,
+          "p_hit_ge_1": 0.9483333333333335,
+          "value_lost": 3.5246171875,
+          "expected_unique_ships_hit": 2.3470833333333334,
+          "expected_repeat_hits": 0.5979166666666667,
+          "expected_loss": 5.991283854166666,
+          "CVaR_90_loss": 7.384855922472774
+        }
+      },
+      {
+        "name": "rect_center_heavy_6_none_mixed_balanced_standard_standard",
+        "primary_score": 6.398044463819931,
+        "complexity_cost": 1.3,
+        "train_summary": {
+          "profiles": 20,
+          "samples": 2400,
+          "expected_hits": 2.7745833333333327,
+          "CVaR_90": 3.3098881327006326,
+          "VaR_90": 3.8716666666666666,
+          "p_hit_ge_1": 0.8975,
+          "value_lost": 3.4748229166666667,
+          "expected_unique_ships_hit": 2.427083333333333,
+          "expected_repeat_hits": 0.58875,
+          "expected_loss": 6.01965625,
+          "CVaR_90_loss": 7.5677642763986315
+        }
+      },
+      {
+        "name": "rect_uniform_6x7_centered_alt_high_value_center_standard_standard",
+        "primary_score": 6.405810739063098,
+        "complexity_cost": 1.3700000000000003,
+        "train_summary": {
+          "profiles": 20,
+          "samples": 2400,
+          "expected_hits": 2.8124999999999996,
+          "CVaR_90": 3.555864978902953,
+          "VaR_90": 3.9008333333333334,
+          "p_hit_ge_1": 0.9454166666666668,
+          "value_lost": 3.413270833333333,
+          "expected_unique_ships_hit": 2.4866666666666664,
+          "expected_repeat_hits": 0.5966666666666666,
+          "expected_loss": 6.019270833333333,
+          "CVaR_90_loss": 7.730798114595297
+        }
+      },
+      {
+        "name": "staggered_uniform_6x7_centered_alt_high_value_center_standard_standard",
+        "primary_score": 6.470134371734587,
+        "complexity_cost": 1.5200000000000002,
+        "train_summary": {
+          "profiles": 20,
+          "samples": 2400,
+          "expected_hits": 2.819583333333333,
+          "CVaR_90": 3.4144368191256773,
+          "VaR_90": 3.8841666666666668,
+          "p_hit_ge_1": 0.9712500000000001,
+          "value_lost": 3.4630520833333334,
+          "expected_unique_ships_hit": 2.5104166666666665,
+          "expected_repeat_hits": 0.56625,
+          "expected_loss": 6.086718749999999,
+          "CVaR_90_loss": 7.668312434691745
+        }
+      },
+      {
+        "name": "staggered_center_heavy_6_none_high_value_center_compact_loose",
+        "primary_score": 6.483652034642269,
+        "complexity_cost": 1.5699999999999998,
+        "train_summary": {
+          "profiles": 20,
+          "samples": 2400,
+          "expected_hits": 2.2891666666666666,
+          "CVaR_90": 2.709393919497055,
+          "VaR_90": 3.7608333333333337,
+          "p_hit_ge_1": 0.7683333333333333,
+          "value_lost": 3.6457864583333333,
+          "expected_unique_ships_hit": 2.3733333333333335,
+          "expected_repeat_hits": 0.4033333333333333,
+          "expected_loss": 6.099786458333333,
+          "CVaR_90_loss": 7.677311526178714
+        }
+      },
+      {
+        "name": "staggered_center_heavy_6_centered_alt_high_value_center_loose_compact",
+        "primary_score": 6.500223018819026,
+        "complexity_cost": 1.72,
+        "train_summary": {
+          "profiles": 20,
+          "samples": 2400,
+          "expected_hits": 2.4745833333333325,
+          "CVaR_90": 3.0816596729213948,
+          "VaR_90": 3.9166666666666665,
+          "p_hit_ge_1": 0.9500000000000002,
+          "value_lost": 3.510536458333333,
+          "expected_unique_ships_hit": 2.505,
+          "expected_repeat_hits": 0.3554166666666666,
+          "expected_loss": 6.086619791666666,
+          "CVaR_90_loss": 8.27206454304721
+        }
+      },
+      {
+        "name": "staggered_center_heavy_6_none_mixed_balanced_standard_standard",
+        "primary_score": 6.522918559153612,
+        "complexity_cost": 1.45,
+        "train_summary": {
+          "profiles": 20,
+          "samples": 2400,
+          "expected_hits": 2.337083333333333,
+          "CVaR_90": 2.9135714285714283,
+          "VaR_90": 3.7733333333333334,
+          "p_hit_ge_1": 0.85125,
+          "value_lost": 3.51934375,
+          "expected_unique_ships_hit": 2.569583333333333,
+          "expected_repeat_hits": 0.2816666666666666,
+          "expected_loss": 6.145260416666666,
+          "CVaR_90_loss": 7.553162849738915
+        }
+      },
+      {
+        "name": "rect_uniform_6x7_centered_alt_mixed_balanced_compact_loose",
+        "primary_score": 6.524844145262647,
+        "complexity_cost": 1.25,
+        "train_summary": {
+          "profiles": 20,
+          "samples": 2400,
+          "expected_hits": 2.7070833333333333,
+          "CVaR_90": 3.3129363421998725,
+          "VaR_90": 3.9091666666666667,
+          "p_hit_ge_1": 0.9475000000000001,
+          "value_lost": 3.6386093749999993,
+          "expected_unique_ships_hit": 2.394166666666667,
+          "expected_repeat_hits": 0.5620833333333333,
+          "expected_loss": 6.145192708333334,
+          "CVaR_90_loss": 7.593028738586256
+        }
+      },
+      {
+        "name": "staggered_uniform_6x7_none_high_value_center_loose_standard",
+        "primary_score": 6.531859960063084,
+        "complexity_cost": 1.52,
+        "train_summary": {
+          "profiles": 20,
+          "samples": 2400,
+          "expected_hits": 2.9354166666666663,
+          "CVaR_90": 3.615569679849341,
+          "VaR_90": 3.691666666666667,
+          "p_hit_ge_1": 0.99875,
+          "value_lost": 3.4057812499999995,
+          "expected_unique_ships_hit": 2.6087499999999997,
+          "expected_repeat_hits": 0.5891666666666667,
+          "expected_loss": 6.132364583333333,
+          "CVaR_90_loss": 7.989907534595035
+        }
+      },
+      {
+        "name": "rect_uniform_6x7_none_high_value_center_standard_loose",
+        "primary_score": 6.601922113637163,
+        "complexity_cost": 1.37,
+        "train_summary": {
+          "profiles": 20,
+          "samples": 2400,
+          "expected_hits": 2.7645833333333334,
+          "CVaR_90": 3.3817706466469266,
+          "VaR_90": 3.9091666666666667,
+          "p_hit_ge_1": 0.9933333333333334,
+          "value_lost": 3.434432291666666,
+          "expected_unique_ships_hit": 2.667916666666667,
+          "expected_repeat_hits": 0.5537500000000001,
+          "expected_loss": 6.213098958333332,
+          "CVaR_90_loss": 7.776463106076605
+        }
+      },
+      {
+        "name": "staggered_uniform_6x7_centered_alt_mixed_balanced_standard_standard",
+        "primary_score": 6.60371378179704,
+        "complexity_cost": 1.4000000000000001,
+        "train_summary": {
+          "profiles": 20,
+          "samples": 2400,
+          "expected_hits": 2.8225000000000002,
+          "CVaR_90": 3.424247164262377,
+          "VaR_90": 3.741666666666667,
+          "p_hit_ge_1": 0.9758333333333333,
+          "value_lost": 3.5591328125000006,
+          "expected_unique_ships_hit": 2.531666666666667,
+          "expected_repeat_hits": 0.54125,
+          "expected_loss": 6.199049479166666,
+          "CVaR_90_loss": 8.093286052607487
+        }
+      },
+      {
+        "name": "rect_uniform_6x7_none_high_value_center_loose_loose",
+        "primary_score": 6.616832578466412,
+        "complexity_cost": 1.47,
+        "train_summary": {
+          "profiles": 20,
+          "samples": 2400,
+          "expected_hits": 2.9745833333333334,
+          "CVaR_90": 3.584771061828686,
+          "VaR_90": 3.7866666666666666,
+          "p_hit_ge_1": 0.9962500000000002,
+          "value_lost": 3.4638802083333333,
+          "expected_unique_ships_hit": 2.6562499999999996,
+          "expected_repeat_hits": 0.5758333333333333,
+          "expected_loss": 6.235296875,
+          "CVaR_90_loss": 7.630714069328233
+        }
+      },
+      {
+        "name": "rect_center_heavy_6_none_high_value_center_compact_loose",
+        "primary_score": 6.6211919787653475,
+        "complexity_cost": 1.42,
+        "train_summary": {
+          "profiles": 20,
+          "samples": 2400,
+          "expected_hits": 2.625833333333334,
+          "CVaR_90": 3.1808104786620923,
+          "VaR_90": 3.9166666666666665,
+          "p_hit_ge_1": 0.9345833333333335,
+          "value_lost": 3.8069687500000002,
+          "expected_unique_ships_hit": 2.2820833333333335,
+          "expected_repeat_hits": 0.6575,
+          "expected_loss": 6.2205520833333345,
+          "CVaR_90_loss": 8.012797908640255
+        }
+      },
+      {
+        "name": "rect_center_heavy_6_centered_alt_high_value_center_standard_loose",
+        "primary_score": 6.637489151415431,
+        "complexity_cost": 1.62,
+        "train_summary": {
+          "profiles": 20,
+          "samples": 2400,
+          "expected_hits": 2.509166666666667,
+          "CVaR_90": 3.0315216200636472,
+          "VaR_90": 3.9091666666666667,
+          "p_hit_ge_1": 0.9120833333333334,
+          "value_lost": 3.797947916666667,
+          "expected_unique_ships_hit": 2.3325,
+          "expected_repeat_hits": 0.49958333333333327,
+          "expected_loss": 6.230364583333334,
+          "CVaR_90_loss": 8.14249136164193
+        }
+      },
+      {
+        "name": "rect_center_heavy_6_none_high_value_center_loose_standard",
+        "primary_score": 6.639873615181698,
+        "complexity_cost": 1.52,
+        "train_summary": {
+          "profiles": 20,
+          "samples": 2400,
+          "expected_hits": 2.524166666666667,
+          "CVaR_90": 3.2374959712518616,
+          "VaR_90": 3.5200000000000005,
+          "p_hit_ge_1": 0.9016666666666666,
+          "value_lost": 3.883651041666666,
+          "expected_unique_ships_hit": 2.2850000000000006,
+          "expected_repeat_hits": 0.42541666666666667,
+          "expected_loss": 6.253734375000001,
+          "CVaR_90_loss": 7.722784803633941
+        }
+      },
+      {
+        "name": "rect_center_heavy_6_centered_alt_mixed_balanced_compact_loose",
+        "primary_score": 6.653425940272963,
+        "complexity_cost": 1.4,
+        "train_summary": {
+          "profiles": 20,
+          "samples": 2400,
+          "expected_hits": 2.4437500000000005,
+          "CVaR_90": 3.028200545082898,
+          "VaR_90": 3.849166666666667,
+          "p_hit_ge_1": 0.8800000000000001,
+          "value_lost": 3.650645833333333,
+          "expected_unique_ships_hit": 2.5420833333333337,
+          "expected_repeat_hits": 0.3120833333333333,
+          "expected_loss": 6.255145833333334,
+          "CVaR_90_loss": 7.965602138792579
+        }
+      },
+      {
+        "name": "rect_center_heavy_6_centered_alt_mixed_balanced_loose_compact",
+        "primary_score": 6.748945055616749,
+        "complexity_cost": 1.45,
+        "train_summary": {
+          "profiles": 20,
+          "samples": 2400,
+          "expected_hits": 2.9275,
+          "CVaR_90": 3.4742467101919217,
+          "VaR_90": 3.9166666666666665,
+          "p_hit_ge_1": 0.9870833333333333,
+          "value_lost": 3.5737500000000004,
+          "expected_unique_ships_hit": 2.6525,
+          "expected_repeat_hits": 0.5608333333333333,
+          "expected_loss": 6.338416666666668,
+          "CVaR_90_loss": 8.210567779001632
+        }
+      },
+      {
+        "name": "rect_uniform_6x7_centered_alt_mixed_balanced_standard_standard",
+        "primary_score": 6.755670375716502,
+        "complexity_cost": 1.2500000000000002,
+        "train_summary": {
+          "profiles": 20,
+          "samples": 2400,
+          "expected_hits": 2.839583333333333,
+          "CVaR_90": 3.557291666666667,
+          "VaR_90": 3.6666666666666665,
+          "p_hit_ge_1": 0.9479166666666667,
+          "value_lost": 3.692994791666667,
+          "expected_unique_ships_hit": 2.5329166666666674,
+          "expected_repeat_hits": 0.5770833333333334,
+          "expected_loss": 6.3413281249999995,
+          "CVaR_90_loss": 8.28684501433004
+        }
+      },
+      {
+        "name": "rect_uniform_6x7_centered_alt_high_value_center_loose_standard",
+        "primary_score": 6.759572135196572,
+        "complexity_cost": 1.4700000000000002,
+        "train_summary": {
+          "profiles": 20,
+          "samples": 2400,
+          "expected_hits": 2.787083333333333,
+          "CVaR_90": 3.3967137049941933,
+          "VaR_90": 3.8625000000000003,
+          "p_hit_ge_1": 0.9816666666666667,
+          "value_lost": 3.5911302083333334,
+          "expected_unique_ships_hit": 2.668333333333334,
+          "expected_repeat_hits": 0.43000000000000005,
+          "expected_loss": 6.345463541666666,
+          "CVaR_90_loss": 8.282171870598123
+        }
+      },
+      {
+        "name": "staggered_uniform_6x7_none_high_value_center_standard_loose",
+        "primary_score": 6.764107318021983,
+        "complexity_cost": 1.52,
+        "train_summary": {
+          "profiles": 20,
+          "samples": 2400,
+          "expected_hits": 2.9345833333333333,
+          "CVaR_90": 3.5313332788383094,
+          "VaR_90": 3.9166666666666665,
+          "p_hit_ge_1": 0.9962500000000001,
+          "value_lost": 3.5802239583333333,
+          "expected_unique_ships_hit": 2.6704166666666667,
+          "expected_repeat_hits": 0.5520833333333333,
+          "expected_loss": 6.3610572916666674,
+          "CVaR_90_loss": 8.061000527106307
+        }
+      },
+      {
+        "name": "staggered_uniform_6x7_centered_alt_high_value_center_loose_standard",
+        "primary_score": 6.788917589148956,
+        "complexity_cost": 1.62,
+        "train_summary": {
+          "profiles": 20,
+          "samples": 2400,
+          "expected_hits": 3.04375,
+          "CVaR_90": 3.708496732026144,
+          "VaR_90": 3.9166666666666665,
+          "p_hit_ge_1": 0.9995833333333334,
+          "value_lost": 3.643442708333333,
+          "expected_unique_ships_hit": 2.6075000000000004,
+          "expected_repeat_hits": 0.6633333333333333,
+          "expected_loss": 6.383609375000001,
+          "CVaR_90_loss": 8.1061642829791
+        }
+      },
+      {
+        "name": "rect_center_heavy_6_none_high_value_center_loose_loose",
+        "primary_score": 6.803204149684306,
+        "complexity_cost": 1.6199999999999999,
+        "train_summary": {
+          "profiles": 20,
+          "samples": 2400,
+          "expected_hits": 2.8175,
+          "CVaR_90": 3.4182888349735494,
+          "VaR_90": 3.8091666666666666,
+          "p_hit_ge_1": 0.9958333333333333,
+          "value_lost": 3.9811510416666662,
+          "expected_unique_ships_hit": 2.28,
+          "expected_repeat_hits": 0.75375,
+          "expected_loss": 6.411901041666667,
+          "CVaR_90_loss": 7.826062160352781
+        }
+      },
+      {
+        "name": "rect_center_heavy_6_centered_alt_mixed_balanced_standard_standard",
+        "primary_score": 6.825199860077316,
+        "complexity_cost": 1.4000000000000001,
+        "train_summary": {
+          "profiles": 20,
+          "samples": 2400,
+          "expected_hits": 2.609166666666667,
+          "CVaR_90": 3.2055727554179567,
+          "VaR_90": 3.879166666666667,
+          "p_hit_ge_1": 0.9495833333333333,
+          "value_lost": 3.696932291666667,
+          "expected_unique_ships_hit": 2.6729166666666666,
+          "expected_repeat_hits": 0.31916666666666665,
+          "expected_loss": 6.433682291666666,
+          "CVaR_90_loss": 7.830351368212986
+        }
+      },
+      {
+        "name": "staggered_uniform_6x7_none_mixed_balanced_loose_loose",
+        "primary_score": 6.873943828612198,
+        "complexity_cost": 1.4999999999999998,
+        "train_summary": {
+          "profiles": 20,
+          "samples": 2400,
+          "expected_hits": 2.88,
+          "CVaR_90": 3.525926280475145,
+          "VaR_90": 3.6766666666666667,
+          "p_hit_ge_1": 0.9983333333333334,
+          "value_lost": 3.928890625,
+          "expected_unique_ships_hit": 2.408333333333333,
+          "expected_repeat_hits": 0.5925,
+          "expected_loss": 6.455723958333333,
+          "CVaR_90_loss": 8.364397405577318
+        }
+      },
+      {
+        "name": "rect_center_heavy_6_none_mixed_balanced_compact_standard",
+        "primary_score": 6.877196862107159,
+        "complexity_cost": 1.2,
+        "train_summary": {
+          "profiles": 20,
+          "samples": 2400,
+          "expected_hits": 2.9529166666666664,
+          "CVaR_90": 3.4855526661854244,
+          "VaR_90": 3.9166666666666665,
+          "p_hit_ge_1": 0.9579166666666667,
+          "value_lost": 3.695135416666667,
+          "expected_unique_ships_hit": 2.64375,
+          "expected_repeat_hits": 0.6670833333333334,
+          "expected_loss": 6.472302083333334,
+          "CVaR_90_loss": 8.097895575476484
+        }
+      },
+      {
+        "name": "rect_center_heavy_6_none_high_value_center_standard_loose",
+        "primary_score": 6.878345673708369,
+        "complexity_cost": 1.52,
+        "train_summary": {
+          "profiles": 20,
+          "samples": 2400,
+          "expected_hits": 2.82875,
+          "CVaR_90": 3.485498821333856,
+          "VaR_90": 3.5675000000000003,
+          "p_hit_ge_1": 0.975,
+          "value_lost": 3.9482447916666663,
+          "expected_unique_ships_hit": 2.3833333333333333,
+          "expected_repeat_hits": 0.6641666666666667,
+          "expected_loss": 6.464411458333333,
+          "CVaR_90_loss": 8.278684307500702
+        }
+      },
+      {
+        "name": "staggered_center_heavy_6_none_mixed_balanced_loose_compact",
+        "primary_score": 6.880707195170839,
+        "complexity_cost": 1.4999999999999998,
+        "train_summary": {
+          "profiles": 20,
+          "samples": 2400,
+          "expected_hits": 2.7779166666666666,
+          "CVaR_90": 3.2766347095133854,
+          "VaR_90": 3.908333333333333,
+          "p_hit_ge_1": 0.9420833333333333,
+          "value_lost": 3.6823333333333332,
+          "expected_unique_ships_hit": 2.68375,
+          "expected_repeat_hits": 0.5120833333333332,
+          "expected_loss": 6.468500000000001,
+          "CVaR_90_loss": 8.24414390341677
+        }
+      },
+      {
+        "name": "rect_uniform_6x7_centered_alt_high_value_center_compact_standard",
+        "primary_score": 6.887955138470232,
+        "complexity_cost": 1.2700000000000002,
+        "train_summary": {
+          "profiles": 20,
+          "samples": 2400,
+          "expected_hits": 2.93125,
+          "CVaR_90": 3.5613770053475933,
+          "VaR_90": 3.9091666666666667,
+          "p_hit_ge_1": 0.9466666666666667,
+          "value_lost": 3.667692708333333,
+          "expected_unique_ships_hit": 2.6941666666666664,
+          "expected_repeat_hits": 0.5979166666666667,
+          "expected_loss": 6.481442708333333,
+          "CVaR_90_loss": 8.130248602737984
+        }
+      },
+      {
+        "name": "staggered_uniform_6x7_none_high_value_center_compact_loose",
+        "primary_score": 6.8976830047123014,
+        "complexity_cost": 1.42,
+        "train_summary": {
+          "profiles": 20,
+          "samples": 2400,
+          "expected_hits": 2.9933333333333336,
+          "CVaR_90": 3.6178591091091095,
+          "VaR_90": 3.9008333333333334,
+          "p_hit_ge_1": 0.9962500000000002,
+          "value_lost": 3.643958333333333,
+          "expected_unique_ships_hit": 2.7191666666666667,
+          "expected_repeat_hits": 0.6333333333333334,
+          "expected_loss": 6.489791666666666,
+          "CVaR_90_loss": 8.157826760912698
+        }
+      },
+      {
+        "name": "staggered_uniform_6x7_centered_alt_high_value_center_compact_standard",
+        "primary_score": 6.974921196179198,
+        "complexity_cost": 1.4200000000000002,
+        "train_summary": {
+          "profiles": 20,
+          "samples": 2400,
+          "expected_hits": 3.0908333333333333,
+          "CVaR_90": 3.558676470588235,
+          "VaR_90": 3.9166666666666665,
+          "p_hit_ge_1": 0.9458333333333332,
+          "value_lost": 3.682838541666667,
+          "expected_unique_ships_hit": 2.733333333333333,
+          "expected_repeat_hits": 0.7845833333333333,
+          "expected_loss": 6.573088541666668,
+          "CVaR_90_loss": 8.03665309025061
+        }
+      },
+      {
+        "name": "staggered_center_heavy_6_centered_alt_mixed_balanced_standard_compact",
+        "primary_score": 6.980851865944488,
+        "complexity_cost": 1.5,
+        "train_summary": {
+          "profiles": 20,
+          "samples": 2400,
+          "expected_hits": 2.66625,
+          "CVaR_90": 3.278049164657028,
+          "VaR_90": 3.9166666666666665,
+          "p_hit_ge_1": 0.9870833333333333,
+          "value_lost": 3.5052395833333336,
+          "expected_unique_ships_hit": 2.989583333333333,
+          "expected_repeat_hits": 0.2700000000000001,
+          "expected_loss": 6.548822916666667,
+          "CVaR_90_loss": 8.640578985556408
+        }
+      },
+      {
+        "name": "staggered_center_heavy_6_centered_alt_mixed_balanced_compact_standard",
+        "primary_score": 7.00590168000376,
+        "complexity_cost": 1.45,
+        "train_summary": {
+          "profiles": 20,
+          "samples": 2400,
+          "expected_hits": 2.94625,
+          "CVaR_90": 3.5749658896633534,
+          "VaR_90": 3.9166666666666665,
+          "p_hit_ge_1": 0.9966666666666668,
+          "value_lost": 3.6020520833333336,
+          "expected_unique_ships_hit": 2.9020833333333336,
+          "expected_repeat_hits": 0.4575,
+          "expected_loss": 6.595635416666665,
+          "CVaR_90_loss": 8.205325266741882
+        }
+      },
+      {
+        "name": "rect_center_heavy_6_none_high_value_center_standard_standard",
+        "primary_score": 7.046983907503171,
+        "complexity_cost": 1.4200000000000002,
+        "train_summary": {
+          "profiles": 20,
+          "samples": 2400,
+          "expected_hits": 2.839166666666667,
+          "CVaR_90": 3.3570158336287372,
+          "VaR_90": 3.9166666666666665,
+          "p_hit_ge_1": 0.9016666666666667,
+          "value_lost": 4.016833333333333,
+          "expected_unique_ships_hit": 2.4833333333333334,
+          "expected_repeat_hits": 0.6279166666666667,
+          "expected_loss": 6.625749999999999,
+          "CVaR_90_loss": 8.424678150063444
+        }
+      },
+      {
+        "name": "staggered_uniform_6x7_none_high_value_center_standard_standard",
+        "primary_score": 7.085684593431822,
+        "complexity_cost": 1.4200000000000002,
+        "train_summary": {
+          "profiles": 20,
+          "samples": 2400,
+          "expected_hits": 3.0595833333333333,
+          "CVaR_90": 3.7752051019156285,
+          "VaR_90": 3.6991666666666667,
+          "p_hit_ge_1": 0.99875,
+          "value_lost": 3.694166666666667,
+          "expected_unique_ships_hit": 2.878333333333333,
+          "expected_repeat_hits": 0.41625000000000006,
+          "expected_loss": 6.65575,
+          "CVaR_90_loss": 8.598691868636445
+        }
+      },
+      {
+        "name": "staggered_uniform_6x7_centered_alt_mixed_balanced_loose_standard",
+        "primary_score": 7.11098886379967,
+        "complexity_cost": 1.5,
+        "train_summary": {
+          "profiles": 20,
+          "samples": 2400,
+          "expected_hits": 3.0429166666666667,
+          "CVaR_90": 3.6701388888888884,
+          "VaR_90": 3.9008333333333334,
+          "p_hit_ge_1": 1.0,
+          "value_lost": 3.911927083333333,
+          "expected_unique_ships_hit": 2.6491666666666664,
+          "expected_repeat_hits": 0.6358333333333333,
+          "expected_loss": 6.688260416666667,
+          "CVaR_90_loss": 8.454568942660059
+        }
+      },
+      {
+        "name": "staggered_center_heavy_6_none_mixed_balanced_standard_compact",
+        "primary_score": 7.11105929232442,
+        "complexity_cost": 1.4,
+        "train_summary": {
+          "profiles": 20,
+          "samples": 2400,
+          "expected_hits": 2.780416666666667,
+          "CVaR_90": 3.3645844486741794,
+          "VaR_90": 3.9016666666666664,
+          "p_hit_ge_1": 0.9345833333333335,
+          "value_lost": 3.7969062500000006,
+          "expected_unique_ships_hit": 2.7820833333333335,
+          "expected_repeat_hits": 0.5058333333333334,
+          "expected_loss": 6.6801562500000005,
+          "CVaR_90_loss": 8.618060846488385
+        }
+      },
+      {
+        "name": "rect_uniform_6x7_none_high_value_center_loose_standard",
+        "primary_score": 7.116313079133769,
+        "complexity_cost": 1.37,
+        "train_summary": {
+          "profiles": 20,
+          "samples": 2400,
+          "expected_hits": 3.0266666666666664,
+          "CVaR_90": 3.5780870781579175,
+          "VaR_90": 3.8641666666666667,
+          "p_hit_ge_1": 0.9895833333333334,
+          "value_lost": 3.78775,
+          "expected_unique_ships_hit": 2.8124999999999996,
+          "expected_repeat_hits": 0.5208333333333334,
+          "expected_loss": 6.704416666666669,
+          "CVaR_90_loss": 8.237928249342009
+        }
+      },
+      {
+        "name": "rect_center_heavy_6_centered_alt_high_value_center_compact_loose",
+        "primary_score": 7.1593473493930135,
+        "complexity_cost": 1.52,
+        "train_summary": {
+          "profiles": 20,
+          "samples": 2400,
+          "expected_hits": 2.5479166666666666,
+          "CVaR_90": 3.0330548231438326,
+          "VaR_90": 3.9166666666666665,
+          "p_hit_ge_1": 0.8820833333333333,
+          "value_lost": 4.102895833333333,
+          "expected_unique_ships_hit": 2.5516666666666667,
+          "expected_repeat_hits": 0.38083333333333336,
+          "expected_loss": 6.730729166666667,
+          "CVaR_90_loss": 8.572363654526926
+        }
+      },
+      {
+        "name": "rect_center_heavy_6_centered_alt_high_value_center_loose_standard",
+        "primary_score": 7.225331373521631,
+        "complexity_cost": 1.62,
+        "train_summary": {
+          "profiles": 20,
+          "samples": 2400,
+          "expected_hits": 2.7625,
+          "CVaR_90": 3.269280197194482,
+          "VaR_90": 3.9166666666666665,
+          "p_hit_ge_1": 0.9883333333333333,
+          "value_lost": 4.16146875,
+          "expected_unique_ships_hit": 2.505416666666667,
+          "expected_repeat_hits": 0.6137499999999999,
+          "expected_loss": 6.789635416666667,
+          "CVaR_90_loss": 8.713919137099285
+        }
+      },
+      {
+        "name": "staggered_uniform_6x7_centered_alt_high_value_center_loose_compact",
+        "primary_score": 7.246067452550575,
+        "complexity_cost": 1.57,
+        "train_summary": {
+          "profiles": 20,
+          "samples": 2400,
+          "expected_hits": 3.15875,
+          "CVaR_90": 3.616543481194969,
+          "VaR_90": 3.9166666666666665,
+          "p_hit_ge_1": 0.9933333333333334,
+          "value_lost": 3.9114609375000002,
+          "expected_unique_ships_hit": 2.805,
+          "expected_repeat_hits": 0.5937500000000001,
+          "expected_loss": 6.835210937499999,
+          "CVaR_90_loss": 8.2171303010115
+        }
+      },
+      {
+        "name": "rect_uniform_6x7_centered_alt_mixed_balanced_loose_standard",
+        "primary_score": 7.258475024798306,
+        "complexity_cost": 1.35,
+        "train_summary": {
+          "profiles": 20,
+          "samples": 2400,
+          "expected_hits": 2.86875,
+          "CVaR_90": 3.4759887005649714,
+          "VaR_90": 3.879166666666667,
+          "p_hit_ge_1": 0.9929166666666667,
+          "value_lost": 4.0071666666666665,
+          "expected_unique_ships_hit": 2.7262499999999994,
+          "expected_repeat_hits": 0.4445833333333334,
+          "expected_loss": 6.822333333333333,
+          "CVaR_90_loss": 8.722833829299471
+        }
+      },
+      {
+        "name": "rect_uniform_6x7_centered_alt_mixed_balanced_compact_standard",
+        "primary_score": 7.267509691698897,
+        "complexity_cost": 1.1500000000000001,
+        "train_summary": {
+          "profiles": 20,
+          "samples": 2400,
+          "expected_hits": 2.993333333333333,
+          "CVaR_90": 3.6033963227783454,
+          "VaR_90": 3.879166666666667,
+          "p_hit_ge_1": 0.9475,
+          "value_lost": 3.9663255208333332,
+          "expected_unique_ships_hit": 2.744583333333334,
+          "expected_repeat_hits": 0.6300000000000001,
+          "expected_loss": 6.836908854166667,
+          "CVaR_90_loss": 8.612016750644592
+        }
+      },
+      {
+        "name": "staggered_center_heavy_6_none_high_value_center_standard_standard",
+        "primary_score": 7.268553579886352,
+        "complexity_cost": 1.57,
+        "train_summary": {
+          "profiles": 20,
+          "samples": 2400,
+          "expected_hits": 2.39375,
+          "CVaR_90": 2.9164748976513684,
+          "VaR_90": 3.7891666666666666,
+          "p_hit_ge_1": 0.8554166666666665,
+          "value_lost": 4.1491875,
+          "expected_unique_ships_hit": 2.6479166666666667,
+          "expected_repeat_hits": 0.2758333333333333,
+          "expected_loss": 6.852270833333334,
+          "CVaR_90_loss": 8.325654931060368
+        }
+      },
+      {
+        "name": "rect_center_heavy_6_centered_alt_high_value_center_standard_standard",
+        "primary_score": 7.336270291372525,
+        "complexity_cost": 1.5200000000000002,
+        "train_summary": {
+          "profiles": 20,
+          "samples": 2400,
+          "expected_hits": 2.6149999999999998,
+          "CVaR_90": 3.1163905608009794,
+          "VaR_90": 3.9166666666666665,
+          "p_hit_ge_1": 0.9370833333333334,
+          "value_lost": 4.151067708333334,
+          "expected_unique_ships_hit": 2.688333333333333,
+          "expected_repeat_hits": 0.32625000000000004,
+          "expected_loss": 6.904651041666666,
+          "CVaR_90_loss": 8.632384994117185
+        }
+      },
+      {
+        "name": "staggered_center_heavy_6_none_high_value_center_loose_compact",
+        "primary_score": 7.339854711646265,
+        "complexity_cost": 1.6199999999999999,
+        "train_summary": {
+          "profiles": 20,
+          "samples": 2400,
+          "expected_hits": 2.799583333333333,
+          "CVaR_90": 3.320215234419126,
+          "VaR_90": 3.9091666666666667,
+          "p_hit_ge_1": 0.9412499999999999,
+          "value_lost": 4.109989583333332,
+          "expected_unique_ships_hit": 2.6870833333333337,
+          "expected_repeat_hits": 0.5275,
+          "expected_loss": 6.902572916666666,
+          "CVaR_90_loss": 8.745635899591974
+        }
+      },
+      {
+        "name": "rect_uniform_6x7_none_high_value_center_compact_standard",
+        "primary_score": 7.359652315768049,
+        "complexity_cost": 1.1700000000000002,
+        "train_summary": {
+          "profiles": 20,
+          "samples": 2400,
+          "expected_hits": 2.638333333333334,
+          "CVaR_90": 3.2699007369566275,
+          "VaR_90": 3.7366666666666672,
+          "p_hit_ge_1": 0.9875,
+          "value_lost": 3.9376718749999995,
+          "expected_unique_ships_hit": 2.900833333333333,
+          "expected_repeat_hits": 0.39625,
+          "expected_loss": 6.917755208333334,
+          "CVaR_90_loss": 8.837942148694296
+        }
+      },
+      {
+        "name": "rect_center_heavy_6_none_high_value_center_compact_standard",
+        "primary_score": 7.367977282929919,
+        "complexity_cost": 1.32,
+        "train_summary": {
+          "profiles": 20,
+          "samples": 2400,
+          "expected_hits": 2.980833333333334,
+          "CVaR_90": 3.5306539286438863,
+          "VaR_90": 3.9166666666666665,
+          "p_hit_ge_1": 0.9583333333333334,
+          "value_lost": 4.144302083333334,
+          "expected_unique_ships_hit": 2.643333333333333,
+          "expected_repeat_hits": 0.6841666666666666,
+          "expected_loss": 6.924468750000001,
+          "CVaR_90_loss": 8.870170658598377
+        }
+      },
+      {
+        "name": "staggered_uniform_6x7_centered_alt_mixed_balanced_compact_standard",
+        "primary_score": 7.3754557589629375,
+        "complexity_cost": 1.3,
+        "train_summary": {
+          "profiles": 20,
+          "samples": 2400,
+          "expected_hits": 3.0629166666666667,
+          "CVaR_90": 3.603846153846154,
+          "VaR_90": 3.9166666666666665,
+          "p_hit_ge_1": 0.9558333333333333,
+          "value_lost": 3.9774218749999997,
+          "expected_unique_ships_hit": 2.8175,
+          "expected_repeat_hits": 0.7154166666666667,
+          "expected_loss": 6.938005208333332,
+          "CVaR_90_loss": 8.749011012592096
+        }
+      },
+      {
+        "name": "rect_center_heavy_6_centered_alt_mixed_balanced_compact_standard",
+        "primary_score": 7.420934955263061,
+        "complexity_cost": 1.3,
+        "train_summary": {
+          "profiles": 20,
+          "samples": 2400,
+          "expected_hits": 2.7437499999999995,
+          "CVaR_90": 3.2270736156781554,
+          "VaR_90": 3.9008333333333334,
+          "p_hit_ge_1": 0.9466666666666667,
+          "value_lost": 3.9600781250000003,
+          "expected_unique_ships_hit": 2.942916666666666,
+          "expected_repeat_hits": 0.4541666666666667,
+          "expected_loss": 6.993828125000002,
+          "CVaR_90_loss": 8.542136605261177
+        }
+      },
+      {
+        "name": "staggered_center_heavy_6_none_mixed_balanced_compact_standard",
+        "primary_score": 7.422908792162698,
+        "complexity_cost": 1.3499999999999999,
+        "train_summary": {
+          "profiles": 20,
+          "samples": 2400,
+          "expected_hits": 2.5941666666666667,
+          "CVaR_90": 2.9555052790346905,
+          "VaR_90": 3.9166666666666665,
+          "p_hit_ge_1": 0.8558333333333333,
+          "value_lost": 4.0300312499999995,
+          "expected_unique_ships_hit": 2.912916666666667,
+          "expected_repeat_hits": 0.26375000000000004,
+          "expected_loss": 6.995697916666666,
+          "CVaR_90_loss": 8.544217509920633
+        }
+      },
+      {
+        "name": "staggered_center_heavy_6_centered_alt_high_value_center_compact_standard",
+        "primary_score": 7.429945774981533,
+        "complexity_cost": 1.57,
+        "train_summary": {
+          "profiles": 20,
+          "samples": 2400,
+          "expected_hits": 2.9845833333333336,
+          "CVaR_90": 3.5764930635763967,
+          "VaR_90": 3.9166666666666665,
+          "p_hit_ge_1": 0.9966666666666668,
+          "value_lost": 3.9806145833333337,
+          "expected_unique_ships_hit": 2.925,
+          "expected_repeat_hits": 0.47541666666666665,
+          "expected_loss": 7.000697916666667,
+          "CVaR_90_loss": 8.584957166297329
+        }
+      },
+      {
+        "name": "rect_center_heavy_6_centered_alt_mixed_balanced_standard_compact",
+        "primary_score": 7.441618952902753,
+        "complexity_cost": 1.35,
+        "train_summary": {
+          "profiles": 20,
+          "samples": 2400,
+          "expected_hits": 2.9658333333333333,
+          "CVaR_90": 3.4692147798503683,
+          "VaR_90": 3.879166666666667,
+          "p_hit_ge_1": 0.9841666666666666,
+          "value_lost": 3.878088541666667,
+          "expected_unique_ships_hit": 3.04,
+          "expected_repeat_hits": 0.34958333333333336,
+          "expected_loss": 6.988005208333332,
+          "CVaR_90_loss": 9.072274891388428
+        }
+      },
+      {
+        "name": "rect_uniform_6x7_none_mixed_balanced_compact_loose",
+        "primary_score": 7.446245808808596,
+        "complexity_cost": 1.15,
+        "train_summary": {
+          "profiles": 20,
+          "samples": 2400,
+          "expected_hits": 2.594583333333333,
+          "CVaR_90": 3.263406406406406,
+          "VaR_90": 3.8325000000000005,
+          "p_hit_ge_1": 0.9891666666666667,
+          "value_lost": 4.257278645833333,
+          "expected_unique_ships_hit": 2.6404166666666664,
+          "expected_repeat_hits": 0.5345833333333333,
+          "expected_loss": 7.004611979166666,
+          "CVaR_90_loss": 8.83267659283862
+        }
+      },
+      {
+        "name": "staggered_uniform_6x7_centered_alt_mixed_balanced_loose_compact",
+        "primary_score": 7.454637809860101,
+        "complexity_cost": 1.45,
+        "train_summary": {
+          "profiles": 20,
+          "samples": 2400,
+          "expected_hits": 3.197916666666667,
+          "CVaR_90": 3.667110078465062,
+          "VaR_90": 3.9166666666666665,
+          "p_hit_ge_1": 0.99375,
+          "value_lost": 4.029648437500001,
+          "expected_unique_ships_hit": 2.8675000000000006,
+          "expected_repeat_hits": 0.5816666666666667,
+          "expected_loss": 7.013481770833335,
+          "CVaR_90_loss": 8.82312078053533
+        }
+      },
+      {
+        "name": "staggered_uniform_6x7_none_mixed_balanced_loose_standard",
+        "primary_score": 7.570266153984903,
+        "complexity_cost": 1.4,
+        "train_summary": {
+          "profiles": 20,
+          "samples": 2400,
+          "expected_hits": 3.0462499999999997,
+          "CVaR_90": 3.6145421989934183,
+          "VaR_90": 3.7591666666666668,
+          "p_hit_ge_1": 0.9991666666666668,
+          "value_lost": 4.303166666666667,
+          "expected_unique_ships_hit": 2.7070833333333337,
+          "expected_repeat_hits": 0.5920833333333333,
+          "expected_loss": 7.128666666666666,
+          "CVaR_90_loss": 8.831989746364744
+        }
+      },
+      {
+        "name": "rect_center_heavy_6_centered_alt_high_value_center_loose_compact",
+        "primary_score": 7.587260843214565,
+        "complexity_cost": 1.57,
+        "train_summary": {
+          "profiles": 20,
+          "samples": 2400,
+          "expected_hits": 2.9845833333333336,
+          "CVaR_90": 3.474408000514502,
+          "VaR_90": 3.9166666666666665,
+          "p_hit_ge_1": 0.9891666666666665,
+          "value_lost": 4.294317708333334,
+          "expected_unique_ships_hit": 2.7245833333333334,
+          "expected_repeat_hits": 0.5445833333333333,
+          "expected_loss": 7.127817708333332,
+          "CVaR_90_loss": 9.188862697624677
+        }
+      },
+      {
+        "name": "rect_uniform_6x7_centered_alt_high_value_center_loose_compact",
+        "primary_score": 7.630493082201704,
+        "complexity_cost": 1.4200000000000002,
+        "train_summary": {
+          "profiles": 20,
+          "samples": 2400,
+          "expected_hits": 2.995833333333333,
+          "CVaR_90": 3.517306570572976,
+          "VaR_90": 3.841666666666667,
+          "p_hit_ge_1": 0.9983333333333334,
+          "value_lost": 4.0957109375,
+          "expected_unique_ships_hit": 3.006666666666667,
+          "expected_repeat_hits": 0.45625,
+          "expected_loss": 7.193627604166667,
+          "CVaR_90_loss": 8.737309560700725
+        }
+      },
+      {
+        "name": "staggered_uniform_6x7_none_high_value_center_compact_standard",
+        "primary_score": 7.6389414338734785,
+        "complexity_cost": 1.32,
+        "train_summary": {
+          "profiles": 20,
+          "samples": 2400,
+          "expected_hits": 3.2579166666666666,
+          "CVaR_90": 3.8211999022482894,
+          "VaR_90": 3.9166666666666665,
+          "p_hit_ge_1": 0.9970833333333333,
+          "value_lost": 3.977036458333333,
+          "expected_unique_ships_hit": 3.1037500000000002,
+          "expected_repeat_hits": 0.595,
+          "expected_loss": 7.199786458333333,
+          "CVaR_90_loss": 8.78309951080291
+        }
+      },
+      {
+        "name": "staggered_center_heavy_6_none_high_value_center_standard_compact",
+        "primary_score": 7.669407147701412,
+        "complexity_cost": 1.52,
+        "train_summary": {
+          "profiles": 20,
+          "samples": 2400,
+          "expected_hits": 2.81625,
+          "CVaR_90": 3.416328410480061,
+          "VaR_90": 3.9091666666666667,
+          "p_hit_ge_1": 0.945,
+          "value_lost": 4.302770833333333,
+          "expected_unique_ships_hit": 2.8070833333333325,
+          "expected_repeat_hits": 0.51375,
+          "expected_loss": 7.212604166666668,
+          "CVaR_90_loss": 9.136059620694878
+        }
+      },
+      {
+        "name": "rect_uniform_6x7_none_high_value_center_standard_standard",
+        "primary_score": 7.777465300925927,
+        "complexity_cost": 1.2700000000000002,
+        "train_summary": {
+          "profiles": 20,
+          "samples": 2400,
+          "expected_hits": 2.8916666666666666,
+          "CVaR_90": 3.6155152279708007,
+          "VaR_90": 3.8758333333333335,
+          "p_hit_ge_1": 0.9983333333333334,
+          "value_lost": 4.116145833333333,
+          "expected_unique_ships_hit": 3.1341666666666668,
+          "expected_repeat_hits": 0.33666666666666667,
+          "expected_loss": 7.3176458333333345,
+          "CVaR_90_loss": 9.196389351851852
+        }
+      },
+      {
+        "name": "staggered_center_heavy_6_centered_alt_mixed_balanced_compact_compact",
+        "primary_score": 7.790484606708325,
+        "complexity_cost": 1.4,
+        "train_summary": {
+          "profiles": 20,
+          "samples": 2400,
+          "expected_hits": 3.104166666666667,
+          "CVaR_90": 3.6278081328933176,
+          "VaR_90": 3.9091666666666667,
+          "p_hit_ge_1": 0.9974999999999999,
+          "value_lost": 3.985151041666667,
+          "expected_unique_ships_hit": 3.25875,
+          "expected_repeat_hits": 0.38625,
+          "expected_loss": 7.321151041666667,
+          "CVaR_90_loss": 9.386671300833148
+        }
+      },
+      {
+        "name": "staggered_center_heavy_6_centered_alt_high_value_center_standard_compact",
+        "primary_score": 7.837753620353702,
+        "complexity_cost": 1.62,
+        "train_summary": {
+          "profiles": 20,
+          "samples": 2400,
+          "expected_hits": 2.787083333333334,
+          "CVaR_90": 3.3797223082361647,
+          "VaR_90": 3.9166666666666665,
+          "p_hit_ge_1": 0.9966666666666667,
+          "value_lost": 4.248651041666667,
+          "expected_unique_ships_hit": 3.05125,
+          "expected_repeat_hits": 0.3270833333333334,
+          "expected_loss": 7.365317708333333,
+          "CVaR_90_loss": 9.448718240407361
+        }
+      },
+      {
+        "name": "staggered_uniform_6x7_none_mixed_balanced_standard_loose",
+        "primary_score": 7.858139817499761,
+        "complexity_cost": 1.4,
+        "train_summary": {
+          "profiles": 20,
+          "samples": 2400,
+          "expected_hits": 3.114583333333333,
+          "CVaR_90": 3.6739036540434946,
+          "VaR_90": 3.9166666666666665,
+          "p_hit_ge_1": 1.0,
+          "value_lost": 4.515635416666667,
+          "expected_unique_ships_hit": 2.7475,
+          "expected_repeat_hits": 0.6491666666666667,
+          "expected_loss": 7.39296875,
+          "CVaR_90_loss": 9.303421349995226
+        }
+      },
+      {
+        "name": "rect_center_heavy_6_centered_alt_high_value_center_compact_standard",
+        "primary_score": 7.937277633761473,
+        "complexity_cost": 1.4200000000000002,
+        "train_summary": {
+          "profiles": 20,
+          "samples": 2400,
+          "expected_hits": 2.78,
+          "CVaR_90": 3.276514930783086,
+          "VaR_90": 3.9008333333333334,
+          "p_hit_ge_1": 0.9470833333333333,
+          "value_lost": 4.421807291666666,
+          "expected_unique_ships_hit": 2.9670833333333335,
+          "expected_repeat_hits": 0.47958333333333336,
+          "expected_loss": 7.484807291666668,
+          "CVaR_90_loss": 9.049406841896108
+        }
+      },
+      {
+        "name": "rect_uniform_6x7_centered_alt_mixed_balanced_loose_compact",
+        "primary_score": 7.944332389272496,
+        "complexity_cost": 1.3,
+        "train_summary": {
+          "profiles": 20,
+          "samples": 2400,
+          "expected_hits": 3.0624999999999996,
+          "CVaR_90": 3.5231114765216907,
+          "VaR_90": 3.8866666666666667,
+          "p_hit_ge_1": 0.9983333333333334,
+          "value_lost": 4.348596354166666,
+          "expected_unique_ships_hit": 3.0579166666666664,
+          "expected_repeat_hits": 0.45541666666666664,
+          "expected_loss": 7.4975963541666655,
+          "CVaR_90_loss": 8.93472070211661
+        }
+      },
+      {
+        "name": "rect_uniform_6x7_none_mixed_balanced_standard_loose",
+        "primary_score": 7.944416324520517,
+        "complexity_cost": 1.25,
+        "train_summary": {
+          "profiles": 20,
+          "samples": 2400,
+          "expected_hits": 2.92875,
+          "CVaR_90": 3.483585593650905,
+          "VaR_90": 3.7891666666666666,
+          "p_hit_ge_1": 0.9974999999999999,
+          "value_lost": 4.575760416666666,
+          "expected_unique_ships_hit": 2.782916666666666,
+          "expected_repeat_hits": 0.6195833333333334,
+          "expected_loss": 7.4825937499999995,
+          "CVaR_90_loss": 9.23645149041035
+        }
+      },
+      {
+        "name": "rect_center_heavy_6_none_mixed_balanced_standard_compact",
+        "primary_score": 7.951945740658324,
+        "complexity_cost": 1.25,
+        "train_summary": {
+          "profiles": 20,
+          "samples": 2400,
+          "expected_hits": 2.924583333333333,
+          "CVaR_90": 3.4124787222581348,
+          "VaR_90": 3.9016666666666664,
+          "p_hit_ge_1": 0.94375,
+          "value_lost": 4.325802083333334,
+          "expected_unique_ships_hit": 3.1037500000000002,
+          "expected_repeat_hits": 0.27375000000000005,
+          "expected_loss": 7.484302083333333,
+          "CVaR_90_loss": 9.352873146499828
+        }
+      },
+      {
+        "name": "rect_uniform_6x7_none_high_value_center_loose_compact",
+        "primary_score": 7.954272248885401,
+        "complexity_cost": 1.32,
+        "train_summary": {
+          "profiles": 20,
+          "samples": 2400,
+          "expected_hits": 3.3083333333333345,
+          "CVaR_90": 3.807043956043956,
+          "VaR_90": 3.8941666666666666,
+          "p_hit_ge_1": 1.0,
+          "value_lost": 4.219697916666666,
+          "expected_unique_ships_hit": 3.1704166666666667,
+          "expected_repeat_hits": 0.5475,
+          "expected_loss": 7.499614583333335,
+          "CVaR_90_loss": 9.093153311041322
+        }
+      },
+      {
+        "name": "rect_center_heavy_6_centered_alt_mixed_balanced_compact_compact",
+        "primary_score": 7.95959161711966,
+        "complexity_cost": 1.25,
+        "train_summary": {
+          "profiles": 20,
+          "samples": 2400,
+          "expected_hits": 2.887083333333333,
+          "CVaR_90": 3.417037857392524,
+          "VaR_90": 3.9166666666666665,
+          "p_hit_ge_1": 0.9491666666666667,
+          "value_lost": 4.201312500000001,
+          "expected_unique_ships_hit": 3.2383333333333333,
+          "expected_repeat_hits": 0.2866666666666667,
+          "expected_loss": 7.496979166666667,
+          "CVaR_90_loss": 9.25224900905986
+        }
+      },
+      {
+        "name": "staggered_center_heavy_6_none_high_value_center_compact_standard",
+        "primary_score": 7.978407477280686,
+        "complexity_cost": 1.47,
+        "train_summary": {
+          "profiles": 20,
+          "samples": 2400,
+          "expected_hits": 2.60375,
+          "CVaR_90": 2.911235252265072,
+          "VaR_90": 3.9166666666666665,
+          "p_hit_ge_1": 0.8470833333333333,
+          "value_lost": 4.548427083333334,
+          "expected_unique_ships_hit": 2.9295833333333334,
+          "expected_repeat_hits": 0.24958333333333335,
+          "expected_loss": 7.527927083333334,
+          "CVaR_90_loss": 9.009607878947033
+        }
+      },
+      {
+        "name": "rect_uniform_6x7_none_mixed_balanced_loose_loose",
+        "primary_score": 8.003513307549424,
+        "complexity_cost": 1.3499999999999999,
+        "train_summary": {
+          "profiles": 20,
+          "samples": 2400,
+          "expected_hits": 3.1670833333333333,
+          "CVaR_90": 3.801111111111111,
+          "VaR_90": 3.8016666666666667,
+          "p_hit_ge_1": 0.9995833333333334,
+          "value_lost": 4.625526041666667,
+          "expected_unique_ships_hit": 2.7945833333333328,
+          "expected_repeat_hits": 0.6516666666666666,
+          "expected_loss": 7.550442708333333,
+          "CVaR_90_loss": 9.061411984321824
+        }
+      },
+      {
+        "name": "rect_uniform_6x7_none_mixed_balanced_compact_standard",
+        "primary_score": 8.01716046101125,
+        "complexity_cost": 1.05,
+        "train_summary": {
+          "profiles": 20,
+          "samples": 2400,
+          "expected_hits": 2.6470833333333337,
+          "CVaR_90": 3.3210381971088667,
+          "VaR_90": 3.7816666666666667,
+          "p_hit_ge_1": 0.9916666666666668,
+          "value_lost": 4.548328124999999,
+          "expected_unique_ships_hit": 2.9066666666666667,
+          "expected_repeat_hits": 0.4029166666666667,
+          "expected_loss": 7.535578124999999,
+          "CVaR_90_loss": 9.631646720225001
+        }
+      },
+      {
+        "name": "staggered_uniform_6x7_none_high_value_center_loose_compact",
+        "primary_score": 8.0660603292103,
+        "complexity_cost": 1.47,
+        "train_summary": {
+          "profiles": 20,
+          "samples": 2400,
+          "expected_hits": 3.042916666666667,
+          "CVaR_90": 3.6055692055692057,
+          "VaR_90": 3.8033333333333332,
+          "p_hit_ge_1": 0.9995833333333334,
+          "value_lost": 4.400041666666667,
+          "expected_unique_ships_hit": 3.100416666666667,
+          "expected_repeat_hits": 0.4883333333333333,
+          "expected_loss": 7.5981250000000005,
+          "CVaR_90_loss": 9.35870658420599
+        }
+      },
+      {
+        "name": "rect_center_heavy_6_none_mixed_balanced_loose_compact",
+        "primary_score": 8.072317908540718,
+        "complexity_cost": 1.3499999999999999,
+        "train_summary": {
+          "profiles": 20,
+          "samples": 2400,
+          "expected_hits": 2.9133333333333336,
+          "CVaR_90": 3.4168096030512864,
+          "VaR_90": 3.8858333333333333,
+          "p_hit_ge_1": 0.9991666666666668,
+          "value_lost": 4.473260416666667,
+          "expected_unique_ships_hit": 3.055833333333333,
+          "expected_repeat_hits": 0.37000000000000005,
+          "expected_loss": 7.603093749999999,
+          "CVaR_90_loss": 9.384483170814386
+        }
+      },
+      {
+        "name": "staggered_uniform_6x7_none_mixed_balanced_compact_loose",
+        "primary_score": 8.08719396238948,
+        "complexity_cost": 1.2999999999999998,
+        "train_summary": {
+          "profiles": 20,
+          "samples": 2400,
+          "expected_hits": 3.0833333333333335,
+          "CVaR_90": 3.7514285714285713,
+          "VaR_90": 3.9,
+          "p_hit_ge_1": 0.99875,
+          "value_lost": 4.6682890625,
+          "expected_unique_ships_hit": 2.8162499999999997,
+          "expected_repeat_hits": 0.67,
+          "expected_loss": 7.618539062499998,
+          "CVaR_90_loss": 9.373097997789612
+        }
+      },
+      {
+        "name": "rect_uniform_6x7_none_high_value_center_standard_compact",
+        "primary_score": 8.092160274527142,
+        "complexity_cost": 1.2200000000000002,
+        "train_summary": {
+          "profiles": 20,
+          "samples": 2400,
+          "expected_hits": 3.099583333333333,
+          "CVaR_90": 3.6677007459412025,
+          "VaR_90": 3.8116666666666665,
+          "p_hit_ge_1": 0.9983333333333334,
+          "value_lost": 4.243854166666667,
+          "expected_unique_ships_hit": 3.2795833333333335,
+          "expected_repeat_hits": 0.42333333333333323,
+          "expected_loss": 7.608104166666668,
+          "CVaR_90_loss": 9.681122157209478
+        }
+      },
+      {
+        "name": "rect_center_heavy_6_centered_alt_high_value_center_standard_compact",
+        "primary_score": 8.209415016624995,
+        "complexity_cost": 1.4700000000000002,
+        "train_summary": {
+          "profiles": 20,
+          "samples": 2400,
+          "expected_hits": 2.984583333333333,
+          "CVaR_90": 3.467111596774484,
+          "VaR_90": 3.9166666666666665,
+          "p_hit_ge_1": 0.9841666666666666,
+          "value_lost": 4.55828125,
+          "expected_unique_ships_hit": 3.0874999999999995,
+          "expected_repeat_hits": 0.3383333333333333,
+          "expected_loss": 7.7134479166666665,
+          "CVaR_90_loss": 9.919341999166555
+        }
+      },
+      {
+        "name": "staggered_uniform_6x7_none_mixed_balanced_standard_standard",
+        "primary_score": 8.226687414034824,
+        "complexity_cost": 1.3,
+        "train_summary": {
+          "profiles": 20,
+          "samples": 2400,
+          "expected_hits": 3.1900000000000004,
+          "CVaR_90": 3.864244360902256,
+          "VaR_90": 3.6958333333333333,
+          "p_hit_ge_1": 0.99875,
+          "value_lost": 4.6963671875,
+          "expected_unique_ships_hit": 2.959166666666667,
+          "expected_repeat_hits": 0.4758333333333333,
+          "expected_loss": 7.750700520833332,
+          "CVaR_90_loss": 9.519737864029846
+        }
+      },
+      {
+        "name": "staggered_uniform_6x7_centered_alt_high_value_center_standard_compact",
+        "primary_score": 8.24524667858292,
+        "complexity_cost": 1.4700000000000002,
+        "train_summary": {
+          "profiles": 20,
+          "samples": 2400,
+          "expected_hits": 3.35,
+          "CVaR_90": 3.7587396345208846,
+          "VaR_90": 3.9166666666666665,
+          "p_hit_ge_1": 0.9991666666666668,
+          "value_lost": 4.390934895833334,
+          "expected_unique_ships_hit": 3.2862500000000003,
+          "expected_repeat_hits": 0.49333333333333335,
+          "expected_loss": 7.7758515625,
+          "CVaR_90_loss": 9.38790232165838
+        }
+      },
+      {
+        "name": "rect_uniform_6x7_none_mixed_balanced_loose_standard",
+        "primary_score": 8.273331449745427,
+        "complexity_cost": 1.25,
+        "train_summary": {
+          "profiles": 20,
+          "samples": 2400,
+          "expected_hits": 3.1529166666666666,
+          "CVaR_90": 3.668269898852233,
+          "VaR_90": 3.849166666666667,
+          "p_hit_ge_1": 0.9958333333333333,
+          "value_lost": 4.7620625,
+          "expected_unique_ships_hit": 2.93125,
+          "expected_repeat_hits": 0.5579166666666666,
+          "expected_loss": 7.804895833333331,
+          "CVaR_90_loss": 9.368712328241932
+        }
+      },
+      {
+        "name": "rect_uniform_6x7_centered_alt_mixed_balanced_compact_compact",
+        "primary_score": 8.348923916677242,
+        "complexity_cost": 1.1,
+        "train_summary": {
+          "profiles": 20,
+          "samples": 2400,
+          "expected_hits": 3.1870833333333337,
+          "CVaR_90": 3.560307274424922,
+          "VaR_90": 3.9166666666666665,
+          "p_hit_ge_1": 0.9491666666666667,
+          "value_lost": 4.458221354166666,
+          "expected_unique_ships_hit": 3.31875,
+          "expected_repeat_hits": 0.45,
+          "expected_loss": 7.866971354166667,
+          "CVaR_90_loss": 9.63905125021151
+        }
+      },
+      {
+        "name": "rect_uniform_6x7_centered_alt_high_value_center_standard_compact",
+        "primary_score": 8.358230304063108,
+        "complexity_cost": 1.3200000000000003,
+        "train_summary": {
+          "profiles": 20,
+          "samples": 2400,
+          "expected_hits": 3.089583333333333,
+          "CVaR_90": 3.5615634322795353,
+          "VaR_90": 3.9166666666666665,
+          "p_hit_ge_1": 0.9895833333333334,
+          "value_lost": 4.491851562500001,
+          "expected_unique_ships_hit": 3.3016666666666667,
+          "expected_repeat_hits": 0.3,
+          "expected_loss": 7.853518229166667,
+          "CVaR_90_loss": 10.094241497928829
+        }
+      },
+      {
+        "name": "rect_uniform_6x7_none_high_value_center_compact_compact",
+        "primary_score": 8.362382049604886,
+        "complexity_cost": 1.12,
+        "train_summary": {
+          "profiles": 20,
+          "samples": 2400,
+          "expected_hits": 2.9258333333333333,
+          "CVaR_90": 3.4639754856614244,
+          "VaR_90": 3.9166666666666665,
+          "p_hit_ge_1": 0.9962500000000001,
+          "value_lost": 4.351239583333333,
+          "expected_unique_ships_hit": 3.432083333333334,
+          "expected_repeat_hits": 0.38625000000000004,
+          "expected_loss": 7.8605729166666665,
+          "CVaR_90_loss": 10.0361826587644
+        }
+      },
+      {
+        "name": "rect_uniform_6x7_centered_alt_high_value_center_compact_compact",
+        "primary_score": 8.366770074786324,
+        "complexity_cost": 1.2200000000000002,
+        "train_summary": {
+          "profiles": 20,
+          "samples": 2400,
+          "expected_hits": 3.1758333333333337,
+          "CVaR_90": 3.515064516129032,
+          "VaR_90": 3.9166666666666665,
+          "p_hit_ge_1": 0.9491666666666667,
+          "value_lost": 4.490442708333333,
+          "expected_unique_ships_hit": 3.2983333333333333,
+          "expected_repeat_hits": 0.45583333333333337,
+          "expected_loss": 7.879942708333333,
+          "CVaR_90_loss": 9.736547329059828
+        }
+      },
+      {
+        "name": "staggered_center_heavy_6_none_mixed_balanced_compact_compact",
+        "primary_score": 8.423662710192394,
+        "complexity_cost": 1.2999999999999998,
+        "train_summary": {
+          "profiles": 20,
+          "samples": 2400,
+          "expected_hits": 2.8270833333333334,
+          "CVaR_90": 3.3199503778947146,
+          "VaR_90": 3.9166666666666665,
+          "p_hit_ge_1": 0.9354166666666668,
+          "value_lost": 4.528416666666667,
+          "expected_unique_ships_hit": 3.3725,
+          "expected_repeat_hits": 0.16833333333333333,
+          "expected_loss": 7.934583333333333,
+          "CVaR_90_loss": 9.78158753718123
+        }
+      },
+      {
+        "name": "rect_uniform_6x7_centered_alt_mixed_balanced_standard_compact",
+        "primary_score": 8.439013358256327,
+        "complexity_cost": 1.2000000000000002,
+        "train_summary": {
+          "profiles": 20,
+          "samples": 2400,
+          "expected_hits": 3.1158333333333337,
+          "CVaR_90": 3.6145221483942414,
+          "VaR_90": 3.9166666666666665,
+          "p_hit_ge_1": 0.9854166666666668,
+          "value_lost": 4.538127604166667,
+          "expected_unique_ships_hit": 3.3204166666666666,
+          "expected_repeat_hits": 0.29416666666666663,
+          "expected_loss": 7.917377604166667,
+          "CVaR_90_loss": 10.432715081793205
+        }
+      },
+      {
+        "name": "staggered_uniform_6x7_centered_alt_high_value_center_compact_compact",
+        "primary_score": 8.517563257826428,
+        "complexity_cost": 1.37,
+        "train_summary": {
+          "profiles": 20,
+          "samples": 2400,
+          "expected_hits": 3.2891666666666675,
+          "CVaR_90": 3.7517957020900794,
+          "VaR_90": 3.9166666666666665,
+          "p_hit_ge_1": 0.9949999999999999,
+          "value_lost": 4.5107656249999994,
+          "expected_unique_ships_hit": 3.393333333333333,
+          "expected_repeat_hits": 0.595,
+          "expected_loss": 8.023098958333335,
+          "CVaR_90_loss": 9.889285989861852
+        }
+      },
+      {
+        "name": "staggered_center_heavy_6_centered_alt_high_value_center_compact_compact",
+        "primary_score": 8.548671079661542,
+        "complexity_cost": 1.52,
+        "train_summary": {
+          "profiles": 20,
+          "samples": 2400,
+          "expected_hits": 3.1745833333333335,
+          "CVaR_90": 3.6268049409188543,
+          "VaR_90": 3.9166666666666665,
+          "p_hit_ge_1": 0.9983333333333333,
+          "value_lost": 4.631005208333333,
+          "expected_unique_ships_hit": 3.335,
+          "expected_repeat_hits": 0.3866666666666666,
+          "expected_loss": 8.043338541666667,
+          "CVaR_90_loss": 10.106650759897478
+        }
+      },
+      {
+        "name": "rect_center_heavy_6_none_high_value_center_loose_compact",
+        "primary_score": 8.553177568432679,
+        "complexity_cost": 1.47,
+        "train_summary": {
+          "profiles": 20,
+          "samples": 2400,
+          "expected_hits": 2.9216666666666664,
+          "CVaR_90": 3.4171206635434808,
+          "VaR_90": 3.9091666666666667,
+          "p_hit_ge_1": 0.9995833333333334,
+          "value_lost": 4.927114583333333,
+          "expected_unique_ships_hit": 3.0608333333333335,
+          "expected_repeat_hits": 0.36208333333333337,
+          "expected_loss": 8.060364583333333,
+          "CVaR_90_loss": 9.856259701986906
+        }
+      },
+      {
+        "name": "staggered_uniform_6x7_centered_alt_mixed_balanced_standard_compact",
+        "primary_score": 8.572548403627188,
+        "complexity_cost": 1.35,
+        "train_summary": {
+          "profiles": 20,
+          "samples": 2400,
+          "expected_hits": 3.375,
+          "CVaR_90": 3.807641010575794,
+          "VaR_90": 3.9166666666666665,
+          "p_hit_ge_1": 0.9995833333333334,
+          "value_lost": 4.666190104166667,
+          "expected_unique_ships_hit": 3.306666666666667,
+          "expected_repeat_hits": 0.5049999999999999,
+          "expected_loss": 8.073856770833334,
+          "CVaR_90_loss": 9.973832655877061
+        }
+      },
+      {
+        "name": "staggered_uniform_6x7_none_mixed_balanced_loose_compact",
+        "primary_score": 8.594490902777778,
+        "complexity_cost": 1.3499999999999999,
+        "train_summary": {
+          "profiles": 20,
+          "samples": 2400,
+          "expected_hits": 3.088333333333334,
+          "CVaR_90": 3.6031099324975893,
+          "VaR_90": 3.8266666666666667,
+          "p_hit_ge_1": 0.9991666666666668,
+          "value_lost": 4.83796875,
+          "expected_unique_ships_hit": 3.1670833333333337,
+          "expected_repeat_hits": 0.49833333333333335,
+          "expected_loss": 8.10471875,
+          "CVaR_90_loss": 9.795443055555555
+        }
+      },
+      {
+        "name": "rect_center_heavy_6_none_high_value_center_standard_compact",
+        "primary_score": 8.602164865233068,
+        "complexity_cost": 1.37,
+        "train_summary": {
+          "profiles": 20,
+          "samples": 2400,
+          "expected_hits": 2.9325,
+          "CVaR_90": 3.370689073997897,
+          "VaR_90": 3.9166666666666665,
+          "p_hit_ge_1": 0.9466666666666669,
+          "value_lost": 4.908677083333334,
+          "expected_unique_ships_hit": 3.1433333333333335,
+          "expected_repeat_hits": 0.25583333333333336,
+          "expected_loss": 8.103177083333332,
+          "CVaR_90_loss": 9.9797556379947
+        }
+      },
+      {
+        "name": "staggered_uniform_6x7_none_mixed_balanced_compact_standard",
+        "primary_score": 8.64792301899801,
+        "complexity_cost": 1.2,
+        "train_summary": {
+          "profiles": 20,
+          "samples": 2400,
+          "expected_hits": 3.3362500000000006,
+          "CVaR_90": 3.8646153846153846,
+          "VaR_90": 3.9166666666666665,
+          "p_hit_ge_1": 0.9970833333333333,
+          "value_lost": 4.918630208333333,
+          "expected_unique_ships_hit": 3.115,
+          "expected_repeat_hits": 0.6458333333333334,
+          "expected_loss": 8.162796875,
+          "CVaR_90_loss": 9.702522879960204
+        }
+      },
+      {
+        "name": "rect_center_heavy_6_centered_alt_high_value_center_compact_compact",
+        "primary_score": 8.716839345698602,
+        "complexity_cost": 1.37,
+        "train_summary": {
+          "profiles": 20,
+          "samples": 2400,
+          "expected_hits": 2.8966666666666665,
+          "CVaR_90": 3.416445909723462,
+          "VaR_90": 3.9166666666666665,
+          "p_hit_ge_1": 0.9520833333333334,
+          "value_lost": 4.856395833333334,
+          "expected_unique_ships_hit": 3.31,
+          "expected_repeat_hits": 0.25125,
+          "expected_loss": 8.216645833333333,
+          "CVaR_90_loss": 10.003870247305375
+        }
+      },
+      {
+        "name": "rect_uniform_6x7_none_mixed_balanced_standard_standard",
+        "primary_score": 8.721435683273743,
+        "complexity_cost": 1.1500000000000001,
+        "train_summary": {
+          "profiles": 20,
+          "samples": 2400,
+          "expected_hits": 2.989583333333333,
+          "CVaR_90": 3.660908415665196,
+          "VaR_90": 3.7608333333333337,
+          "p_hit_ge_1": 1.0,
+          "value_lost": 4.9445703125,
+          "expected_unique_ships_hit": 3.192916666666666,
+          "expected_repeat_hits": 0.4025,
+          "expected_loss": 8.217986979166666,
+          "CVaR_90_loss": 10.068974082141526
+        }
+      },
+      {
+        "name": "rect_center_heavy_6_none_mixed_balanced_compact_compact",
+        "primary_score": 8.85126897285185,
+        "complexity_cost": 1.15,
+        "train_summary": {
+          "profiles": 20,
+          "samples": 2400,
+          "expected_hits": 3.2225,
+          "CVaR_90": 3.6150015155123514,
+          "VaR_90": 3.9166666666666665,
+          "p_hit_ge_1": 0.9558333333333333,
+          "value_lost": 4.6973697916666675,
+          "expected_unique_ships_hit": 3.580416666666667,
+          "expected_repeat_hits": 0.29583333333333334,
+          "expected_loss": 8.336953124999999,
+          "CVaR_90_loss": 10.286316957037016
+        }
+      },
+      {
+        "name": "staggered_uniform_6x7_centered_alt_mixed_balanced_compact_compact",
+        "primary_score": 8.883803553522554,
+        "complexity_cost": 1.25,
+        "train_summary": {
+          "profiles": 20,
+          "samples": 2400,
+          "expected_hits": 3.3079166666666664,
+          "CVaR_90": 3.753387533875339,
+          "VaR_90": 3.9166666666666665,
+          "p_hit_ge_1": 0.9954166666666666,
+          "value_lost": 4.845898437500001,
+          "expected_unique_ships_hit": 3.41125,
+          "expected_repeat_hits": 0.5850000000000001,
+          "expected_loss": 8.374148437499999,
+          "CVaR_90_loss": 10.193102320451107
+        }
+      },
+      {
+        "name": "staggered_center_heavy_6_none_high_value_center_compact_compact",
+        "primary_score": 8.920457406181612,
+        "complexity_cost": 1.42,
+        "train_summary": {
+          "profiles": 20,
+          "samples": 2400,
+          "expected_hits": 2.859583333333333,
+          "CVaR_90": 3.321256467638304,
+          "VaR_90": 3.9166666666666665,
+          "p_hit_ge_1": 0.9404166666666669,
+          "value_lost": 4.967708333333333,
+          "expected_unique_ships_hit": 3.402916666666667,
+          "expected_repeat_hits": 0.16916666666666666,
+          "expected_loss": 8.404458333333332,
+          "CVaR_90_loss": 10.319981456965584
+        }
+      },
+      {
+        "name": "rect_uniform_6x7_none_mixed_balanced_loose_compact",
+        "primary_score": 8.972335733421689,
+        "complexity_cost": 1.2,
+        "train_summary": {
+          "profiles": 20,
+          "samples": 2400,
+          "expected_hits": 3.374166666666666,
+          "CVaR_90": 3.8509615384615388,
+          "VaR_90": 3.8941666666666666,
+          "p_hit_ge_1": 0.9991666666666668,
+          "value_lost": 5.08309375,
+          "expected_unique_ships_hit": 3.2758333333333334,
+          "expected_repeat_hits": 0.5450000000000002,
+          "expected_loss": 8.467927083333333,
+          "CVaR_90_loss": 10.08817300176712
+        }
+      },
+      {
+        "name": "staggered_uniform_6x7_none_high_value_center_standard_compact",
+        "primary_score": 9.01748535706951,
+        "complexity_cost": 1.37,
+        "train_summary": {
+          "profiles": 20,
+          "samples": 2400,
+          "expected_hits": 3.3583333333333334,
+          "CVaR_90": 3.8513333333333337,
+          "VaR_90": 3.8716666666666666,
+          "p_hit_ge_1": 0.9995833333333334,
+          "value_lost": 4.814604166666667,
+          "expected_unique_ships_hit": 3.6029166666666668,
+          "expected_repeat_hits": 0.36625,
+          "expected_loss": 8.490770833333332,
+          "CVaR_90_loss": 10.534290474723578
+        }
+      },
+      {
+        "name": "rect_uniform_6x7_none_mixed_balanced_standard_compact",
+        "primary_score": 9.041705814417062,
+        "complexity_cost": 1.1,
+        "train_summary": {
+          "profiles": 20,
+          "samples": 2400,
+          "expected_hits": 3.166666666666667,
+          "CVaR_90": 3.6718958093323364,
+          "VaR_90": 3.7816666666666667,
+          "p_hit_ge_1": 1.0,
+          "value_lost": 5.094932291666666,
+          "expected_unique_ships_hit": 3.3400000000000007,
+          "expected_repeat_hits": 0.4041666666666666,
+          "expected_loss": 8.515765624999998,
+          "CVaR_90_loss": 10.518803788341287
+        }
+      },
+      {
+        "name": "rect_uniform_6x7_none_mixed_balanced_compact_compact",
+        "primary_score": 9.189700709777721,
+        "complexity_cost": 1.0,
+        "train_summary": {
+          "profiles": 20,
+          "samples": 2400,
+          "expected_hits": 2.9291666666666667,
+          "CVaR_90": 3.511020940206879,
+          "VaR_90": 3.9166666666666665,
+          "p_hit_ge_1": 0.9954166666666667,
+          "value_lost": 5.081317708333334,
+          "expected_unique_ships_hit": 3.496666666666666,
+          "expected_repeat_hits": 0.3408333333333333,
+          "expected_loss": 8.646151041666664,
+          "CVaR_90_loss": 10.870993362221148
+        }
+      },
+      {
+        "name": "staggered_uniform_6x7_none_high_value_center_compact_compact",
+        "primary_score": 9.32995631174009,
+        "complexity_cost": 1.27,
+        "train_summary": {
+          "profiles": 20,
+          "samples": 2400,
+          "expected_hits": 3.3670833333333325,
+          "CVaR_90": 3.8582923497267756,
+          "VaR_90": 3.9166666666666665,
+          "p_hit_ge_1": 0.9995833333333334,
+          "value_lost": 4.947916666666666,
+          "expected_unique_ships_hit": 3.7712500000000007,
+          "expected_repeat_hits": 0.34375,
+          "expected_loss": 8.78791666666667,
+          "CVaR_90_loss": 10.840792901468417
+        }
+      },
+      {
+        "name": "rect_center_heavy_6_none_high_value_center_compact_compact",
+        "primary_score": 9.576236630351568,
+        "complexity_cost": 1.27,
+        "train_summary": {
+          "profiles": 20,
+          "samples": 2400,
+          "expected_hits": 3.302916666666667,
+          "CVaR_90": 3.7163384139080735,
+          "VaR_90": 3.9166666666666665,
+          "p_hit_ge_1": 0.99125,
+          "value_lost": 5.31090625,
+          "expected_unique_ships_hit": 3.651666666666666,
+          "expected_repeat_hits": 0.3291666666666667,
+          "expected_loss": 9.02840625,
+          "CVaR_90_loss": 10.956607607031373
+        }
+      },
+      {
+        "name": "staggered_uniform_6x7_none_mixed_balanced_standard_compact",
+        "primary_score": 9.624578894416652,
+        "complexity_cost": 1.25,
+        "train_summary": {
+          "profiles": 20,
+          "samples": 2400,
+          "expected_hits": 3.422916666666667,
+          "CVaR_90": 3.852027777777778,
+          "VaR_90": 3.8716666666666666,
+          "p_hit_ge_1": 0.9995833333333334,
+          "value_lost": 5.342776041666666,
+          "expected_unique_ships_hit": 3.6475,
+          "expected_repeat_hits": 0.3879166666666667,
+          "expected_loss": 9.067859375000001,
+          "CVaR_90_loss": 11.134390388333015
+        }
+      },
+      {
+        "name": "staggered_uniform_6x7_none_mixed_balanced_compact_compact",
+        "primary_score": 10.103660062571914,
+        "complexity_cost": 1.15,
+        "train_summary": {
+          "profiles": 20,
+          "samples": 2400,
+          "expected_hits": 3.4541666666666657,
+          "CVaR_90": 3.861515151515152,
+          "VaR_90": 3.9166666666666665,
+          "p_hit_ge_1": 0.9991666666666668,
+          "value_lost": 5.620046875,
+          "expected_unique_ships_hit": 3.829999999999999,
+          "expected_repeat_hits": 0.3675,
+          "expected_loss": 9.523546875000001,
+          "CVaR_90_loss": 11.602263751438263
+        }
+      }
+    ],
+    "builder_greedy_trace": [
+      "family:staggered",
+      "pattern:center_heavy_6",
+      "offset:centered_alt",
+      "placement:high_value_center",
+      "along:standard",
+      "across:standard"
+    ]
+  },
+  "evaluation": {
+    "profiles": 10,
+    "samples": 1200,
+    "expected_hits": 2.434166666666667,
+    "CVaR_90": 2.802,
+    "VaR_90": 3.8375000000000004,
+    "p_hit_ge_1": 0.8283333333333334,
+    "value_lost": 2.8684374999999998,
+    "expected_unique_ships_hit": 1.9383333333333332,
+    "expected_repeat_hits": 0.6408333333333334,
+    "expected_loss": 4.934937500000001,
+    "CVaR_90_loss": 6.433759110055965
+  },
+  "timing": {
+    "training_seconds": 2.458670541876927,
+    "train_ranking_seconds": 2734.5622484169435,
+    "action_selection_seconds": 0.004810540936887264,
+    "eval_seconds": 9.431915207998827,
+    "total_seconds": 2746.4715352919884,
+    "candidate_action_count": 144,
+    "episodes": 300
+  }
+}

@@ -123,7 +123,17 @@ Last updated: 2026-04-20
 - [x] Add Phase 0 runtime instrumentation to canonical baseline / RL / audit entrypoints:
   - write timing summaries into `metrics_summary.json` and `run_manifest.json`
   - capture baseline search time, RL training time, RL train-ranking time, RL eval time, and audit per-action timings
-- [ ] Rerun baseline + RL + audit once with timing instrumentation and review the largest runtime buckets before optimizing behavior.
+- [x] Rerun baseline + RL + audit once with timing instrumentation and review the largest runtime buckets before optimizing behavior:
+  - baseline total: about `185s`
+  - baseline bottleneck: heuristic train-search (`~165s` of `~185s`)
+  - RL total: about `2747s`
+  - RL bottleneck: train-time action ranking over 144 builder actions (`~2735s`), not the tabular episode loop (`~2.5s`)
+  - audit total: about `4019s`
+  - audit bottleneck: full cross-product evaluation of 144 actions (`~27.9s` per action on average)
+- [ ] Phase 1 runtime optimization:
+  - reduce train-time ranking cost before touching RL episode logic
+  - add cheaper training-time evaluation budget for RL action ranking
+  - add staged/top-K audit funnel before evaluating all candidates at full cost
 - [ ] Phase 4 RL overhaul: replace tabular RL selector with stronger learner while preserving artifact schema.
 - [ ] Expand RL training threat diversity beyond the current narrow setup.
 - [ ] Add compact RL observation/state vector for geometry/composition/threat context.
