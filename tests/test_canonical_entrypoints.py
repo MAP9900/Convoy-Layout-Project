@@ -253,6 +253,9 @@ def test_run_rl_train_builder_mode_writes_selection_metadata(tmp_path: Path) -> 
             "alpha": 0.3,
             "seed": 5,
         },
+        "runtime": {
+            "validation_profile_count": 1,
+        },
         "rl": {
             "builder": {
                 "enabled": True,
@@ -282,11 +285,17 @@ def test_run_rl_train_builder_mode_writes_selection_metadata(tmp_path: Path) -> 
     assert metrics["training"]["mode"] == "builder"
     assert "builder_greedy_trace" in metrics["selection"]
     assert metrics["timing"]["candidate_action_count"] > 0
+    assert metrics["selection"]["selection_split"] == "validation"
+    assert metrics["selection"]["effective_train_profile_count"] == 1
+    assert metrics["selection"]["selection_profile_count"] == 1
 
     manifest = _read_json(run_dir / "run_manifest.json")
     assert manifest["selection"]["mode"] == "builder"
     assert "builder" in manifest["selection"]
     assert "timing" in manifest
+    assert manifest["selection"]["selection_split"] == "validation"
+    assert len(manifest["profile_splits"]["train"]) == 1
+    assert len(manifest["profile_splits"]["selection"]) == 1
 
 
 def test_rl_train_selection_prefers_simpler_action_when_scores_are_nearly_tied() -> None:

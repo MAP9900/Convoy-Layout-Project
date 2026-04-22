@@ -117,9 +117,10 @@ Last updated: 2026-04-20
   - RL now selects `staggered_center_heavy_6_none_mixed_balanced_loose_loose`
   - direct audit no longer agrees on train and eval winner, so the next bottleneck is generalization rather than missing builder freedom
 - [ ] Add stronger validation/eval gating for RL builder runs:
-  - consider a held-out validation split for final action selection
+  - [x] add a held-out validation split for final action selection
+  - [x] rerun with held-out validation selection and confirm it improves eval result
   - add repeated eval seed sets or a harder held-out profile pack
-  - use this to measure train/eval mismatch after builder-space changes
+  - use this to measure residual train/eval mismatch after builder-space changes
 - [x] Add Phase 0 runtime instrumentation to canonical baseline / RL / audit entrypoints:
   - write timing summaries into `metrics_summary.json` and `run_manifest.json`
   - capture baseline search time, RL training time, RL train-ranking time, RL eval time, and audit per-action timings
@@ -134,10 +135,14 @@ Last updated: 2026-04-20
   - reduce train-time ranking cost before touching RL episode logic
   - add cheaper training-time evaluation budget for RL action ranking
   - add staged/top-K audit funnel before evaluating all candidates at full cost
-- [ ] Phase 2 runtime optimization:
+- [x] Phase 2 runtime optimization:
   - add stronger validation-based final action selection
-  - consider a cheap validation pass before full eval
-  - use this to attack the current train/eval mismatch in the richer builder space
+  - use a held-out validation slice before full eval
+  - attack the current train/eval mismatch in the richer builder space without changing final eval fidelity
+- [ ] Next methodology hardening step:
+  - expand attack-profile diversity first
+  - then add repeated or harder held-out eval packs
+  - only revisit selector mechanics afterward if the audit mismatch remains
 - [ ] Phase 4 RL overhaul: replace tabular RL selector with stronger learner while preserving artifact schema.
 - [ ] Expand RL training threat diversity beyond the current narrow setup.
 - [ ] Add compact RL observation/state vector for geometry/composition/threat context.

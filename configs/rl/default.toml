@@ -11,6 +11,7 @@ max_hits_per_torpedo = 1
 rl_ranking_n_trials_per_seed = 8
 audit_screen_n_trials_per_seed = 8
 audit_top_k_full_eval = 24
+validation_profile_count = 4
 
 [simulation.noise]
 sigma_heading_rad = 0.01

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import random
 import time
 from pathlib import Path
 from typing import Any
@@ -185,6 +186,58 @@ def _train_library(default_library: AttackProfileLibrary, train_ids: list[str]) 
     return AttackProfileLibrary(profiles=keep)
 
 
+def _profile_sort_key(profile_id: str) -> tuple[int, str]:
+    digits = "".join(ch for ch in str(profile_id) if ch.isdigit())
+    return (int(digits) if digits else 10**9, str(profile_id))
+
+
+def _resolve_selection_split(
+    *,
+    train_profile_ids: list[str],
+    train_seeds: list[int],
+    split_cfg: dict[str, Any],
+    runtime_cfg: dict[str, Any],
+    fallback_seed: int,
+) -> tuple[list[str], list[str], list[int], str, int]:
+    explicit_validation_profiles = [str(x) for x in split_cfg.get("validation_profiles", [])]
+    if explicit_validation_profiles:
+        validation_seeds = [int(x) for x in split_cfg.get("validation_seeds", train_seeds)]
+        effective_train = [pid for pid in train_profile_ids if pid not in set(explicit_validation_profiles)]
+        return (
+            effective_train,
+            explicit_validation_profiles,
+            validation_seeds,
+            "validation",
+            int(runtime_cfg.get("validation_split_seed", fallback_seed)),
+        )
+
+    validation_profile_count = int(runtime_cfg.get("validation_profile_count", 0))
+    if validation_profile_count <= 0:
+        return (
+            list(train_profile_ids),
+            list(train_profile_ids),
+            list(train_seeds),
+            "train",
+            int(runtime_cfg.get("validation_split_seed", fallback_seed)),
+        )
+
+    if validation_profile_count >= len(train_profile_ids):
+        raise ValueError("runtime.validation_profile_count must be smaller than the train profile count")
+
+    validation_split_seed = int(runtime_cfg.get("validation_split_seed", fallback_seed))
+    shuffled = list(train_profile_ids)
+    random.Random(validation_split_seed).shuffle(shuffled)
+    validation_profiles = sorted(shuffled[:validation_profile_count], key=_profile_sort_key)
+    effective_train = sorted(shuffled[validation_profile_count:], key=_profile_sort_key)
+    return (
+        effective_train,
+        validation_profiles,
+        list(train_seeds),
+        "validation",
+        validation_split_seed,
+    )
+
+
 def _greedy_builder_state(
     builder_cfg: RLLayoutBuilderConfig,
     q_tables: list[np.ndarray],
@@ -274,7 +327,17 @@ def run_from_config(config: dict[str, Any], *, project_root: Path) -> Path:
     complexity_tiebreak_tolerance = float(selection_cfg.get("complexity_tiebreak_tolerance", 0.1))
     objective = objective_from_config(objective_cfg)
 
-    profile_lib = _train_library(DEFAULT_ATTACK_PROFILE_LIBRARY, train_profile_ids)
+    effective_train_profile_ids, selection_profile_ids, selection_seeds, selection_split, validation_split_seed = (
+        _resolve_selection_split(
+            train_profile_ids=train_profile_ids,
+            train_seeds=train_seeds,
+            split_cfg=split_cfg,
+            runtime_cfg=runtime_cfg,
+            fallback_seed=int(dict(config.get("split_meta", {})).get("split_seed", train_seed)),
+        )
+    )
+
+    profile_lib = _train_library(DEFAULT_ATTACK_PROFILE_LIBRARY, effective_train_profile_ids)
 
     threat_prior = ThreatPrior(probs={ThreatType.ABEAM_FAN: 1.0})
     common_episode_kwargs = {
@@ -376,14 +439,15 @@ def run_from_config(config: dict[str, Any], *, project_root: Path) -> Path:
     train_action_summaries: dict[str, dict[str, Any]] = {}
     train_summaries_in_action_order: list[dict[str, Any]] = []
     train_ranking_started = time.perf_counter()
+    selection_library = DEFAULT_ATTACK_PROFILE_LIBRARY if selection_split == "validation" else profile_lib
     for action in actions:
         rows = evaluate_layout_over_profiles(
-            model_name=f"{action.name}_train_objective",
+            model_name=f"{action.name}_{selection_split}_objective",
             layout_fn=action.layout_fn,
             layout_kwargs=action.layout_kwargs,
-            library=profile_lib,
-            profile_ids=train_profile_ids,
-            seeds=train_seeds,
+            library=selection_library,
+            profile_ids=selection_profile_ids,
+            seeds=selection_seeds,
             n_trials_per_seed=rl_ranking_n_trials_per_seed,
             t_max=t_max,
             noise_model=noise_model,
@@ -440,13 +504,18 @@ def run_from_config(config: dict[str, Any], *, project_root: Path) -> Path:
         "risk_cvar_weight": risk_cvar_weight,
         "complexity_tiebreak_tolerance": complexity_tiebreak_tolerance,
         "selection_mode": "builder" if builder_cfg is not None and builder_cfg.enabled else "flat_action_menu",
+        "selection_split": selection_split,
+        "selection_profile_count": len(selection_profile_ids),
+        "effective_train_profile_count": len(effective_train_profile_ids),
+        "selection_seed_count": len(selection_seeds),
+        "validation_split_seed": validation_split_seed,
         "effective_complexity_tiebreak_tolerance": float(ranked_train_actions[0]["effective_tolerance"]),
         "ranked_train_actions": [
             {
                 "name": item["name"],
                 "primary_score": float(item["primary_score"]),
                 "complexity_cost": float(item["complexity_cost"]),
-                "train_summary": item["summary"],
+                "selection_summary": item["summary"],
             }
             for item in ranked_train_actions
         ],
@@ -542,11 +611,13 @@ def run_from_config(config: dict[str, Any], *, project_root: Path) -> Path:
         "workflow": "rl",
         "git_sha": git_sha(project_root),
         "profile_splits": {
-            "train": train_profile_ids,
+            "train": effective_train_profile_ids,
+            "selection": selection_profile_ids,
             "eval": eval_profile_ids,
         },
         "seed_sets": {
             "train": train_seeds,
+            "selection": selection_seeds,
             "eval": eval_seeds,
         },
         "n_trials_per_seed": n_trials_per_seed,
@@ -567,6 +638,7 @@ def run_from_config(config: dict[str, Any], *, project_root: Path) -> Path:
         "runtime_budgets": {
             "rl_ranking_n_trials_per_seed": rl_ranking_n_trials_per_seed,
             "final_eval_n_trials_per_seed": n_trials_per_seed,
+            "validation_profile_count": int(runtime_cfg.get("validation_profile_count", 0)),
         },
         "timing": {
             "training_seconds": training_seconds,
@@ -583,6 +655,8 @@ def run_from_config(config: dict[str, Any], *, project_root: Path) -> Path:
             "selected_action": best_action.name,
             "selected_action_by_q_value": actions[best_q_action_idx].name,
             "mode": "builder" if builder_cfg is not None and builder_cfg.enabled else "flat_action_menu",
+            "selection_split": selection_split,
+            "validation_split_seed": validation_split_seed,
         },
         "layout_plots": {
             "selected_policy": str(selected_plot_path.relative_to(project_root)) if selected_plot_written else None,

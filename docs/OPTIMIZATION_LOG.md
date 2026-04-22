@@ -906,3 +906,50 @@ Practical implication:
   1. candidate evaluation budgets
   2. staged validation/eval funnels
   3. only later, caching or parallel audit/baseline evaluation
+
+## Validation-Gated Selection Check 1 (2026-04-22)
+
+### Run References
+
+- Baseline run dir: `results/runs/baseline/20260422_171355_baseline_default`
+- RL run dir: `results/runs/rl/20260422_171525_rl_default`
+- Audit run dir: `results/runs/rl_action_audit/20260422_171724_rl_default_action_audit`
+
+### What Changed In This Check
+
+- RL final action selection no longer ranked candidates on the full train split.
+- Instead it used a held-out validation slice derived from train profiles:
+  - `runtime.validation_profile_count = 4`
+  - effective train profiles: `16`
+  - validation profiles: `4`
+- Runtime-budget staging remained active:
+  - `runtime.rl_ranking_n_trials_per_seed = 8`
+  - `runtime.audit_screen_n_trials_per_seed = 8`
+  - `runtime.audit_top_k_full_eval = 24`
+
+### Config / Methodology Notes
+
+- Baseline result remained unchanged:
+  - heuristic baseline `expected_loss = 6.1704791666666665`
+- RL selected action changed:
+  - selected action: `staggered_center_heavy_6_centered_alt_mixed_balanced_loose_loose`
+  - Q-value winner: `staggered_center_heavy_6_none_high_value_center_loose_loose`
+- RL eval improved relative to the prior runtime-staged run:
+  - before: `expected_loss = 4.934937500000001`
+  - after: `expected_loss = 4.795624999999999`
+
+### Methodology Interpretation
+
+- The held-out validation slice helped.
+- It changed the selected action and produced a better eval result than the prior train-ranked selection.
+- But it did not eliminate the mismatch with the direct audit:
+  - best eval action remained `rect_uniform_6x7_centered_alt_mixed_balanced_loose_loose`
+  - best eval `expected_loss = 4.36471875`
+
+What this means:
+- validation-based selection is directionally correct, but not sufficient by itself
+- the remaining gap likely comes from benchmark breadth, not just selector mechanics
+- the next high-value change should be:
+  1. broader attack-profile diversity
+  2. repeated or harder held-out eval packs
+  3. only then further selector refinement if the mismatch persists

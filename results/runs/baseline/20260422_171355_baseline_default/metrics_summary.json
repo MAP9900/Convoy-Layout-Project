@@ -1,0 +1,40 @@
+{
+  "static_baseline": {
+    "profiles": 10,
+    "samples": 1200,
+    "expected_hits": 2.7725,
+    "CVaR_90": 3.327370621322969,
+    "VaR_90": 3.4324999999999997,
+    "p_hit_ge_1": 0.9991666666666668,
+    "value_lost": 3.973583333333333,
+    "expected_unique_ships_hit": 2.3425000000000002,
+    "expected_repeat_hits": 0.6091666666666666,
+    "expected_loss": 6.437916666666666,
+    "CVaR_90_loss": 7.8282370677651985
+  },
+  "heuristic_baseline": {
+    "profiles": 10,
+    "samples": 1200,
+    "expected_hits": 2.505833333333334,
+    "CVaR_90": 3.224246184960471,
+    "VaR_90": 3.1316666666666664,
+    "p_hit_ge_1": 0.99,
+    "value_lost": 3.7259791666666664,
+    "expected_unique_ships_hit": 2.370833333333333,
+    "expected_repeat_hits": 0.36833333333333335,
+    "expected_loss": 6.1704791666666665,
+    "CVaR_90_loss": 7.571662670465746
+  },
+  "winner": "heuristic_baseline",
+  "runtime_budgets": {
+    "baseline_search_n_trials_per_seed": 16,
+    "final_eval_n_trials_per_seed": 40
+  },
+  "timing": {
+    "static_eval_seconds": 9.94836675003171,
+    "heuristic_search_seconds": 68.4526829579845,
+    "heuristic_eval_seconds": 9.809434291906655,
+    "total_seconds": 88.21107962494716,
+    "heuristic_candidate_count": 9
+  }
+}

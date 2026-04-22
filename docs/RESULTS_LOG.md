@@ -636,3 +636,27 @@ Interpretation:
 - The next bottleneck remains methodological rather than computational:
   - better validation/eval gating
   - broader attack-profile diversity
+
+### Validation-Gated Selection Note (added 2026-04-22)
+
+- A held-out validation slice was then enabled for RL final action selection:
+  - baseline run: `results/runs/baseline/20260422_171355_baseline_default`
+  - RL run: `results/runs/rl/20260422_171525_rl_default`
+  - audit run: `results/runs/rl_action_audit/20260422_171724_rl_default_action_audit`
+- Baseline result was unchanged:
+  - heuristic baseline remained at `expected_loss = 6.1704791666666665`
+- RL changed its selected action:
+  - from `staggered_center_heavy_6_none_mixed_balanced_loose_loose`
+  - to `staggered_center_heavy_6_centered_alt_mixed_balanced_loose_loose`
+- RL improved modestly on eval:
+  - prior runtime-staged RL: `expected_loss = 4.934937500000001`
+  - validation-gated RL: `expected_loss = 4.795624999999999`
+- Direct audit still found a different best eval action:
+  - `rect_uniform_6x7_centered_alt_mixed_balanced_loose_loose`
+  - `expected_loss = 4.36471875`
+
+Interpretation:
+- Held-out validation improved the selected policy, but it did not close the train/eval generalization gap.
+- The next bottleneck is still benchmark hardening:
+  - broader attack-profile diversity
+  - stronger held-out evaluation structure

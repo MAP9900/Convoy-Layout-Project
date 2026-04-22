@@ -297,6 +297,7 @@ Use this as the running checklist when changing RL experiments.
   - `rl_ranking_n_trials_per_seed`
   - `audit_screen_n_trials_per_seed`
   - `audit_top_k_full_eval`
+  - `validation_profile_count`
 
 ### RL Builder Knobs
 
@@ -348,11 +349,18 @@ Current canonical runtime behavior:
 - RL action audit now defaults to a staged funnel:
   - screen all actions at `runtime.audit_screen_n_trials_per_seed`
   - promote top-K train/eval candidates to full-budget reevaluation via `runtime.audit_top_k_full_eval`
+- RL final action selection can now use a held-out validation slice carved from the train split:
+  - controlled by `runtime.validation_profile_count`
+  - training still uses the remaining train profiles
+  - final benchmark eval still uses the unchanged eval split
 
 To restore the old full-fidelity audit behavior:
 - set `runtime.audit_screen_n_trials_per_seed = simulation.n_trials_per_seed`
 - set `runtime.audit_top_k_full_eval` to the full candidate-action count
   - for the current canonical builder space, that is `144`
+
+To disable held-out validation selection:
+- set `runtime.validation_profile_count = 0`
 
 ### Longer-Term Reward Additions
 
