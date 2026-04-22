@@ -229,8 +229,8 @@ Important boundary:
 
 For faster library expansion, use:
 - `python -m experiments.generate_attack_profile_scaffold --start-index 31 --count 30 --output results/diag/generated_attack_profiles.json`
-- default output is a machine-readable JSON payload; `--format python` emits paste-ready `AttackProfile(...)` entries instead
-- generated profiles always keep the modern explicit schema
+- default output is a machine-readable JSON payload; `--format python` emits paste-ready `_scaffolded_fan_profile(...)` entries for the curated library helper
+- curated-library generation currently stays on `uniform_divergent` fan spreads so the emitted Python matches the existing scaffold style
 - generated profiles sample `u_boat_initial_speed_mps` from `1.0` to `2.0` m/s in `0.1` steps
 - generated profiles are filtered through the existing geometry plausibility audit against the selected convoy profile before being emitted
 

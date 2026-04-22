@@ -641,7 +641,7 @@ def make_placeholder_profile_library(n_profiles: int = 25) -> AttackProfileLibra
 
 
 def build_scaffolded_attack_profile_library() -> AttackProfileLibrary:
-    """Return 30 explicit convoy-attack profiles for manual curation.
+    """Return 30 scaffolded convoy-attack profiles for manual curation.
 
     Torpedo Data: https://uboat.net/technical/torpedoes.htm
 
@@ -778,6 +778,7 @@ def build_scaffolded_attack_profile_library() -> AttackProfileLibrary:
         _scaffolded_fan_profile(profile_id="P28", name="profile_28", u_pos=(-2800.0, 200.0), base_bearing_rad=0.0858, spread_rad=0.2443, launch_delay_s=0.9, salvo_interval_s=3.0, u_boat_initial_speed_mps=1.9),
         _scaffolded_fan_profile(profile_id="P29", name="profile_29", u_pos=(-3200.0, 900.0), base_bearing_rad=6.1661, spread_rad=0.2443, launch_delay_s=0.5, salvo_interval_s=3.0, u_boat_initial_speed_mps=1.0),
         _scaffolded_fan_profile(profile_id="P30", name="profile_30", u_pos=(-3000.0, -900.0), base_bearing_rad=0.4485, spread_rad=0.2443, launch_delay_s=1.9, salvo_interval_s=2.0, u_boat_initial_speed_mps=1.2),
+
     ]
     return AttackProfileLibrary(profiles=profiles)
 
@@ -785,27 +786,3 @@ def build_scaffolded_attack_profile_library() -> AttackProfileLibrary:
 DEFAULT_ATTACK_PROFILE_LIBRARY = build_scaffolded_attack_profile_library()
 
 
-
-
-
-
-# AttackProfile(profile_id="P31", name="profile_31", mode="fan", u_pos=(-3000.0, -900.0), n=4, speed=15.4333, max_run_time=486.0, base_bearing_rad=0.4485, u_boat_initial_heading_rad=0.4485, spread_rad=0.2443, bearing_rad=0.0, lateral_spacing=120.0, launch_delay_s=1.9, salvo_interval_s=2.0),
-# AttackProfile(profile_id="P32", name="profile_32", mode="fan", u_pos=(-3000.0, -900.0), n=4, speed=15.4333, max_run_time=486.0, base_bearing_rad=0.4485, u_boat_initial_heading_rad=0.4485, spread_rad=0.2443, bearing_rad=0.0, lateral_spacing=120.0, launch_delay_s=1.9, salvo_interval_s=2.0),
-# AttackProfile(profile_id="P33", name="profile_33", mode="fan", u_pos=(-3000.0, -900.0), n=4, speed=15.4333, max_run_time=486.0, base_bearing_rad=0.4485, u_boat_initial_heading_rad=0.4485, spread_rad=0.2443, bearing_rad=0.0, lateral_spacing=120.0, launch_delay_s=1.9, salvo_interval_s=2.0),
-# AttackProfile(profile_id="P34", name="profile_34", mode="fan", u_pos=(-3000.0, -900.0), n=4, speed=15.4333, max_run_time=486.0, base_bearing_rad=0.4485, u_boat_initial_heading_rad=0.4485, spread_rad=0.2443, bearing_rad=0.0, lateral_spacing=120.0, launch_delay_s=1.9, salvo_interval_s=2.0),
-# AttackProfile(profile_id="P35", name="profile_35", mode="fan", u_pos=(-3000.0, -900.0), n=4, speed=15.4333, max_run_time=486.0, base_bearing_rad=0.4485, u_boat_initial_heading_rad=0.4485, spread_rad=0.2443, bearing_rad=0.0, lateral_spacing=120.0, launch_delay_s=1.9, salvo_interval_s=2.0),
-# AttackProfile(profile_id="P36", name="profile_36", mode="fan", u_pos=(-3000.0, -900.0), n=4, speed=15.4333, max_run_time=486.0, base_bearing_rad=0.4485, u_boat_initial_heading_rad=0.4485, spread_rad=0.2443, bearing_rad=0.0, lateral_spacing=120.0, launch_delay_s=1.9, salvo_interval_s=2.0),
-# AttackProfile(profile_id="P37", name="profile_37", mode="fan", u_pos=(-3000.0, -900.0), n=4, speed=15.4333, max_run_time=486.0, base_bearing_rad=0.4485, u_boat_initial_heading_rad=0.4485, spread_rad=0.2443, bearing_rad=0.0, lateral_spacing=120.0, launch_delay_s=1.9, salvo_interval_s=2.0),
-# AttackProfile(profile_id="P38", name="profile_38", mode="fan", u_pos=(-3000.0, -900.0), n=4, speed=15.4333, max_run_time=486.0, base_bearing_rad=0.4485, u_boat_initial_heading_rad=0.4485, spread_rad=0.2443, bearing_rad=0.0, lateral_spacing=120.0, launch_delay_s=1.9, salvo_interval_s=2.0),
-# AttackProfile(profile_id="P39", name="profile_39", mode="fan", u_pos=(-3000.0, -900.0), n=4, speed=15.4333, max_run_time=486.0, base_bearing_rad=0.4485, u_boat_initial_heading_rad=0.4485, spread_rad=0.2443, bearing_rad=0.0, lateral_spacing=120.0, launch_delay_s=1.9, salvo_interval_s=2.0),
-# AttackProfile(profile_id="P40", name="profile_40", mode="fan", u_pos=(-3000.0, -900.0), n=4, speed=15.4333, max_run_time=486.0, base_bearing_rad=0.4485, u_boat_initial_heading_rad=0.4485, spread_rad=0.2443, bearing_rad=0.0, lateral_spacing=120.0, launch_delay_s=1.9, salvo_interval_s=2.0),
-# AttackProfile(profile_id="P41", name="profile_41", mode="fan", u_pos=(-3000.0, -900.0), n=4, speed=15.4333, max_run_time=486.0, base_bearing_rad=0.4485, u_boat_initial_heading_rad=0.4485, spread_rad=0.2443, bearing_rad=0.0, lateral_spacing=120.0, launch_delay_s=1.9, salvo_interval_s=2.0),
-# AttackProfile(profile_id="P42", name="profile_42", mode="fan", u_pos=(-3000.0, -900.0), n=4, speed=15.4333, max_run_time=486.0, base_bearing_rad=0.4485, u_boat_initial_heading_rad=0.4485, spread_rad=0.2443, bearing_rad=0.0, lateral_spacing=120.0, launch_delay_s=1.9, salvo_interval_s=2.0),
-# AttackProfile(profile_id="P43", name="profile_43", mode="fan", u_pos=(-3000.0, -900.0), n=4, speed=15.4333, max_run_time=486.0, base_bearing_rad=0.4485, u_boat_initial_heading_rad=0.4485, spread_rad=0.2443, bearing_rad=0.0, lateral_spacing=120.0, launch_delay_s=1.9, salvo_interval_s=2.0),
-# AttackProfile(profile_id="P44", name="profile_44", mode="fan", u_pos=(-3000.0, -900.0), n=4, speed=15.4333, max_run_time=486.0, base_bearing_rad=0.4485, u_boat_initial_heading_rad=0.4485, spread_rad=0.2443, bearing_rad=0.0, lateral_spacing=120.0, launch_delay_s=1.9, salvo_interval_s=2.0),
-# AttackProfile(profile_id="P45", name="profile_45", mode="fan", u_pos=(-3000.0, -900.0), n=4, speed=15.4333, max_run_time=486.0, base_bearing_rad=0.4485, u_boat_initial_heading_rad=0.4485, spread_rad=0.2443, bearing_rad=0.0, lateral_spacing=120.0, launch_delay_s=1.9, salvo_interval_s=2.0),
-# AttackProfile(profile_id="P46", name="profile_46", mode="fan", u_pos=(-3000.0, -900.0), n=4, speed=15.4333, max_run_time=486.0, base_bearing_rad=0.4485, u_boat_initial_heading_rad=0.4485, spread_rad=0.2443, bearing_rad=0.0, lateral_spacing=120.0, launch_delay_s=1.9, salvo_interval_s=2.0),
-# AttackProfile(profile_id="P47", name="profile_47", mode="fan", u_pos=(-3000.0, -900.0), n=4, speed=15.4333, max_run_time=486.0, base_bearing_rad=0.4485, u_boat_initial_heading_rad=0.4485, spread_rad=0.2443, bearing_rad=0.0, lateral_spacing=120.0, launch_delay_s=1.9, salvo_interval_s=2.0),
-# AttackProfile(profile_id="P48", name="profile_48", mode="fan", u_pos=(-3000.0, -900.0), n=4, speed=15.4333, max_run_time=486.0, base_bearing_rad=0.4485, u_boat_initial_heading_rad=0.4485, spread_rad=0.2443, bearing_rad=0.0, lateral_spacing=120.0, launch_delay_s=1.9, salvo_interval_s=2.0),
-# AttackProfile(profile_id="P49", name="profile_49", mode="fan", u_pos=(-3000.0, -900.0), n=4, speed=15.4333, max_run_time=486.0, base_bearing_rad=0.4485, u_boat_initial_heading_rad=0.4485, spread_rad=0.2443, bearing_rad=0.0, lateral_spacing=120.0, launch_delay_s=1.9, salvo_interval_s=2.0),
-# AttackProfile(profile_id="P50", name="profile_50", mode="fan", u_pos=(-3000.0, -900.0), n=4, speed=15.4333, max_run_time=486.0, base_bearing_rad=0.4485, u_boat_initial_heading_rad=0.4485, spread_rad=0.2443, bearing_rad=0.0, lateral_spacing=120.0, launch_delay_s=1.9, salvo_interval_s=2.0),
