@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import argparse
 import csv
+import time
 from pathlib import Path
 from typing import Any
 
@@ -120,6 +121,7 @@ def _write_action_summary_csv(path: Path, rows: list[dict[str, Any]]) -> None:
 
 
 def run_from_config(config: dict[str, Any], *, project_root: Path) -> Path:
+    started_at = time.perf_counter()
     run_cfg = dict(config.get("run", {}))
     sim_cfg = dict(config.get("simulation", {}))
     split_cfg = dict(config.get("splits", {}))
@@ -165,8 +167,11 @@ def run_from_config(config: dict[str, Any], *, project_root: Path) -> Path:
     summary_rows: list[dict[str, Any]] = []
     all_profile_rows = []
     action_reports: list[dict[str, Any]] = []
+    action_timing_rows: list[dict[str, Any]] = []
+    evaluation_started = time.perf_counter()
 
     for action in actions:
+        action_started = time.perf_counter()
         train_rows = evaluate_layout_over_profiles(
             model_name=f"{action.name}_train",
             layout_fn=action.layout_fn,
@@ -252,6 +257,7 @@ def run_from_config(config: dict[str, Any], *, project_root: Path) -> Path:
             dpi=plot_dpi,
             show_plot=show_plot,
         )
+        action_elapsed = time.perf_counter() - action_started
 
         action_reports.append(
             {
@@ -267,6 +273,14 @@ def run_from_config(config: dict[str, Any], *, project_root: Path) -> Path:
                 "figure": str(plot_path.relative_to(project_root)) if plot_written else None,
             }
         )
+        action_timing_rows.append(
+            {
+                "name": action.name,
+                "seconds": action_elapsed,
+                "complexity_cost": float(action.complexity_cost),
+            }
+        )
+    evaluation_seconds = time.perf_counter() - evaluation_started
 
     best_train = min(action_reports, key=lambda item: float(item["train_summary"].get("expected_loss", item["train_summary"]["expected_hits"])))
     best_eval = min(action_reports, key=lambda item: float(item["eval_summary"].get("expected_loss", item["eval_summary"]["expected_hits"])))
@@ -300,6 +314,12 @@ def run_from_config(config: dict[str, Any], *, project_root: Path) -> Path:
             "train_expected_hits": best_eval["train_summary"]["expected_hits"],
         },
         "actions": action_reports,
+        "timing": {
+            "evaluation_seconds": evaluation_seconds,
+            "total_seconds": time.perf_counter() - started_at,
+            "candidate_action_count": len(actions),
+            "per_action_seconds": action_timing_rows,
+        },
     }
 
     manifest = {
@@ -332,6 +352,11 @@ def run_from_config(config: dict[str, Any], *, project_root: Path) -> Path:
             "mode": "builder" if builder_cfg is not None and builder_cfg.enabled else "flat_action_menu",
         },
         "objective": objective_to_dict(objective),
+        "timing": {
+            "evaluation_seconds": evaluation_seconds,
+            "total_seconds": time.perf_counter() - started_at,
+            "candidate_action_count": len(actions),
+        },
     }
 
     write_yaml(run_dir / "config_resolved.yaml", resolved)

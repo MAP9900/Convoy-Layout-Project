@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import time
 from pathlib import Path
 from typing import Any
 
@@ -204,6 +205,7 @@ def _greedy_builder_state(
 
 
 def run_from_config(config: dict[str, Any], *, project_root: Path) -> Path:
+    started_at = time.perf_counter()
     run_cfg = dict(config.get("run", {}))
     sim_cfg = dict(config.get("simulation", {}))
     split_cfg = dict(config.get("splits", {}))
@@ -309,6 +311,7 @@ def run_from_config(config: dict[str, Any], *, project_root: Path) -> Path:
     builder_q_choice_names: list[str] | None = None
     builder_q_action_name: str | None = None
 
+    training_started = time.perf_counter()
     if builder_cfg is not None and builder_cfg.enabled:
         action_space_names = rl_episode.action_space.names
         builder_q_tables = [np.zeros(len(action_space_names), dtype=float) for _ in range(builder_cfg.step_count)]
@@ -363,10 +366,12 @@ def run_from_config(config: dict[str, Any], *, project_root: Path) -> Path:
             reward_history.append(float(reward))
             epsilon = max(epsilon_min, epsilon * epsilon_decay)
         best_q_action_idx = int(np.argmax(q_values))
+    training_seconds = time.perf_counter() - training_started
 
     train_action_rows: dict[str, list[Any]] = {}
     train_action_summaries: dict[str, dict[str, Any]] = {}
     train_summaries_in_action_order: list[dict[str, Any]] = []
+    train_ranking_started = time.perf_counter()
     for action in actions:
         rows = evaluate_layout_over_profiles(
             model_name=f"{action.name}_train_objective",
@@ -386,7 +391,9 @@ def run_from_config(config: dict[str, Any], *, project_root: Path) -> Path:
         train_action_rows[action.name] = rows
         train_action_summaries[action.name] = summary
         train_summaries_in_action_order.append(summary)
+    train_ranking_seconds = time.perf_counter() - train_ranking_started
 
+    action_selection_started = time.perf_counter()
     best_action_idx, ranked_train_actions = _select_best_action_from_train_summaries(
         actions,
         train_summaries_in_action_order,
@@ -394,8 +401,10 @@ def run_from_config(config: dict[str, Any], *, project_root: Path) -> Path:
         complexity_tiebreak_tolerance=complexity_tiebreak_tolerance,
         selection_mode="builder" if builder_cfg is not None and builder_cfg.enabled else "flat_action_menu",
     )
+    action_selection_seconds = time.perf_counter() - action_selection_started
     best_action = actions[best_action_idx]
 
+    eval_started = time.perf_counter()
     eval_rows = evaluate_layout_over_profiles(
         model_name="rl_policy",
         layout_fn=best_action.layout_fn,
@@ -410,6 +419,7 @@ def run_from_config(config: dict[str, Any], *, project_root: Path) -> Path:
         max_hits_per_torpedo=max_hits_per_torpedo,
         objective=objective,
     )
+    eval_seconds = time.perf_counter() - eval_started
 
     eval_summary = summarize_profile_rows(eval_rows)
     training_summary = {
@@ -492,6 +502,15 @@ def run_from_config(config: dict[str, Any], *, project_root: Path) -> Path:
         "training": training_summary,
         "selection": selection_summary,
         "evaluation": eval_summary,
+        "timing": {
+            "training_seconds": training_seconds,
+            "train_ranking_seconds": train_ranking_seconds,
+            "action_selection_seconds": action_selection_seconds,
+            "eval_seconds": eval_seconds,
+            "total_seconds": time.perf_counter() - started_at,
+            "candidate_action_count": len(actions),
+            "episodes": episodes,
+        },
     }
 
     plot_xlim = tuple(float(x) for x in plot_cfg["xlim"]) if "xlim" in plot_cfg else (-5000.0, 5000.0)
@@ -537,6 +556,15 @@ def run_from_config(config: dict[str, Any], *, project_root: Path) -> Path:
             "ship_movement_realism_enabled": bool(ship_movement_realism),
         },
         "objective": objective_to_dict(objective),
+        "timing": {
+            "training_seconds": training_seconds,
+            "train_ranking_seconds": train_ranking_seconds,
+            "action_selection_seconds": action_selection_seconds,
+            "eval_seconds": eval_seconds,
+            "total_seconds": time.perf_counter() - started_at,
+            "candidate_action_count": len(actions),
+            "episodes": episodes,
+        },
         "selection": {
             "risk_cvar_weight": risk_cvar_weight,
             "complexity_tiebreak_tolerance": complexity_tiebreak_tolerance,

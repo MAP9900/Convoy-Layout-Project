@@ -275,6 +275,24 @@ Use this as the running checklist when changing RL experiments.
 - `alpha`
 - `seed`
 
+### Runtime / Profiling Knobs
+
+- timing summary in run artifacts:
+  - `training_seconds`
+  - `train_ranking_seconds`
+  - `action_selection_seconds`
+  - `eval_seconds`
+  - `total_seconds`
+- baseline timing summary:
+  - `static_eval_seconds`
+  - `heuristic_search_seconds`
+  - `heuristic_eval_seconds`
+  - `total_seconds`
+- audit timing summary:
+  - `evaluation_seconds`
+  - `per_action_seconds`
+  - `total_seconds`
+
 ### RL Builder Knobs
 
 - `layout_families`
@@ -312,6 +330,11 @@ When testing a change, change one family of knobs at a time:
 - attack-profile library only
 
 Otherwise the result becomes hard to interpret.
+
+For runtime work specifically:
+- add instrumentation first
+- rerun once
+- optimize the biggest measured bucket, not the guessed one
 
 ### Longer-Term Reward Additions
 

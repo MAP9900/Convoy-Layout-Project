@@ -114,6 +114,13 @@ def test_run_baseline_suite_writes_canonical_artifacts(tmp_path: Path) -> None:
     assert metrics["winner"] in {"static_baseline", "heuristic_baseline"}
     assert REQUIRED_SUMMARY_KEYS <= set(metrics["static_baseline"])
     assert REQUIRED_SUMMARY_KEYS <= set(metrics["heuristic_baseline"])
+    assert {
+        "static_eval_seconds",
+        "heuristic_search_seconds",
+        "heuristic_eval_seconds",
+        "total_seconds",
+        "heuristic_candidate_count",
+    } <= set(metrics["timing"])
 
     manifest = _read_json(run_dir / "run_manifest.json")
     _assert_manifest_common(manifest)
@@ -189,7 +196,7 @@ def test_run_rl_train_writes_canonical_artifacts_and_checkpoint(tmp_path: Path) 
     assert {row["model_name"] for row in rows} == {"rl_policy"}
 
     metrics = _read_json(run_dir / "metrics_summary.json")
-    assert {"training", "selection", "evaluation"} <= set(metrics)
+    assert {"training", "selection", "evaluation", "timing"} <= set(metrics)
     assert {
         "episodes",
         "epsilon_final",
@@ -200,6 +207,15 @@ def test_run_rl_train_writes_canonical_artifacts_and_checkpoint(tmp_path: Path) 
     } <= set(metrics["training"])
     assert {"risk_cvar_weight", "complexity_tiebreak_tolerance", "ranked_train_actions"} <= set(metrics["selection"])
     assert REQUIRED_SUMMARY_KEYS <= set(metrics["evaluation"])
+    assert {
+        "training_seconds",
+        "train_ranking_seconds",
+        "action_selection_seconds",
+        "eval_seconds",
+        "total_seconds",
+        "candidate_action_count",
+        "episodes",
+    } <= set(metrics["timing"])
 
     manifest = _read_json(run_dir / "run_manifest.json")
     _assert_manifest_common(manifest)
@@ -257,10 +273,12 @@ def test_run_rl_train_builder_mode_writes_selection_metadata(tmp_path: Path) -> 
     metrics = _read_json(run_dir / "metrics_summary.json")
     assert metrics["training"]["mode"] == "builder"
     assert "builder_greedy_trace" in metrics["selection"]
+    assert metrics["timing"]["candidate_action_count"] > 0
 
     manifest = _read_json(run_dir / "run_manifest.json")
     assert manifest["selection"]["mode"] == "builder"
     assert "builder" in manifest["selection"]
+    assert "timing" in manifest
 
 
 def test_rl_train_selection_prefers_simpler_action_when_scores_are_nearly_tied() -> None:

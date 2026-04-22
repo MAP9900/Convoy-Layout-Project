@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import time
 from pathlib import Path
 from typing import Any
 
@@ -61,6 +62,7 @@ def _render_layout_kwargs(layout_kwargs: dict[str, Any]) -> dict[str, Any]:
 
 
 def run_from_config(config: dict[str, Any], *, project_root: Path) -> Path:
+    started_at = time.perf_counter()
     run_cfg = dict(config.get("run", {}))
     sim_cfg = dict(config.get("simulation", {}))
     split_cfg = dict(config.get("splits", {}))
@@ -96,6 +98,7 @@ def run_from_config(config: dict[str, Any], *, project_root: Path) -> Path:
     max_hits_per_torpedo = None if max_hits_per_torpedo is None else int(max_hits_per_torpedo)
     objective = objective_from_config(objective_cfg)
 
+    static_eval_started = time.perf_counter()
     static_rows = evaluate_layout_over_profiles(
         model_name="static_baseline",
         layout_fn=static_layout_fn,
@@ -110,6 +113,7 @@ def run_from_config(config: dict[str, Any], *, project_root: Path) -> Path:
         max_hits_per_torpedo=max_hits_per_torpedo,
         objective=objective,
     )
+    static_eval_seconds = time.perf_counter() - static_eval_started
 
     search_cfg = dict(baseline_cfg.get("heuristic_search", {}))
     grid = dict(search_cfg.get("grid", {}))
@@ -118,8 +122,11 @@ def run_from_config(config: dict[str, Any], *, project_root: Path) -> Path:
 
     best_kwargs = dict(static_layout_kwargs)
     best_train_score = float("inf")
+    heuristic_search_started = time.perf_counter()
+    heuristic_candidate_count = 0
 
     for override in iter_param_overrides(grid, max_candidates=max_candidates):
+        heuristic_candidate_count += 1
         candidate_kwargs = dict(static_layout_kwargs)
         candidate_kwargs.update(override)
         candidate_rows = evaluate_layout_over_profiles(
@@ -141,7 +148,9 @@ def run_from_config(config: dict[str, Any], *, project_root: Path) -> Path:
         if score < best_train_score:
             best_train_score = score
             best_kwargs = candidate_kwargs
+    heuristic_search_seconds = time.perf_counter() - heuristic_search_started
 
+    heuristic_eval_started = time.perf_counter()
     heuristic_rows = evaluate_layout_over_profiles(
         model_name="heuristic_baseline",
         layout_fn=static_layout_fn,
@@ -156,6 +165,7 @@ def run_from_config(config: dict[str, Any], *, project_root: Path) -> Path:
         max_hits_per_torpedo=max_hits_per_torpedo,
         objective=objective,
     )
+    heuristic_eval_seconds = time.perf_counter() - heuristic_eval_started
 
     all_rows = static_rows + heuristic_rows
     static_summary = summarize_profile_rows(static_rows)
@@ -182,6 +192,13 @@ def run_from_config(config: dict[str, Any], *, project_root: Path) -> Path:
         "static_baseline": static_summary,
         "heuristic_baseline": heuristic_summary,
         "winner": winner,
+        "timing": {
+            "static_eval_seconds": static_eval_seconds,
+            "heuristic_search_seconds": heuristic_search_seconds,
+            "heuristic_eval_seconds": heuristic_eval_seconds,
+            "total_seconds": time.perf_counter() - started_at,
+            "heuristic_candidate_count": heuristic_candidate_count,
+        },
     }
 
     plot_xlim = tuple(float(x) for x in plot_cfg["xlim"]) if "xlim" in plot_cfg else (-5000.0, 5000.0)
@@ -237,6 +254,13 @@ def run_from_config(config: dict[str, Any], *, project_root: Path) -> Path:
             "ship_movement_realism_enabled": bool(ship_movement_realism),
         },
         "objective": objective_to_dict(objective),
+        "timing": {
+            "static_eval_seconds": static_eval_seconds,
+            "heuristic_search_seconds": heuristic_search_seconds,
+            "heuristic_eval_seconds": heuristic_eval_seconds,
+            "total_seconds": time.perf_counter() - started_at,
+            "heuristic_candidate_count": heuristic_candidate_count,
+        },
         "layout_plots": {
             "static": str(static_plot_path.relative_to(project_root)) if static_plot_written else None,
             "heuristic_best": str(heuristic_plot_path.relative_to(project_root)) if heuristic_plot_written else None,
