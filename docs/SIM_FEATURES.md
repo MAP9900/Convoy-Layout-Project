@@ -234,6 +234,9 @@ For faster library expansion, use:
 - generated profiles sample `u_boat_initial_speed_mps` from `1.0` to `2.0` m/s in `0.1` steps
 - generated profiles reject U-boat spawns that begin within `250 m` of any convoy ship
 - generated profiles are filtered through the existing geometry plausibility audit against the selected convoy profile before being emitted
+- generator modes:
+  - `curated` (default): helper-compatible library expansion for `attack_profiles.py`
+  - `dataset`: broader synthetic corpus generation with JSONL output for downstream ML/VAE workflows
 
 Profile supports:
 - spread mode: `fan` or `parallel`

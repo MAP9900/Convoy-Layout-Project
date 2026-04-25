@@ -77,6 +77,7 @@ def test_generate_attack_profile_scaffold_json_output(tmp_path: Path) -> None:
     assert 1.0 <= payload["profiles"][0]["u_boat_initial_speed_mps"] <= 2.0
     assert round(payload["profiles"][0]["u_boat_initial_speed_mps"], 1) == payload["profiles"][0]["u_boat_initial_speed_mps"]
     assert payload["audit_rows"][0]["suggested_label"] in {"credible_hit_threat", "credible_near_miss"}
+    assert payload["generator_meta"]["mode"] == "curated"
 
 
 def test_generated_profiles_respect_spawn_clearance() -> None:
@@ -87,3 +88,34 @@ def test_generated_profiles_respect_spawn_clearance() -> None:
         u_pos = np.asarray(profile.u_pos, dtype=float)
         min_distance = float(np.min(np.linalg.norm(ship_positions - u_pos, axis=1)))
         assert min_distance >= MIN_SPAWN_CLEARANCE_M
+
+
+def test_generate_attack_profile_scaffold_dataset_jsonl_output(tmp_path: Path) -> None:
+    output = tmp_path / "profiles.jsonl"
+    subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "experiments.generate_attack_profile_scaffold",
+            "--mode",
+            "dataset",
+            "--start-index",
+            "1",
+            "--count",
+            "3",
+            "--seed",
+            "1945",
+            "--output",
+            str(output),
+        ],
+        check=True,
+    )
+
+    lines = [line for line in output.read_text(encoding="utf-8").splitlines() if line.strip()]
+    assert len(lines) == 3
+    rows = [json.loads(line) for line in lines]
+    assert rows[0]["generator_meta"]["mode"] == "dataset"
+    assert rows[0]["generator_meta"]["source"] == "generate_attack_profile_scaffold"
+    assert rows[0]["profile"]["profile_id"].startswith("D")
+    assert rows[0]["profile"]["spread_doctrine"] == "uniform_divergent"
+    assert rows[0]["audit"]["suggested_label"] in {"credible_hit_threat", "credible_near_miss"}
