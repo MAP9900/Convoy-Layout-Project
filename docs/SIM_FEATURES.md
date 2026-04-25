@@ -237,6 +237,9 @@ For faster library expansion, use:
 - generator modes:
   - `curated` (default): helper-compatible library expansion for `attack_profiles.py`
   - `dataset`: broader synthetic corpus generation with JSONL output for downstream ML/VAE workflows
+- dataset inspection:
+  - `python -m experiments.audit_attack_profile_dataset --input data/attack_profiles/synthetic/train_random_v1.jsonl`
+  - writes flattened CSV plus summary/count outputs that are easy to inspect directly or load into a notebook
 
 Profile supports:
 - spread mode: `fan` or `parallel`
