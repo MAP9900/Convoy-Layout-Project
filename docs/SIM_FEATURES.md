@@ -232,6 +232,7 @@ For faster library expansion, use:
 - default output is a machine-readable JSON payload; `--format python` emits paste-ready `_scaffolded_fan_profile(...)` entries for the curated library helper
 - curated-library generation currently stays on `uniform_divergent` fan spreads so the emitted Python matches the existing scaffold style
 - generated profiles sample `u_boat_initial_speed_mps` from `1.0` to `2.0` m/s in `0.1` steps
+- generated profiles reject U-boat spawns that begin within `250 m` of any convoy ship
 - generated profiles are filtered through the existing geometry plausibility audit against the selected convoy profile before being emitted
 
 Profile supports:

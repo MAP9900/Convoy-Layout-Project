@@ -93,6 +93,8 @@ DEFAULT_SUB_LENGTH_M = 67.0
 DEFAULT_SUB_BEAM_M = 6.5
 DEFAULT_MAX_BOW_OFFSET_DEG = 15.0
 DEFAULT_ACCEPTED_LABELS = ("credible_hit_threat", "credible_near_miss")
+MIN_SPAWN_CLEARANCE_M = 250.0
+RANGE_BAND_TOLERANCE_M = 250.0
 
 
 def _wrap_angle_rad(angle: float) -> float:
@@ -106,6 +108,31 @@ def _all_profile_specs() -> list[tuple[ApproachPreset, RangePreset, SalvoPreset]
             for salvo in SALVO_PRESETS:
                 specs.append((approach, range_preset, salvo))
     return specs
+
+
+def _range_band_bounds_m(range_preset: RangePreset) -> tuple[float, float]:
+    center = float(range_preset.radius_m)
+    tol = float(RANGE_BAND_TOLERANCE_M)
+    return center - tol, center + tol
+
+
+def _spawn_is_feasible(
+    u_pos: tuple[float, float],
+    ships: Sequence[object],
+    *,
+    range_preset: RangePreset,
+) -> bool:
+    u_boat_pos = np.asarray(u_pos, dtype=float)
+    ship_positions = np.asarray([np.asarray(getattr(ship, "position"), dtype=float) for ship in ships], dtype=float)
+    if ship_positions.size == 0:
+        return False
+    distances = np.linalg.norm(ship_positions - u_boat_pos, axis=1)
+    if float(np.min(distances)) < float(MIN_SPAWN_CLEARANCE_M):
+        return False
+    centroid = np.mean(ship_positions, axis=0)
+    centroid_range = float(np.linalg.norm(u_boat_pos - centroid))
+    min_range, max_range = _range_band_bounds_m(range_preset)
+    return min_range <= centroid_range <= max_range
 
 
 def generate_attack_profile_scaffolds(
@@ -157,6 +184,8 @@ def generate_attack_profile_scaffolds(
             float(radius_m * np.cos(angle_rad)),
             float(radius_m * np.sin(angle_rad)),
         )
+        if not _spawn_is_feasible(u_pos, ships, range_preset=range_preset):
+            continue
         bearing_to_origin = float(np.arctan2(-u_pos[1], -u_pos[0]))
         base_bearing_rad = _wrap_angle_rad(bearing_to_origin + float(np.deg2rad(rng.uniform(-4.0, 4.0))))
         profile = AttackProfile(

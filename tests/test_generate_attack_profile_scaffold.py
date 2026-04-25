@@ -5,6 +5,14 @@ import subprocess
 import sys
 from pathlib import Path
 
+import numpy as np
+
+from experiments.generate_attack_profile_scaffold import (
+    MIN_SPAWN_CLEARANCE_M,
+    generate_attack_profile_scaffolds,
+)
+from scenarios.convoy_profiles import get_convoy_layout_profile
+
 
 def test_generate_attack_profile_scaffold_python_output(tmp_path: Path) -> None:
     output = tmp_path / "profiles.py"
@@ -69,3 +77,13 @@ def test_generate_attack_profile_scaffold_json_output(tmp_path: Path) -> None:
     assert 1.0 <= payload["profiles"][0]["u_boat_initial_speed_mps"] <= 2.0
     assert round(payload["profiles"][0]["u_boat_initial_speed_mps"], 1) == payload["profiles"][0]["u_boat_initial_speed_mps"]
     assert payload["audit_rows"][0]["suggested_label"] in {"credible_hit_threat", "credible_near_miss"}
+
+
+def test_generated_profiles_respect_spawn_clearance() -> None:
+    profiles, _audit_rows = generate_attack_profile_scaffolds(start_index=31, count=6, seed=1945)
+    ships = get_convoy_layout_profile("convoy_layout_1").build_ships()
+    ship_positions = np.asarray([np.asarray(ship.position, dtype=float) for ship in ships], dtype=float)
+    for profile in profiles:
+        u_pos = np.asarray(profile.u_pos, dtype=float)
+        min_distance = float(np.min(np.linalg.norm(ship_positions - u_pos, axis=1)))
+        assert min_distance >= MIN_SPAWN_CLEARANCE_M
