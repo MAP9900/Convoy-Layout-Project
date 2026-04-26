@@ -119,3 +119,16 @@ def test_generate_attack_profile_scaffold_dataset_jsonl_output(tmp_path: Path) -
     assert rows[0]["profile"]["profile_id"].startswith("D")
     assert rows[0]["profile"]["spread_doctrine"] == "uniform_divergent"
     assert rows[0]["audit"]["suggested_label"] in {"credible_hit_threat", "credible_near_miss"}
+
+
+def test_generate_attack_profile_scaffold_dataset_targets_75_25_mix() -> None:
+    profiles, audit_rows = generate_attack_profile_scaffolds(
+        start_index=1,
+        count=20,
+        seed=1945,
+        mode="dataset",
+    )
+    labels = [str(row["suggested_label"]) for row in audit_rows]
+    assert len(profiles) == 20
+    assert labels.count("credible_hit_threat") == 15
+    assert labels.count("credible_near_miss") == 5

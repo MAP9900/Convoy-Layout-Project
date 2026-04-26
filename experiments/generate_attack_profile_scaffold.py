@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+from collections import Counter
 import json
 from dataclasses import dataclass
 from pathlib import Path
@@ -97,6 +98,7 @@ MIN_SPAWN_CLEARANCE_M = 250.0
 RANGE_BAND_TOLERANCE_M = 250.0
 GENERATOR_SOURCE = "generate_attack_profile_scaffold"
 GENERATOR_VERSION = "v2"
+DATASET_HIT_THREAT_FRACTION = 0.75
 
 
 def _wrap_angle_rad(angle: float) -> float:
@@ -233,12 +235,27 @@ def generate_attack_profile_scaffolds(
     if not accepted:
         raise ValueError("accepted_labels must not be empty")
 
-    max_attempts = max(count * 20, len(specs) * 2)
+    max_attempts = max(count * (20 if mode == "curated" else 200), len(specs) * 2)
     profiles: list[AttackProfile] = []
     accepted_audit_rows: list[dict[str, object]] = []
     used_signatures: set[tuple[str, str, str, float]] = set()
     next_index = start_index
     attempts = 0
+    dataset_label_targets: dict[str, int] | None = None
+    dataset_label_counts: Counter[str] | None = None
+    if mode == "dataset":
+        if accepted != {"credible_hit_threat", "credible_near_miss"}:
+            raise ValueError(
+                "dataset mode currently expects accepted_labels to be exactly "
+                "{credible_hit_threat, credible_near_miss}"
+            )
+        hit_target = int(round(count * DATASET_HIT_THREAT_FRACTION))
+        near_miss_target = int(count - hit_target)
+        dataset_label_targets = {
+            "credible_hit_threat": hit_target,
+            "credible_near_miss": near_miss_target,
+        }
+        dataset_label_counts = Counter()
 
     while len(profiles) < count:
         if attempts >= max_attempts:
@@ -249,6 +266,7 @@ def generate_attack_profile_scaffolds(
         attempts += 1
         approach, range_preset, salvo = specs[int(rng.integers(0, len(specs)))]
         u_boat_initial_speed_mps = float(rng.choice(DEFAULT_U_BOAT_SPEED_OPTIONS_MPS))
+        target_label: str | None = None
         if mode == "curated":
             signature = (approach.name, range_preset.name, salvo.name, u_boat_initial_speed_mps)
             if signature in used_signatures:
@@ -264,15 +282,36 @@ def generate_attack_profile_scaffolds(
             profile_id = f"P{next_index:02d}"
             profile_name = f"profile_{next_index:02d}_{approach.name}_{range_preset.name}_{salvo.name}"
         else:
+            assert dataset_label_targets is not None
+            assert dataset_label_counts is not None
+            remaining_hit = dataset_label_targets["credible_hit_threat"] - dataset_label_counts["credible_hit_threat"]
+            remaining_near = dataset_label_targets["credible_near_miss"] - dataset_label_counts["credible_near_miss"]
+            if remaining_hit <= 0 and remaining_near <= 0:
+                break
+            if remaining_hit > 0 and remaining_near > 0:
+                total_remaining = remaining_hit + remaining_near
+                target_label = (
+                    "credible_hit_threat"
+                    if float(rng.random()) < (remaining_hit / total_remaining)
+                    else "credible_near_miss"
+                )
+            elif remaining_hit > 0:
+                target_label = "credible_hit_threat"
+            else:
+                target_label = "credible_near_miss"
             signature = (
                 approach.name,
                 range_preset.name,
+                str(target_label),
                 f"{u_boat_initial_speed_mps:.1f}",
                 f"{rng.integers(0, 1_000_000)}",
             )
             angle_jitter_deg = 10.0
             radius_jitter_m = 350.0
-            spread_deg = float(rng.choice(np.array([3.5, 4.0, 4.5, 5.0, 5.5, 6.0, 6.5, 7.0, 8.0], dtype=float)))
+            if target_label == "credible_hit_threat":
+                spread_deg = float(rng.choice(np.array([3.5, 4.0, 4.5, 5.0, 5.5, 6.0, 6.5, 7.0, 8.0], dtype=float)))
+            else:
+                spread_deg = float(rng.choice(np.array([12.0, 14.0, 16.0], dtype=float)))
             spread_rad = float(np.deg2rad(spread_deg))
             launch_delay_s = float(rng.choice(np.round(np.arange(0.5, 2.51, 0.1), 1)))
             salvo_interval_s = float(rng.choice(np.array([1.5, 2.0, 2.5, 3.0], dtype=float)))
@@ -292,9 +331,17 @@ def generate_attack_profile_scaffolds(
         if not _spawn_is_feasible(u_pos, ships, range_preset=range_preset):
             continue
         bearing_to_origin = float(np.arctan2(-u_pos[1], -u_pos[0]))
-        base_bearing_jitter_deg = 4.0 if mode == "curated" else 8.0
+        if mode == "curated":
+            base_bearing_offset_deg = float(rng.uniform(-4.0, 4.0))
+        else:
+            assert target_label is not None
+            if target_label == "credible_hit_threat":
+                base_bearing_offset_deg = float(rng.uniform(-5.0, 5.0))
+            else:
+                miss_sign = -1.0 if float(rng.random()) < 0.5 else 1.0
+                base_bearing_offset_deg = float(miss_sign * rng.uniform(8.4, 10.4))
         base_bearing_rad = _wrap_angle_rad(
-            bearing_to_origin + float(np.deg2rad(rng.uniform(-base_bearing_jitter_deg, base_bearing_jitter_deg)))
+            bearing_to_origin + float(np.deg2rad(base_bearing_offset_deg))
         )
         profile = _build_attack_profile(
             profile_id=profile_id,
@@ -312,11 +359,16 @@ def generate_attack_profile_scaffolds(
             gyro_straight_run_m=float(salvo.gyro_straight_run_m),
         )
         audit_row = audit_attack_profiles([profile], ships, thresholds=thresholds)[0]
-        if str(audit_row["suggested_label"]) not in accepted:
+        audit_label = str(audit_row["suggested_label"])
+        if audit_label not in accepted:
+            continue
+        if mode == "dataset" and audit_label != target_label:
             continue
         used_signatures.add(signature)
         profiles.append(profile)
         accepted_audit_rows.append(audit_row)
+        if dataset_label_counts is not None:
+            dataset_label_counts[audit_label] += 1
         next_index += 1
     return profiles, accepted_audit_rows
 

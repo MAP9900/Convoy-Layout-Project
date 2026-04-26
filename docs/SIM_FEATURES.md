@@ -236,7 +236,7 @@ For faster library expansion, use:
 - generated profiles are filtered through the existing geometry plausibility audit against the selected convoy profile before being emitted
 - generator modes:
   - `curated` (default): helper-compatible library expansion for `attack_profiles.py`
-  - `dataset`: broader synthetic corpus generation with JSONL output for downstream ML/VAE workflows
+  - `dataset`: broader synthetic corpus generation with JSONL output for downstream ML/VAE workflows; currently targets a `75% credible_hit_threat / 25% credible_near_miss` mix
 - dataset inspection:
   - `python -m experiments.audit_attack_profile_dataset --input data/attack_profiles/synthetic/train_random_v1.jsonl`
   - writes flattened CSV plus summary/count outputs that are easy to inspect directly or load into a notebook
