@@ -6,7 +6,7 @@ as a vector observation and allow actions to propose parameter deltas. Future
 phases can plug in full simulators, learned policies, or third-party RL
 libraries without changing the public surface here.
 
-Intended usage (later phases):
+Intended usage:
 - Observation: concatenated vector of layout parameters, attack parameters, and
   noise settings, normalized by user-defined scales.
 - Action: delta updates to either defender or attacker parameters.
