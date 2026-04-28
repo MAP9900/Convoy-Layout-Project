@@ -1,0 +1,14 @@
+dataset:
+  train_path: "data/attack_profiles/synthetic/train_random_v2.jsonl"
+  valid_path: "data/attack_profiles/synthetic/valid_random_v2.jsonl"
+training:
+  epochs: 50
+  batch_size: 128
+  learning_rate: 0.001
+  beta: 0.05
+  latent_dim: 4
+  hidden_dim: 32
+  device: "mps"
+  num_workers: 0
+  sample_count: 16
+  seed: 1945
