@@ -351,7 +351,7 @@ class AttackProfileVAEDataset(Dataset[torch.Tensor]):
 
 
 class AttackProfileVAE(nn.Module):
-    """Small MLP beta-VAE for the v1 continuous attack-profile feature space.
+    """Small MLP beta-VAE for the continuous attack-profile feature space.
 
     Architecture:
 
@@ -359,7 +359,7 @@ class AttackProfileVAE(nn.Module):
     - latent heads: ``mu`` and ``logvar``
     - decoder: ``latent_dim -> hidden_dim -> hidden_dim -> input_dim``
 
-    Default dimensions reflect the agreed first-pass design:
+    Default dimensions:
 
     - ``input_dim = 8``
     - ``latent_dim = 4``
@@ -490,8 +490,7 @@ def vae_loss(
 def build_vae_datasets(
     *,
     train_path: str | Path,
-    valid_path: str | Path,
-) -> tuple[AttackProfileVAEDataset, AttackProfileVAEDataset, AttackProfileVAEPreprocessor]:
+    valid_path: str | Path,) -> tuple[AttackProfileVAEDataset, AttackProfileVAEDataset, AttackProfileVAEPreprocessor]:
     """Build normalized train/valid datasets from JSONL corpora.
 
     Intended training flow:
