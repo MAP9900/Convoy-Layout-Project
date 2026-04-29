@@ -1,0 +1,59 @@
+{
+  "workflow": "vae_train_notebook",
+  "git_sha": "30a34511c67c5694b4aac75288b7fe1f8255929e",
+  "device": "mps",
+  "seed": 1945,
+  "train_path": "data/attack_profiles/synthetic/train_random_v2.jsonl",
+  "valid_path": "data/attack_profiles/synthetic/valid_random_v2.jsonl",
+  "output_root": "results/runs",
+  "run_name": "notebook",
+  "hyperparameters": {
+    "epochs": 50,
+    "batch_size": 128,
+    "learning_rate": 0.001,
+    "beta": 0.05,
+    "latent_dim": 4,
+    "hidden_dim": 32,
+    "sample_count": 16
+  },
+  "preprocessor": {
+    "feature_names": [
+      "u_pos_x",
+      "u_pos_y",
+      "sin_base_bearing_rad",
+      "cos_base_bearing_rad",
+      "spread_rad",
+      "launch_delay_s",
+      "salvo_interval_s",
+      "u_boat_initial_speed_mps"
+    ],
+    "mean": [
+      9.702669143676758,
+      -1.8620976209640503,
+      0.0018322461983188987,
+      -0.008672782219946384,
+      0.1367814689874649,
+      1.5090402364730835,
+      2.2486000061035156,
+      1.503416895866394
+    ],
+    "std": [
+      1832.3223876953125,
+      1643.178466796875,
+      0.690074622631073,
+      0.7236840128898621,
+      0.07243117690086365,
+      0.606611430644989,
+      0.5584811568260193,
+      0.31457507610321045
+    ]
+  },
+  "artifacts": {
+    "history_csv": "training_history.csv",
+    "metrics_summary_json": "metrics_summary.json",
+    "run_manifest_json": "run_manifest.json",
+    "best_checkpoint": "checkpoints/model_best.pt",
+    "latest_checkpoint": "checkpoints/model_latest.pt",
+    "sampled_profiles_json": "sampled_profiles.json"
+  }
+}
