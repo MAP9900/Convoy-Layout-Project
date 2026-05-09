@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any, Iterable
+from typing import Any, Iterable, Mapping, Sequence
 import math
 
 import numpy as np
@@ -47,19 +47,45 @@ def audit_attack_profiles(
     profiles: list[AttackProfile],
     ships: list[Ship],
     *,
+    intents: Sequence[Mapping[str, Any]] | None = None,
     thresholds: AuditThresholds | None = None,
 ) -> list[dict[str, Any]]:
     """Return plausibility audit rows for attack profiles against a convoy layout."""
 
     cfg = thresholds or AuditThresholds()
     centroid = _convoy_centroid(ships)
+    if intents is not None and len(intents) != len(profiles):
+        raise ValueError("intents length must match profiles length")
     rows: list[dict[str, Any]] = []
 
-    for profile in profiles:
+    for index, profile in enumerate(profiles):
         u_pos = np.asarray(profile.u_pos, dtype=float)
-        dx = float(centroid[0] - u_pos[0])
-        dy = float(centroid[1] - u_pos[1])
-        range_to_centroid_m = float(np.hypot(dx, dy))
+        dx_centroid = float(centroid[0] - u_pos[0])
+        dy_centroid = float(centroid[1] - u_pos[1])
+        centroid_range_m = float(np.hypot(dx_centroid, dy_centroid))
+        centroid_bearing_rad = float(np.arctan2(dy_centroid, dx_centroid))
+
+        intent = dict(intents[index]) if intents is not None else None
+        if intent is None:
+            target_point = centroid
+            target_zone_id = ""
+            target_zone_kind = ""
+            approach_lane = ""
+            approach_side = ""
+            intended_label = ""
+        else:
+            target_point = np.asarray(intent["target_point"], dtype=float)
+            if target_point.shape != (2,):
+                raise ValueError("intent target_point must be a 2D vector")
+            target_zone_id = str(intent.get("target_zone_id", ""))
+            target_zone_kind = str(intent.get("target_zone_kind", ""))
+            approach_lane = str(intent.get("approach_lane", ""))
+            approach_side = str(intent.get("approach_side", ""))
+            intended_label = str(intent.get("intended_label", ""))
+
+        dx = float(target_point[0] - u_pos[0])
+        dy = float(target_point[1] - u_pos[1])
+        range_to_target_m = float(np.hypot(dx, dy))
         intent_bearing_rad = float(np.arctan2(dy, dx))
 
         if profile.mode == "fan":
@@ -70,13 +96,13 @@ def audit_attack_profiles(
         bearing_error_rad = _wrap_to_pi(active_bearing - intent_bearing_rad)
         bearing_error_deg = float(np.degrees(abs(bearing_error_rad)))
 
-        threshold_deg = _error_threshold_deg(range_to_centroid_m, cfg)
+        threshold_deg = _error_threshold_deg(range_to_target_m, cfg)
         flags: list[str] = []
 
         if bearing_error_deg > threshold_deg:
-            if range_to_centroid_m <= cfg.near_range_m:
+            if range_to_target_m <= cfg.near_range_m:
                 flags.append("near_range_large_error")
-            elif range_to_centroid_m <= cfg.mid_range_m:
+            elif range_to_target_m <= cfg.mid_range_m:
                 flags.append("mid_range_large_error")
             else:
                 flags.append("far_range_large_error")
@@ -86,7 +112,7 @@ def audit_attack_profiles(
             if bearing_error_deg > (half_spread_deg + cfg.fan_margin_deg):
                 flags.append("fan_not_covering_target")
 
-        if range_to_centroid_m <= cfg.near_range_m and bearing_error_deg >= 90.0:
+        if range_to_target_m <= cfg.near_range_m and bearing_error_deg >= 90.0:
             flags.append("near_range_opposite_direction")
 
         if "near_range_opposite_direction" in flags:
@@ -112,15 +138,24 @@ def audit_attack_profiles(
                 "mode": profile.mode,
                 "u_pos_x": float(u_pos[0]),
                 "u_pos_y": float(u_pos[1]),
-                "range_to_centroid_m": range_to_centroid_m,
+                "range_to_centroid_m": centroid_range_m,
+                "centroid_bearing_rad": centroid_bearing_rad,
+                "range_to_target_m": range_to_target_m,
+                "target_bearing_rad": intent_bearing_rad,
                 "intent_bearing_rad": intent_bearing_rad,
                 "active_bearing_rad": active_bearing,
                 "bearing_error_deg": bearing_error_deg,
+                "target_bearing_error_deg": bearing_error_deg,
                 "spread_deg": float(np.degrees(profile.spread_rad)),
                 "flag_count": int(len(flags)),
                 "flags": flags,
                 "severity": float(severity),
                 "suggested_label": suggested_label,
+                "target_zone_id": target_zone_id,
+                "target_zone_kind": target_zone_kind,
+                "approach_lane": approach_lane,
+                "approach_side": approach_side,
+                "intended_label": intended_label,
             }
         )
 

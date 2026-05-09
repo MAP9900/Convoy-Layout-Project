@@ -105,3 +105,46 @@ def test_dataset_audit_pipeline(tmp_path: Path) -> None:
     assert outputs["summary_json"].exists()
     assert outputs["profiles_flat_csv"].exists()
     assert outputs["counts_by_label_csv"].exists()
+
+
+def test_dataset_audit_pipeline_flattens_v3_intent(tmp_path: Path) -> None:
+    record = _sample_record(
+        profile_id="Z000001",
+        name="zone_dataset_000001_port_edge_port_credible_hit_threat",
+        spread_deg=5.0,
+        speed=1.4,
+        label="credible_hit_threat",
+    )
+    record["intent"] = {
+        "target_zone_id": "TZ000001_port_edge_port",
+        "target_zone_kind": "port_edge",
+        "approach_side": "port",
+        "approach_lane": "port_broadside",
+        "intended_label": "credible_hit_threat",
+        "target_point": [0.0, 1000.0],
+        "target_local": [0.0, 1000.0],
+        "spawn_local": [0.0, 2500.0],
+        "target_ship_ids": ["S01"],
+        "range_to_target_m": 1500.0,
+        "planned_bearing_error_deg": 0.0,
+        "convoy_heading_rad": 0.0,
+    }
+    record["audit"]["target_zone_id"] = "TZ000001_port_edge_port"
+    record["audit"]["target_zone_kind"] = "port_edge"
+    record["audit"]["approach_side"] = "port"
+    record["audit"]["approach_lane"] = "port_broadside"
+    record["audit"]["range_to_target_m"] = 1500.0
+    record["generator_meta"]["mode"] = "random_zones"
+    record["generator_meta"]["generator_version"] = "v3"
+    path = tmp_path / "profiles_v3.jsonl"
+    path.write_text(json.dumps(record) + "\n", encoding="utf-8")
+
+    loaded = load_dataset_records(path)
+    flat_rows = flatten_dataset_records(loaded)
+    summary = summarize_flat_rows(flat_rows)
+
+    assert flat_rows[0]["target_zone_kind"] == "port_edge"
+    assert flat_rows[0]["approach_side"] == "port"
+    assert flat_rows[0]["range_to_target_m"] == 1500.0
+    assert summary["target_zone_kinds"]["port_edge"] == 1
+    assert summary["approach_sides"]["port"] == 1

@@ -11,6 +11,12 @@ import numpy as np
 
 from convoy_sim.attack_profiles import AttackProfile
 from convoy_sim.profile_audit import AuditThresholds, audit_attack_profiles
+from convoy_sim.target_zones import (
+    AttackIntent,
+    build_curated_attack_intents,
+    sample_random_attack_intent,
+    spawn_world_from_intent,
+)
 from scenarios.convoy_profiles import get_convoy_layout_profile, list_convoy_layout_profiles
 
 
@@ -98,7 +104,11 @@ MIN_SPAWN_CLEARANCE_M = 250.0
 RANGE_BAND_TOLERANCE_M = 250.0
 GENERATOR_SOURCE = "generate_attack_profile_scaffold"
 GENERATOR_VERSION = "v2"
+TARGET_ZONE_GENERATOR_VERSION = "v3"
 DATASET_HIT_THREAT_FRACTION = 0.75
+LEGACY_MODES = {"curated", "dataset"}
+TARGET_ZONE_MODES = {"curated_zones", "random_zones"}
+ALL_MODES = LEGACY_MODES | TARGET_ZONE_MODES
 
 
 def _wrap_angle_rad(angle: float) -> float:
@@ -181,6 +191,54 @@ def _spawn_is_feasible(
     return min_range <= centroid_range <= max_range
 
 
+def _spawn_has_clearance(
+    u_pos: tuple[float, float],
+    ships: Sequence[object],
+    *,
+    min_clearance_m: float = MIN_SPAWN_CLEARANCE_M,
+) -> bool:
+    u_boat_pos = np.asarray(u_pos, dtype=float)
+    ship_positions = np.asarray([np.asarray(getattr(ship, "position"), dtype=float) for ship in ships], dtype=float)
+    if ship_positions.size == 0:
+        return False
+    distances = np.linalg.norm(ship_positions - u_boat_pos, axis=1)
+    return float(np.min(distances)) >= float(min_clearance_m)
+
+
+def _target_zone_spread_deg(target_label: str, rng: np.random.Generator) -> float:
+    if target_label == "credible_hit_threat":
+        return float(rng.choice(np.array([3.5, 4.0, 4.5, 5.0, 5.5, 6.0, 6.5, 7.0, 8.0], dtype=float)))
+    return float(rng.choice(np.array([12.0, 14.0, 16.0], dtype=float)))
+
+
+def _target_zone_label_targets(count: int) -> dict[str, int]:
+    hit_target = int(round(count * DATASET_HIT_THREAT_FRACTION))
+    return {
+        "credible_hit_threat": hit_target,
+        "credible_near_miss": int(count - hit_target),
+    }
+
+
+def _choose_remaining_target_label(
+    *,
+    rng: np.random.Generator,
+    targets: dict[str, int],
+    counts: Counter[str],
+) -> str:
+    remaining_hit = int(targets["credible_hit_threat"] - counts["credible_hit_threat"])
+    remaining_near = int(targets["credible_near_miss"] - counts["credible_near_miss"])
+    if remaining_hit <= 0 and remaining_near <= 0:
+        raise StopIteration
+    if remaining_hit > 0 and remaining_near > 0:
+        total_remaining = remaining_hit + remaining_near
+        if float(rng.random()) < (remaining_hit / total_remaining):
+            return "credible_hit_threat"
+        return "credible_near_miss"
+    if remaining_hit > 0:
+        return "credible_hit_threat"
+    return "credible_near_miss"
+
+
 def _explicit_profile_dict(profile: AttackProfile) -> dict[str, object]:
     return {
         "profile_id": profile.profile_id,
@@ -219,8 +277,8 @@ def generate_attack_profile_scaffolds(
     thresholds: AuditThresholds | None = None,
     mode: str = "curated",
 ) -> tuple[list[AttackProfile], list[dict[str, object]]]:
-    if mode not in {"curated", "dataset"}:
-        raise ValueError("mode must be one of: curated, dataset")
+    if mode not in ALL_MODES:
+        raise ValueError(f"mode must be one of: {', '.join(sorted(ALL_MODES))}")
     if start_index <= 0:
         raise ValueError("start_index must be positive")
     if count <= 0:
@@ -235,27 +293,29 @@ def generate_attack_profile_scaffolds(
     if not accepted:
         raise ValueError("accepted_labels must not be empty")
 
-    max_attempts = max(count * (20 if mode == "curated" else 200), len(specs) * 2)
+    max_attempts = max(count * (20 if mode == "curated" else 300), len(specs) * 2)
     profiles: list[AttackProfile] = []
     accepted_audit_rows: list[dict[str, object]] = []
-    used_signatures: set[tuple[str, str, str, float]] = set()
+    used_signatures: set[tuple[str, ...]] = set()
     next_index = start_index
     attempts = 0
     dataset_label_targets: dict[str, int] | None = None
     dataset_label_counts: Counter[str] | None = None
-    if mode == "dataset":
+    curated_zone_intents: list[AttackIntent] = []
+    if mode in {"dataset", "random_zones"}:
         if accepted != {"credible_hit_threat", "credible_near_miss"}:
             raise ValueError(
-                "dataset mode currently expects accepted_labels to be exactly "
+                f"{mode} mode currently expects accepted_labels to be exactly "
                 "{credible_hit_threat, credible_near_miss}"
             )
-        hit_target = int(round(count * DATASET_HIT_THREAT_FRACTION))
-        near_miss_target = int(count - hit_target)
-        dataset_label_targets = {
-            "credible_hit_threat": hit_target,
-            "credible_near_miss": near_miss_target,
-        }
+        dataset_label_targets = _target_zone_label_targets(count)
         dataset_label_counts = Counter()
+    if mode == "curated_zones":
+        curated_zone_intents = build_curated_attack_intents(
+            ships,
+            count=max(count * 3, count + len(ships)),
+            start_index=start_index,
+        )
 
     while len(profiles) < count:
         if attempts >= max_attempts:
@@ -264,6 +324,95 @@ def generate_attack_profile_scaffolds(
                 "broaden presets or relax audit thresholds."
             )
         attempts += 1
+        if mode in TARGET_ZONE_MODES:
+            intent: AttackIntent
+            if mode == "curated_zones":
+                intent = curated_zone_intents[(attempts - 1) % len(curated_zone_intents)]
+                target_label = intent.intended_label
+                profile_id = f"P{next_index:02d}"
+                profile_name = (
+                    f"profile_{next_index:02d}_{intent.target_zone_kind}_"
+                    f"{intent.approach_side}_{target_label}"
+                )
+            else:
+                assert dataset_label_targets is not None
+                assert dataset_label_counts is not None
+                try:
+                    target_label = _choose_remaining_target_label(
+                        rng=rng,
+                        targets=dataset_label_targets,
+                        counts=dataset_label_counts,
+                    )
+                except StopIteration:
+                    break
+                intent = sample_random_attack_intent(
+                    ships,
+                    rng=rng,
+                    sequence_id=next_index,
+                    intended_label=target_label,
+                )
+                profile_id = f"Z{next_index:06d}"
+                profile_name = (
+                    f"zone_dataset_{next_index:06d}_{intent.target_zone_kind}_"
+                    f"{intent.approach_side}_{target_label}"
+                )
+            signature = (
+                intent.target_zone_id,
+                intent.approach_side,
+                str(target_label),
+                f"{rng.integers(0, 1_000_000)}",
+            )
+            if signature in used_signatures:
+                continue
+            u_boat_initial_speed_mps = float(rng.choice(DEFAULT_U_BOAT_SPEED_OPTIONS_MPS))
+            u_pos = spawn_world_from_intent(intent, ships)
+            if not _spawn_has_clearance(u_pos, ships):
+                continue
+            target_point = np.asarray(intent.target_point, dtype=float)
+            u_arr = np.asarray(u_pos, dtype=float)
+            bearing_to_target = float(np.arctan2(target_point[1] - u_arr[1], target_point[0] - u_arr[0]))
+            base_bearing_rad = _wrap_angle_rad(
+                bearing_to_target + float(np.deg2rad(intent.planned_bearing_error_deg))
+            )
+            spread_rad = float(np.deg2rad(_target_zone_spread_deg(target_label, rng)))
+            launch_delay_s = float(rng.choice(np.round(np.arange(0.5, 2.51, 0.1), 1)))
+            salvo_interval_s = float(rng.choice(np.array([1.5, 2.0, 2.5, 3.0], dtype=float)))
+            profile = _build_attack_profile(
+                profile_id=profile_id,
+                name=profile_name,
+                weight=float(weight),
+                u_pos=u_pos,
+                n=4,
+                base_bearing_rad=base_bearing_rad,
+                spread_doctrine="uniform_divergent",
+                spread_rad=spread_rad,
+                per_torpedo_heading_offsets_rad=(),
+                launch_delay_s=launch_delay_s,
+                salvo_interval_s=salvo_interval_s,
+                u_boat_initial_speed_mps=u_boat_initial_speed_mps,
+                gyro_straight_run_m=10.0,
+            )
+            intent_dict = intent.to_dict()
+            audit_row = audit_attack_profiles(
+                [profile],
+                ships,
+                intents=[intent_dict],
+                thresholds=thresholds,
+            )[0]
+            audit_label = str(audit_row["suggested_label"])
+            if audit_label not in accepted:
+                continue
+            if mode == "random_zones" and audit_label != target_label:
+                continue
+            audit_row["intent"] = intent_dict
+            used_signatures.add(signature)
+            profiles.append(profile)
+            accepted_audit_rows.append(audit_row)
+            if dataset_label_counts is not None:
+                dataset_label_counts[audit_label] += 1
+            next_index += 1
+            continue
+
         approach, range_preset, salvo = specs[int(rng.integers(0, len(specs)))]
         u_boat_initial_speed_mps = float(rng.choice(DEFAULT_U_BOAT_SPEED_OPTIONS_MPS))
         target_label: str | None = None
@@ -422,21 +571,25 @@ def render_profiles_as_json(
     seed: int,
     convoy_profile: str,
     accepted_labels: Sequence[str],
+    mode: str = "curated",
 ) -> str:
+    is_target_zone_mode = mode in TARGET_ZONE_MODES
     payload = {
         "generator_meta": {
             "seed": int(seed),
             "convoy_profile": str(convoy_profile),
             "accepted_labels": [str(label) for label in accepted_labels],
-            "mode": "curated",
+            "mode": str(mode),
             "source": GENERATOR_SOURCE,
-            "generator_version": GENERATOR_VERSION,
+            "generator_version": TARGET_ZONE_GENERATOR_VERSION if is_target_zone_mode else GENERATOR_VERSION,
             "u_boat_initial_speed_mps_options": [float(v) for v in DEFAULT_U_BOAT_SPEED_OPTIONS_MPS],
             "profile_count": len(profiles),
         },
         "profiles": [_explicit_profile_dict(profile) for profile in profiles],
         "audit_rows": list(audit_rows),
     }
+    if is_target_zone_mode:
+        payload["intents"] = [dict(row["intent"]) for row in audit_rows if "intent" in row]
     return json.dumps(payload, indent=2) + "\n"
 
 
@@ -447,21 +600,27 @@ def render_profiles_as_jsonl(
     seed: int,
     convoy_profile: str,
     accepted_labels: Sequence[str],
+    mode: str = "dataset",
 ) -> str:
     lines: list[str] = []
+    is_target_zone_mode = mode in TARGET_ZONE_MODES
     for profile, audit_row in zip(profiles, audit_rows):
+        audit_payload = dict(audit_row)
+        intent_payload = audit_payload.pop("intent", None)
         record = {
             "profile": _explicit_profile_dict(profile),
-            "audit": dict(audit_row),
+            "audit": audit_payload,
             "generator_meta": {
-                "mode": "dataset",
+                "mode": str(mode),
                 "seed": int(seed),
                 "convoy_profile": str(convoy_profile),
                 "accepted_labels": [str(label) for label in accepted_labels],
                 "source": GENERATOR_SOURCE,
-                "generator_version": GENERATOR_VERSION,
+                "generator_version": TARGET_ZONE_GENERATOR_VERSION if is_target_zone_mode else GENERATOR_VERSION,
             },
         }
+        if intent_payload is not None:
+            record["intent"] = intent_payload
         lines.append(json.dumps(record))
     return "\n".join(lines) + ("\n" if lines else "")
 
@@ -476,15 +635,18 @@ def _parse_args() -> argparse.Namespace:
     parser.add_argument("--weight", type=float, default=DEFAULT_WEIGHT, help="Profile sampling weight (default: 1.0).")
     parser.add_argument(
         "--mode",
-        choices=("curated", "dataset"),
+        choices=tuple(sorted(ALL_MODES)),
         default="curated",
-        help="Generation mode. `curated` preserves the current helper-style library workflow; `dataset` emits synthetic training records.",
+        help=(
+            "Generation mode. `curated` and `dataset` preserve the current centroid workflow; "
+            "`curated_zones` and `random_zones` use target-zone intents."
+        ),
     )
     parser.add_argument(
         "--format",
         choices=("python", "json", "jsonl"),
         default=None,
-        help="Output format. Defaults to `json` for curated mode and `jsonl` for dataset mode.",
+        help="Output format. Defaults to `json` for curated modes and `jsonl` for dataset/random modes.",
     )
     parser.add_argument(
         "--convoy-profile",
@@ -519,9 +681,10 @@ def main() -> None:
         accepted_labels=accepted_labels,
         mode=str(args.mode),
     )
-    output_format = str(args.format) if args.format is not None else ("json" if args.mode == "curated" else "jsonl")
-    if args.mode == "dataset" and output_format == "python":
-        raise ValueError("dataset mode does not support --format python; use jsonl or json")
+    default_json_modes = {"curated", "curated_zones"}
+    output_format = str(args.format) if args.format is not None else ("json" if args.mode in default_json_modes else "jsonl")
+    if args.mode in {"dataset", "random_zones"} and output_format == "python":
+        raise ValueError(f"{args.mode} mode does not support --format python; use jsonl or json")
     if output_format == "json":
         rendered = render_profiles_as_json(
             profiles,
@@ -529,6 +692,7 @@ def main() -> None:
             seed=int(args.seed),
             convoy_profile=str(args.convoy_profile),
             accepted_labels=accepted_labels,
+            mode=str(args.mode),
         )
     elif output_format == "jsonl":
         rendered = render_profiles_as_jsonl(
@@ -537,6 +701,7 @@ def main() -> None:
             seed=int(args.seed),
             convoy_profile=str(args.convoy_profile),
             accepted_labels=accepted_labels,
+            mode=str(args.mode),
         )
     else:
         rendered = render_profiles_as_python(profiles)

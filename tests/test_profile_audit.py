@@ -53,3 +53,32 @@ def test_audit_marks_implausible_opposite_direction_near_range() -> None:
     rows = audit_attack_profiles([profile], _ships())
     assert rows[0]["suggested_label"] == "implausible_geometry"
     assert "near_range_opposite_direction" in rows[0]["flags"]
+
+
+def test_audit_uses_target_intent_when_present() -> None:
+    profile = AttackProfile(
+        profile_id="P01",
+        name="target_intent",
+        mode="fan",
+        u_pos=(1000.0, 1000.0),
+        base_bearing_rad=-np.pi / 2.0,
+        spread_rad=0.0873,
+        n=4,
+        speed=15.0,
+        max_run_time=500.0,
+    )
+    intent = {
+        "target_zone_id": "TZ000001_test",
+        "target_zone_kind": "port_edge",
+        "target_point": [1000.0, 0.0],
+        "approach_side": "port",
+        "approach_lane": "port_broadside",
+        "intended_label": "credible_hit_threat",
+    }
+
+    rows = audit_attack_profiles([profile], _ships(), intents=[intent])
+
+    assert rows[0]["target_zone_id"] == "TZ000001_test"
+    assert rows[0]["range_to_target_m"] == 1000.0
+    assert rows[0]["target_bearing_error_deg"] < 1e-6
+    assert rows[0]["suggested_label"] == "credible_hit_threat"

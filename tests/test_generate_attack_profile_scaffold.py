@@ -132,3 +132,53 @@ def test_generate_attack_profile_scaffold_dataset_targets_75_25_mix() -> None:
     assert len(profiles) == 20
     assert labels.count("credible_hit_threat") == 15
     assert labels.count("credible_near_miss") == 5
+
+
+def test_generate_attack_profile_scaffold_random_zones_jsonl_output(tmp_path: Path) -> None:
+    output = tmp_path / "profiles_v3.jsonl"
+    subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "experiments.generate_attack_profile_scaffold",
+            "--mode",
+            "random_zones",
+            "--start-index",
+            "1",
+            "--count",
+            "8",
+            "--seed",
+            "1945",
+            "--output",
+            str(output),
+        ],
+        check=True,
+    )
+
+    rows = [json.loads(line) for line in output.read_text(encoding="utf-8").splitlines() if line.strip()]
+    assert len(rows) == 8
+    assert rows[0]["generator_meta"]["mode"] == "random_zones"
+    assert rows[0]["generator_meta"]["generator_version"] == "v3"
+    assert rows[0]["profile"]["profile_id"].startswith("Z")
+    assert rows[0]["intent"]["target_zone_id"].startswith("TZ")
+    assert rows[0]["audit"]["target_zone_id"] == rows[0]["intent"]["target_zone_id"]
+    assert rows[0]["audit"]["suggested_label"] in {"credible_hit_threat", "credible_near_miss"}
+
+
+def test_generate_attack_profile_scaffold_random_zones_targets_75_25_mix() -> None:
+    profiles, audit_rows = generate_attack_profile_scaffolds(
+        start_index=1,
+        count=20,
+        seed=1945,
+        mode="random_zones",
+    )
+    labels = [str(row["suggested_label"]) for row in audit_rows]
+    target_zone_kinds = {str(row["target_zone_kind"]) for row in audit_rows}
+    approach_sides = {str(row["approach_side"]) for row in audit_rows}
+
+    assert len(profiles) == 20
+    assert labels.count("credible_hit_threat") == 15
+    assert labels.count("credible_near_miss") == 5
+    assert len(target_zone_kinds) > 1
+    assert len(approach_sides) > 1
+    assert all("intent" in row for row in audit_rows)
