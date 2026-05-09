@@ -80,6 +80,7 @@ Primary simulation feature reference:
 - `convoy_sim/noise.py` (`supporting`)
 - `convoy_sim/objectives.py` (`canonical`)
 - `convoy_sim/profile_audit.py` (`diagnostic`)
+- `convoy_sim/profile_generation_viz.py` (`diagnostic`)
 - `convoy_sim/realism.py` (`canonical`)
 - `convoy_sim/risk.py` (`canonical`)
 - `convoy_sim/rl_env.py` (`canonical`)
