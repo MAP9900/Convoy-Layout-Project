@@ -182,3 +182,54 @@ def test_generate_attack_profile_scaffold_random_zones_targets_75_25_mix() -> No
     assert len(target_zone_kinds) > 1
     assert len(approach_sides) > 1
     assert all("intent" in row for row in audit_rows)
+
+
+def test_generate_attack_profile_scaffold_random_tactical_v4_jsonl_output(tmp_path: Path) -> None:
+    output = tmp_path / "profiles_v4.jsonl"
+    subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "experiments.generate_attack_profile_scaffold",
+            "--mode",
+            "random_tactical_v4",
+            "--start-index",
+            "1",
+            "--count",
+            "8",
+            "--seed",
+            "1945",
+            "--output",
+            str(output),
+        ],
+        check=True,
+    )
+
+    rows = [json.loads(line) for line in output.read_text(encoding="utf-8").splitlines() if line.strip()]
+    assert len(rows) == 8
+    assert rows[0]["generator_meta"]["mode"] == "random_tactical_v4"
+    assert rows[0]["generator_meta"]["generator_version"] == "v4"
+    assert rows[0]["profile"]["profile_id"].startswith("T")
+    assert rows[0]["intent"]["target_zone_id"].startswith("TV4")
+    assert rows[0]["intent"]["spawn_region"]
+    assert rows[0]["intent"]["nearest_ship_clearance_m"] >= MIN_SPAWN_CLEARANCE_M
+    assert rows[0]["audit"]["target_zone_id"] == rows[0]["intent"]["target_zone_id"]
+
+
+def test_generate_attack_profile_scaffold_random_tactical_v4_targets_75_25_mix() -> None:
+    profiles, audit_rows = generate_attack_profile_scaffolds(
+        start_index=1,
+        count=20,
+        seed=1945,
+        mode="random_tactical_v4",
+    )
+    labels = [str(row["suggested_label"]) for row in audit_rows]
+    spawn_regions = {str(row["intent"]["spawn_region"]) for row in audit_rows}
+    inside_count = sum(1 for row in audit_rows if bool(row["intent"]["inside_convoy_envelope"]))
+
+    assert len(profiles) == 20
+    assert labels.count("credible_hit_threat") == 15
+    assert labels.count("credible_near_miss") == 5
+    assert len(spawn_regions) > 1
+    assert inside_count > 0
+    assert all(float(row["intent"]["nearest_ship_clearance_m"]) >= MIN_SPAWN_CLEARANCE_M for row in audit_rows)

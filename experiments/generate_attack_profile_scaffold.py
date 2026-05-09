@@ -15,6 +15,7 @@ from convoy_sim.target_zones import (
     AttackIntent,
     build_curated_attack_intents,
     sample_random_attack_intent,
+    sample_random_tactical_attack_intent,
     spawn_world_from_intent,
 )
 from scenarios.convoy_profiles import get_convoy_layout_profile, list_convoy_layout_profiles
@@ -105,10 +106,13 @@ RANGE_BAND_TOLERANCE_M = 250.0
 GENERATOR_SOURCE = "generate_attack_profile_scaffold"
 GENERATOR_VERSION = "v2"
 TARGET_ZONE_GENERATOR_VERSION = "v3"
+TACTICAL_GENERATOR_VERSION = "v4"
 DATASET_HIT_THREAT_FRACTION = 0.75
 LEGACY_MODES = {"curated", "dataset"}
 TARGET_ZONE_MODES = {"curated_zones", "random_zones"}
-ALL_MODES = LEGACY_MODES | TARGET_ZONE_MODES
+TACTICAL_MODES = {"random_tactical_v4"}
+INTENT_MODES = TARGET_ZONE_MODES | TACTICAL_MODES
+ALL_MODES = LEGACY_MODES | INTENT_MODES
 
 
 def _wrap_angle_rad(angle: float) -> float:
@@ -239,6 +243,14 @@ def _choose_remaining_target_label(
     return "credible_near_miss"
 
 
+def _generator_version_for_mode(mode: str) -> str:
+    if mode in TACTICAL_MODES:
+        return TACTICAL_GENERATOR_VERSION
+    if mode in TARGET_ZONE_MODES:
+        return TARGET_ZONE_GENERATOR_VERSION
+    return GENERATOR_VERSION
+
+
 def _explicit_profile_dict(profile: AttackProfile) -> dict[str, object]:
     return {
         "profile_id": profile.profile_id,
@@ -302,7 +314,7 @@ def generate_attack_profile_scaffolds(
     dataset_label_targets: dict[str, int] | None = None
     dataset_label_counts: Counter[str] | None = None
     curated_zone_intents: list[AttackIntent] = []
-    if mode in {"dataset", "random_zones"}:
+    if mode in {"dataset", "random_zones", "random_tactical_v4"}:
         if accepted != {"credible_hit_threat", "credible_near_miss"}:
             raise ValueError(
                 f"{mode} mode currently expects accepted_labels to be exactly "
@@ -324,7 +336,7 @@ def generate_attack_profile_scaffolds(
                 "broaden presets or relax audit thresholds."
             )
         attempts += 1
-        if mode in TARGET_ZONE_MODES:
+        if mode in INTENT_MODES:
             intent: AttackIntent
             if mode == "curated_zones":
                 intent = curated_zone_intents[(attempts - 1) % len(curated_zone_intents)]
@@ -334,7 +346,7 @@ def generate_attack_profile_scaffolds(
                     f"profile_{next_index:02d}_{intent.target_zone_kind}_"
                     f"{intent.approach_side}_{target_label}"
                 )
-            else:
+            elif mode == "random_zones":
                 assert dataset_label_targets is not None
                 assert dataset_label_counts is not None
                 try:
@@ -356,9 +368,33 @@ def generate_attack_profile_scaffolds(
                     f"zone_dataset_{next_index:06d}_{intent.target_zone_kind}_"
                     f"{intent.approach_side}_{target_label}"
                 )
+            else:
+                assert dataset_label_targets is not None
+                assert dataset_label_counts is not None
+                try:
+                    target_label = _choose_remaining_target_label(
+                        rng=rng,
+                        targets=dataset_label_targets,
+                        counts=dataset_label_counts,
+                    )
+                except StopIteration:
+                    break
+                intent = sample_random_tactical_attack_intent(
+                    ships,
+                    rng=rng,
+                    sequence_id=next_index,
+                    intended_label=target_label,
+                    min_clearance_m=MIN_SPAWN_CLEARANCE_M,
+                )
+                profile_id = f"T{next_index:06d}"
+                profile_name = (
+                    f"tactical_dataset_{next_index:06d}_{intent.spawn_region}_"
+                    f"{intent.target_zone_kind}_{target_label}"
+                )
             signature = (
                 intent.target_zone_id,
                 intent.approach_side,
+                intent.approach_lane,
                 str(target_label),
                 f"{rng.integers(0, 1_000_000)}",
             )
@@ -402,7 +438,7 @@ def generate_attack_profile_scaffolds(
             audit_label = str(audit_row["suggested_label"])
             if audit_label not in accepted:
                 continue
-            if mode == "random_zones" and audit_label != target_label:
+            if mode in {"random_zones", "random_tactical_v4"} and audit_label != target_label:
                 continue
             audit_row["intent"] = intent_dict
             used_signatures.add(signature)
@@ -573,7 +609,7 @@ def render_profiles_as_json(
     accepted_labels: Sequence[str],
     mode: str = "curated",
 ) -> str:
-    is_target_zone_mode = mode in TARGET_ZONE_MODES
+    is_intent_mode = mode in INTENT_MODES
     payload = {
         "generator_meta": {
             "seed": int(seed),
@@ -581,14 +617,14 @@ def render_profiles_as_json(
             "accepted_labels": [str(label) for label in accepted_labels],
             "mode": str(mode),
             "source": GENERATOR_SOURCE,
-            "generator_version": TARGET_ZONE_GENERATOR_VERSION if is_target_zone_mode else GENERATOR_VERSION,
+            "generator_version": _generator_version_for_mode(mode),
             "u_boat_initial_speed_mps_options": [float(v) for v in DEFAULT_U_BOAT_SPEED_OPTIONS_MPS],
             "profile_count": len(profiles),
         },
         "profiles": [_explicit_profile_dict(profile) for profile in profiles],
         "audit_rows": list(audit_rows),
     }
-    if is_target_zone_mode:
+    if is_intent_mode:
         payload["intents"] = [dict(row["intent"]) for row in audit_rows if "intent" in row]
     return json.dumps(payload, indent=2) + "\n"
 
@@ -603,7 +639,6 @@ def render_profiles_as_jsonl(
     mode: str = "dataset",
 ) -> str:
     lines: list[str] = []
-    is_target_zone_mode = mode in TARGET_ZONE_MODES
     for profile, audit_row in zip(profiles, audit_rows):
         audit_payload = dict(audit_row)
         intent_payload = audit_payload.pop("intent", None)
@@ -616,7 +651,7 @@ def render_profiles_as_jsonl(
                 "convoy_profile": str(convoy_profile),
                 "accepted_labels": [str(label) for label in accepted_labels],
                 "source": GENERATOR_SOURCE,
-                "generator_version": TARGET_ZONE_GENERATOR_VERSION if is_target_zone_mode else GENERATOR_VERSION,
+                "generator_version": _generator_version_for_mode(mode),
             },
         }
         if intent_payload is not None:
@@ -639,7 +674,8 @@ def _parse_args() -> argparse.Namespace:
         default="curated",
         help=(
             "Generation mode. `curated` and `dataset` preserve the current centroid workflow; "
-            "`curated_zones` and `random_zones` use target-zone intents."
+            "`curated_zones` and `random_zones` use v3 target-zone intents; "
+            "`random_tactical_v4` samples spawn-first tactical intents."
         ),
     )
     parser.add_argument(
@@ -683,7 +719,7 @@ def main() -> None:
     )
     default_json_modes = {"curated", "curated_zones"}
     output_format = str(args.format) if args.format is not None else ("json" if args.mode in default_json_modes else "jsonl")
-    if args.mode in {"dataset", "random_zones"} and output_format == "python":
+    if args.mode in {"dataset", "random_zones", "random_tactical_v4"} and output_format == "python":
         raise ValueError(f"{args.mode} mode does not support --format python; use jsonl or json")
     if output_format == "json":
         rendered = render_profiles_as_json(

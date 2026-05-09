@@ -7,6 +7,7 @@ from convoy_sim.target_zones import (
     build_curated_attack_intents,
     convoy_frame_and_envelope,
     sample_random_attack_intent,
+    sample_random_tactical_attack_intent,
     spawn_world_from_intent,
 )
 from scenarios.convoy_profiles import get_convoy_layout_profile
@@ -73,3 +74,33 @@ def test_random_attack_spawn_is_outside_convoy_access_envelope() -> None:
         outside_x = spawn_local[0] < envelope.min_x or spawn_local[0] > envelope.max_x
         outside_y = spawn_local[1] < envelope.min_y or spawn_local[1] > envelope.max_y
         assert outside_x or outside_y
+
+
+def test_random_tactical_attack_intent_enforces_clearance_and_metadata() -> None:
+    ships = _ships()
+    frame, envelope, local_positions = convoy_frame_and_envelope(ships)
+    rng = np.random.default_rng(1945)
+    intents = [
+        sample_random_tactical_attack_intent(
+            ships,
+            rng=rng,
+            sequence_id=sequence_id,
+            intended_label="credible_hit_threat",
+            min_clearance_m=250.0,
+        )
+        for sequence_id in range(1, 80)
+    ]
+
+    assert {intent.spawn_region for intent in intents}
+    assert any(intent.inside_convoy_envelope for intent in intents)
+    assert all(intent.target_zone_id.startswith("TV4") for intent in intents)
+    assert all(intent.nearest_ship_clearance_m >= 250.0 for intent in intents)
+
+    for intent in intents:
+        spawn_local = frame.world_to_local(spawn_world_from_intent(intent, ships))
+        clearance = float(np.min(np.linalg.norm(local_positions - spawn_local, axis=1)))
+        assert clearance >= 250.0
+        assert intent.inside_convoy_envelope == (
+            envelope.min_x <= spawn_local[0] <= envelope.max_x
+            and envelope.min_y <= spawn_local[1] <= envelope.max_y
+        )

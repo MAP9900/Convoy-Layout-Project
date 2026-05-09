@@ -148,3 +148,54 @@ def test_dataset_audit_pipeline_flattens_v3_intent(tmp_path: Path) -> None:
     assert flat_rows[0]["range_to_target_m"] == 1500.0
     assert summary["target_zone_kinds"]["port_edge"] == 1
     assert summary["approach_sides"]["port"] == 1
+
+
+def test_dataset_audit_pipeline_flattens_v4_tactical_intent(tmp_path: Path) -> None:
+    record = _sample_record(
+        profile_id="T000001",
+        name="tactical_dataset_000001_inside_columns_interior_credible_hit_threat",
+        spread_deg=5.0,
+        speed=1.4,
+        label="credible_hit_threat",
+    )
+    record["intent"] = {
+        "target_zone_id": "TV4000001_inside_columns_interior",
+        "target_zone_kind": "interior",
+        "approach_side": "inside_columns",
+        "approach_lane": "inside_columns:inside_columns",
+        "intended_label": "credible_hit_threat",
+        "spawn_region": "inside_columns",
+        "inside_convoy_envelope": True,
+        "target_aspect_deg": 84.0,
+        "target_score": 4.2,
+        "nearest_ship_clearance_m": 312.0,
+        "target_point": [0.0, 1000.0],
+        "target_local": [0.0, 1000.0],
+        "spawn_local": [0.0, 1300.0],
+        "target_ship_ids": ["S01"],
+        "range_to_target_m": 300.0,
+        "planned_bearing_error_deg": 0.0,
+        "convoy_heading_rad": 0.0,
+    }
+    record["audit"]["target_zone_id"] = "TV4000001_inside_columns_interior"
+    record["audit"]["target_zone_kind"] = "interior"
+    record["audit"]["approach_side"] = "inside_columns"
+    record["audit"]["approach_lane"] = "inside_columns:inside_columns"
+    record["audit"]["range_to_target_m"] = 300.0
+    record["generator_meta"]["mode"] = "random_tactical_v4"
+    record["generator_meta"]["generator_version"] = "v4"
+    path = tmp_path / "profiles_v4.jsonl"
+    path.write_text(json.dumps(record) + "\n", encoding="utf-8")
+
+    loaded = load_dataset_records(path)
+    flat_rows = flatten_dataset_records(loaded)
+    summary = summarize_flat_rows(flat_rows)
+    outputs = write_dataset_audit_outputs(output_dir=tmp_path / "audit_v4", flat_rows=flat_rows, summary=summary)
+
+    assert flat_rows[0]["spawn_region"] == "inside_columns"
+    assert flat_rows[0]["inside_convoy_envelope"] is True
+    assert flat_rows[0]["target_aspect_deg"] == 84.0
+    assert flat_rows[0]["nearest_ship_clearance_m"] == 312.0
+    assert summary["spawn_regions"]["inside_columns"] == 1
+    assert summary["inside_convoy_envelope"]["true"] == 1
+    assert outputs["counts_by_spawn_region_csv"].exists()

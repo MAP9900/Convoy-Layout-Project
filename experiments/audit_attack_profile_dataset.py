@@ -81,6 +81,15 @@ def flatten_dataset_records(records: Iterable[dict[str, Any]]) -> list[dict[str,
             "approach_side": str(intent.get("approach_side", audit.get("approach_side", ""))),
             "approach_lane": str(intent.get("approach_lane", audit.get("approach_lane", ""))),
             "intended_label": str(intent.get("intended_label", audit.get("intended_label", ""))),
+            "spawn_region": str(intent.get("spawn_region", audit.get("spawn_region", ""))),
+            "inside_convoy_envelope": bool(
+                intent.get("inside_convoy_envelope", audit.get("inside_convoy_envelope", False))
+            ),
+            "target_aspect_deg": float(intent.get("target_aspect_deg", audit.get("target_aspect_deg", 0.0))),
+            "target_score": float(intent.get("target_score", audit.get("target_score", 0.0))),
+            "nearest_ship_clearance_m": float(
+                intent.get("nearest_ship_clearance_m", audit.get("nearest_ship_clearance_m", 0.0))
+            ),
             "n": int(profile["n"]),
             "speed_mps": float(profile["speed"]),
             "base_bearing_rad": float(profile["base_bearing_rad"]),
@@ -121,6 +130,7 @@ def summarize_flat_rows(rows: list[dict[str, Any]]) -> dict[str, Any]:
             "approach_families": {},
             "range_bands": {},
             "target_zone_kinds": {},
+            "spawn_regions": {},
             "approach_sides": {},
             "approach_lanes": {},
             "spread_deg_values": {},
@@ -131,6 +141,7 @@ def summarize_flat_rows(rows: list[dict[str, Any]]) -> dict[str, Any]:
     approach_counter = Counter(str(row["approach_family"]) for row in rows)
     range_counter = Counter(str(row["range_band"]) for row in rows)
     target_zone_counter = Counter(str(row["target_zone_kind"]) for row in rows if str(row["target_zone_kind"]))
+    spawn_region_counter = Counter(str(row["spawn_region"]) for row in rows if str(row["spawn_region"]))
     approach_side_counter = Counter(str(row["approach_side"]) for row in rows if str(row["approach_side"]))
     approach_lane_counter = Counter(str(row["approach_lane"]) for row in rows if str(row["approach_lane"]))
     spread_counter = Counter(f"{float(row['spread_deg']):.1f}" for row in rows)
@@ -144,6 +155,11 @@ def summarize_flat_rows(rows: list[dict[str, Any]]) -> dict[str, Any]:
         "approach_families": dict(approach_counter),
         "range_bands": dict(range_counter),
         "target_zone_kinds": dict(target_zone_counter),
+        "spawn_regions": dict(spawn_region_counter),
+        "inside_convoy_envelope": {
+            "true": int(sum(1 for row in rows if bool(row["inside_convoy_envelope"]))),
+            "false": int(sum(1 for row in rows if not bool(row["inside_convoy_envelope"]))),
+        },
         "approach_sides": dict(approach_side_counter),
         "approach_lanes": dict(approach_lane_counter),
         "spread_deg_values": dict(spread_counter),
@@ -180,6 +196,7 @@ def summarize_flat_rows(rows: list[dict[str, Any]]) -> dict[str, Any]:
                 "approach_family": row["approach_family"],
                 "range_band": row["range_band"],
                 "target_zone_kind": row["target_zone_kind"],
+                "spawn_region": row["spawn_region"],
                 "approach_side": row["approach_side"],
             }
             for row in sorted(rows, key=lambda item: float(item["severity"]), reverse=True)[:10]
@@ -209,6 +226,7 @@ def write_dataset_audit_outputs(
     approach_csv = output_dir / "counts_by_approach_family.csv"
     range_csv = output_dir / "counts_by_range_band.csv"
     target_zone_csv = output_dir / "counts_by_target_zone_kind.csv"
+    spawn_region_csv = output_dir / "counts_by_spawn_region.csv"
     approach_side_csv = output_dir / "counts_by_approach_side.csv"
     approach_lane_csv = output_dir / "counts_by_approach_lane.csv"
     speed_csv = output_dir / "counts_by_u_boat_speed_mps.csv"
@@ -224,6 +242,7 @@ def write_dataset_audit_outputs(
     _write_csv(approach_csv, _count_mapping_rows(summary.get("approach_families", {})), ["value", "count"])
     _write_csv(range_csv, _count_mapping_rows(summary.get("range_bands", {})), ["value", "count"])
     _write_csv(target_zone_csv, _count_mapping_rows(summary.get("target_zone_kinds", {})), ["value", "count"])
+    _write_csv(spawn_region_csv, _count_mapping_rows(summary.get("spawn_regions", {})), ["value", "count"])
     _write_csv(approach_side_csv, _count_mapping_rows(summary.get("approach_sides", {})), ["value", "count"])
     _write_csv(approach_lane_csv, _count_mapping_rows(summary.get("approach_lanes", {})), ["value", "count"])
     _write_csv(speed_csv, _count_mapping_rows(summary.get("u_boat_speed_values_mps", {})), ["value", "count"])
@@ -235,6 +254,7 @@ def write_dataset_audit_outputs(
         "counts_by_approach_family_csv": approach_csv,
         "counts_by_range_band_csv": range_csv,
         "counts_by_target_zone_kind_csv": target_zone_csv,
+        "counts_by_spawn_region_csv": spawn_region_csv,
         "counts_by_approach_side_csv": approach_side_csv,
         "counts_by_approach_lane_csv": approach_lane_csv,
         "counts_by_u_boat_speed_mps_csv": speed_csv,
@@ -255,6 +275,8 @@ def main() -> None:
     print("Range band counts:", summary.get("range_bands", {}))
     if summary.get("target_zone_kinds"):
         print("Target zone kind counts:", summary.get("target_zone_kinds", {}))
+    if summary.get("spawn_regions"):
+        print("Spawn region counts:", summary.get("spawn_regions", {}))
     if summary.get("approach_sides"):
         print("Approach side counts:", summary.get("approach_sides", {}))
     print("Top 5 highest-severity profiles:")
