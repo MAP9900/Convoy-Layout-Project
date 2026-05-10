@@ -245,6 +245,7 @@ For faster library expansion, use:
   - writes flattened CSV plus summary/count outputs that are easy to inspect directly or load into a notebook
   - v3 target-zone datasets add counts by target-zone kind, approach side, and approach lane
   - v4 tactical datasets also add counts by spawn region plus inside-convoy, target-aspect, target-score, and nearest-ship-clearance diagnostics
+  - `convoy_sim.profile_outcome_audit` runs generated records through moving zig-zag convoy outcome QA and reports intended-target hits, other-ship hits, closest passes, and outcome-vs-intent agreement before VAE training
 
 Profile supports:
 - spread mode: `fan` or `parallel`
