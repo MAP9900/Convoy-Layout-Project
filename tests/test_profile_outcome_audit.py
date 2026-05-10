@@ -12,6 +12,7 @@ from convoy_sim.profile_outcome_audit import (
     audit_dataset_outcomes,
     audit_profile_outcome,
     enrich_dataset_records_with_outcomes,
+    filter_records_by_outcome_gate,
     summarize_outcome_rows,
 )
 from experiments.generate_attack_profile_scaffold import generate_attack_profile_scaffolds, render_profiles_as_jsonl
@@ -60,6 +61,47 @@ def test_profile_outcome_audit_detects_intended_target_hit() -> None:
     assert row["spread_doctrine"] == "uniform_divergent"
 
 
+def test_profile_outcome_audit_accepts_intentional_miss() -> None:
+    ship = Ship(
+        id="S1",
+        position=as_vec(0.0, 0.0),
+        speed=0.0,
+        heading_rad=0.0,
+        length=100.0,
+        beam=20.0,
+        ship_class=ShipClass.FREIGHTER,
+    )
+    profile = AttackProfile(
+        profile_id="T002",
+        name="deliberate_miss",
+        mode="fan",
+        u_pos=(-1000.0, 0.0),
+        n=1,
+        speed=20.0,
+        max_run_time=100.0,
+        base_bearing_rad=float(np.deg2rad(35.0)),
+        spread_rad=0.0,
+        spread_doctrine="uniform_divergent",
+        u_boat_mode="static",
+        u_boat_initial_heading_rad=0.0,
+        launch_from="center",
+    )
+    row = audit_profile_outcome(
+        profile,
+        [ship],
+        intent={
+            "target_ship_ids": ["S1"],
+            "intended_label": "intentional_miss",
+            "spawn_region": "unit_test",
+        },
+        cfg=OutcomeAuditConfig(t_max_s=100.0, hit_dt_s=0.25, zigzag_enabled=False),
+    )
+
+    assert row["actual_outcome_label"] == "miss"
+    assert row["passes_outcome_gate"] is True
+    assert row["outcome_matches_intent"] is True
+
+
 def test_dataset_outcome_audit_runs_generated_v4_through_standard_dynamic_pipeline() -> None:
     profiles, audit_rows = generate_attack_profile_scaffolds(
         mode="random_tactical_v4",
@@ -101,3 +143,5 @@ def test_dataset_outcome_audit_runs_generated_v4_through_standard_dynamic_pipeli
     assert len(enriched) == 2
     assert "outcome" in enriched[0]
     assert "actual_outcome_label" in enriched[0]["outcome"]
+    assert all("passes_outcome_gate" in row["outcome"] for row in enriched)
+    assert len(filter_records_by_outcome_gate(enriched)) <= len(enriched)

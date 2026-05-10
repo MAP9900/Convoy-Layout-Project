@@ -431,8 +431,8 @@ def sample_random_tactical_attack_intent(
 ) -> AttackIntent:
     """Sample v4 tactical intent by choosing spawn first, then target/firing intent."""
 
-    if intended_label not in {"credible_hit_threat", "credible_near_miss"}:
-        raise ValueError("intended_label must be credible_hit_threat or credible_near_miss")
+    if intended_label not in {"credible_hit_threat", "credible_near_miss", "intentional_miss"}:
+        raise ValueError("intended_label must be credible_hit_threat, credible_near_miss, or intentional_miss")
     frame, envelope, local_positions = convoy_frame_and_envelope(ships)
     for _ in range(int(max_attempts)):
         spawn_local, spawn_region = _sample_tactical_spawn_local(
@@ -440,6 +440,8 @@ def sample_random_tactical_attack_intent(
             envelope=envelope,
             local_positions=local_positions,
         )
+        if intended_label == "intentional_miss" and spawn_region == "inside_columns":
+            continue
         clearance_m = _nearest_clearance_m(spawn_local, local_positions)
         if clearance_m < float(min_clearance_m):
             continue
@@ -464,10 +466,11 @@ def sample_random_tactical_attack_intent(
         zone_kind = _zone_kind_for_ship(local_positions[ship_index], envelope)
         approach_side = _approach_side_from_spawn(spawn_local, envelope)
         if intended_label == "credible_hit_threat":
-            planned_error = float(rng.uniform(-4.5, 4.5))
+            planned_error = float(rng.uniform(-2.5, 2.5))
+        elif intended_label == "credible_near_miss":
+            planned_error = float(rng.uniform(-1.5, 1.5))
         else:
-            miss_sign = -1.0 if float(rng.random()) < 0.5 else 1.0
-            planned_error = float(miss_sign * rng.uniform(11.0, 16.0))
+            planned_error = float(rng.uniform(-2.0, 2.0))
         return AttackIntent(
             target_zone_id=f"TV4{int(sequence_id):06d}_{spawn_region}_{zone_kind}",
             target_zone_kind=zone_kind,

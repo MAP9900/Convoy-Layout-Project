@@ -127,8 +127,12 @@ def audit_attack_profiles(
             suggested_label = "implausible_geometry"
         elif "near_range_large_error" in flags:
             suggested_label = "implausible_geometry"
-        elif "fan_not_covering_target" in flags and intended_label != "credible_near_miss":
+        elif "fan_not_covering_target" in flags and intended_label not in {"credible_near_miss", "intentional_miss"}:
             suggested_label = "implausible_geometry"
+        elif intended_label == "intentional_miss":
+            suggested_label = "intentional_miss"
+        elif intended_label == "credible_near_miss":
+            suggested_label = "credible_near_miss"
         elif bearing_error_deg <= 8.0:
             suggested_label = "credible_hit_threat"
         else:

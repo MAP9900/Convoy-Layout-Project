@@ -239,13 +239,13 @@ For faster library expansion, use:
   - `dataset`: broader legacy centroid-based synthetic corpus generation with JSONL output for downstream ML/VAE workflows; currently targets a `75% credible_hit_threat / 25% credible_near_miss` mix
   - `curated_zones`: deterministic v3 target-zone profile generation for debugging target-relative geometry and audit behavior
   - `random_zones`: structured-random v3 target-zone JSONL generation for VAE training; each record includes top-level `intent` metadata with target zone, target point, approach side/lane, and intended label
-  - `random_tactical_v4`: spawn-first tactical JSONL generation for VAE training; each record samples a U-boat region around or inside the convoy first, enforces minimum clearance to ships, then selects an accessible target and standard zig-zag lead/intercept aim point from that position
+  - `random_tactical_v4`: spawn-first tactical JSONL generation for VAE training; each record samples a U-boat region around or inside the convoy first, enforces minimum clearance to ships, then selects an accessible target and standard zig-zag lead/intercept aim point from that position. It targets a `65% credible_hit_threat / 25% credible_near_miss / 10% intentional_miss` mix and accepts records only after the moving zig-zag outcome gate confirms the intended label.
 - dataset inspection:
   - `python -m experiments.audit_attack_profile_dataset --input data/attack_profiles/synthetic/train_random_v1.jsonl`
   - writes flattened CSV plus summary/count outputs that are easy to inspect directly or load into a notebook
   - v3 target-zone datasets add counts by target-zone kind, approach side, and approach lane
-  - v4 tactical datasets also add counts by spawn region plus inside-convoy, target-aspect, target-score, nearest-ship-clearance, and lead-solution diagnostics
-  - `convoy_sim.profile_outcome_audit` runs generated records through moving zig-zag convoy outcome QA and reports or attaches intended-target hits, other-ship hits, closest passes, and outcome-vs-intent agreement before VAE training
+  - v4 tactical datasets also add counts by spawn region plus inside-convoy, target-aspect, target-score, nearest-ship-clearance, lead-solution diagnostics, and aim-offset diagnostics for intentional near/miss labels
+  - `convoy_sim.profile_outcome_audit` runs generated records through moving zig-zag convoy outcome QA and reports or attaches intended-target hits, other-ship hits, closest passes, and outcome-vs-intent agreement before VAE training; its outcome gate is also reused during v4 generation
 
 Profile supports:
 - spread mode: `fan` or `parallel`

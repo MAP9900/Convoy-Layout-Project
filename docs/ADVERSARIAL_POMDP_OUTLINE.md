@@ -26,8 +26,9 @@ Core question: does defender performance degrade under an adaptive, belief-limit
   - select/rank feasible VAE candidates (optional light parameter refinement)
 - Candidate metadata expected from the generation/audit pipeline:
   - tactical intent fields (`spawn_region`, `approach_side`, `target_zone_kind`, target ship ids)
-  - firing-solution fields (`aim_point`, `aim_solution_kind`, lead distance/intercept time)
-  - dynamic outcome fields (`actual_outcome_label`, intended-target hit, other-ship hit, closest-pass distances)
+  - firing-solution fields (`aim_point`, `aim_solution_kind`, lead distance/intercept time, aim-offset fields)
+  - intended outcome labels (`credible_hit_threat`, `credible_near_miss`, `intentional_miss`)
+  - dynamic outcome fields (`actual_outcome_label`, outcome-gate pass flag, intended-target hit, other-ship hit, closest-pass distances)
 - Training setup:
   - phase 1: adversarial attacker against fixed defender with full-state input (debug/upper bound)
   - phase 2: belief-state attacker with partial observations (POMDP)
@@ -35,7 +36,7 @@ Core question: does defender performance degrade under an adaptive, belief-limit
 
 ## Method
 
-1. Freeze VAE candidate generation protocol for reproducibility.
+1. Freeze the outcome-gated VAE candidate generation protocol for reproducibility.
 2. Define attacker action as candidate selection/ranking from VAE outputs.
 3. Train full-state strategic adversary policy as optimization baseline.
 4. Replace full-state input with partial-observation + belief-state policy.

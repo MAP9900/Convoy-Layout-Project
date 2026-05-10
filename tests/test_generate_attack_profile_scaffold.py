@@ -212,15 +212,17 @@ def test_generate_attack_profile_scaffold_random_tactical_v4_jsonl_output(tmp_pa
     assert rows[0]["profile"]["profile_id"].startswith("T")
     assert rows[0]["intent"]["target_zone_id"].startswith("TV4")
     assert rows[0]["intent"]["spawn_region"]
-    assert rows[0]["intent"]["aim_solution_kind"] == "standard_zigzag_lead"
+    assert str(rows[0]["intent"]["aim_solution_kind"]).startswith("standard_zigzag_lead")
     assert rows[0]["intent"]["aim_lead_distance_m"] > 0.0
+    assert "aim_offset_kind" in rows[0]["intent"]
+    assert "aim_lateral_offset_m" in rows[0]["intent"]
     assert "aim_point" in rows[0]["intent"]
     assert rows[0]["audit"]["range_to_aim_m"] > 0.0
     assert rows[0]["intent"]["nearest_ship_clearance_m"] >= MIN_SPAWN_CLEARANCE_M
     assert rows[0]["audit"]["target_zone_id"] == rows[0]["intent"]["target_zone_id"]
 
 
-def test_generate_attack_profile_scaffold_random_tactical_v4_targets_75_25_mix() -> None:
+def test_generate_attack_profile_scaffold_random_tactical_v4_targets_65_25_10_mix() -> None:
     profiles, audit_rows = generate_attack_profile_scaffolds(
         start_index=1,
         count=20,
@@ -232,8 +234,9 @@ def test_generate_attack_profile_scaffold_random_tactical_v4_targets_75_25_mix()
     inside_count = sum(1 for row in audit_rows if bool(row["intent"]["inside_convoy_envelope"]))
 
     assert len(profiles) == 20
-    assert labels.count("credible_hit_threat") == 15
+    assert labels.count("credible_hit_threat") == 13
     assert labels.count("credible_near_miss") == 5
+    assert labels.count("intentional_miss") == 2
     assert len(spawn_regions) > 1
     assert inside_count > 0
     assert all(float(row["intent"]["nearest_ship_clearance_m"]) >= MIN_SPAWN_CLEARANCE_M for row in audit_rows)

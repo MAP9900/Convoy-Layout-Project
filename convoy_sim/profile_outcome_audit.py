@@ -35,6 +35,67 @@ class OutcomeAuditConfig:
     zigzag_waveform: str = "sine"
 
 
+@dataclass
+class OutcomeAuditContext:
+    """Reusable dynamic audit context with precomputed moving-convoy positions."""
+
+    ships: Sequence[Ship]
+    cfg: OutcomeAuditConfig
+    times: np.ndarray
+    ship_position_cube: np.ndarray
+
+    @classmethod
+    def from_ships(
+        cls,
+        ships: Sequence[Ship],
+        *,
+        cfg: OutcomeAuditConfig | None = None,
+    ) -> "OutcomeAuditContext":
+        audit_cfg = cfg or OutcomeAuditConfig()
+        formation, kinematics = build_standard_evasive_kinematics(
+            ships,
+            t_max_s=float(audit_cfg.t_max_s),
+            cfg=audit_cfg,
+        )
+        times = np.arange(
+            0.0,
+            float(audit_cfg.t_max_s) + 1e-9,
+            float(audit_cfg.hit_dt_s),
+            dtype=float,
+        )
+        ship_position_cube = _ship_position_cube(
+            formation=formation,
+            kinematics=kinematics,
+            times=times,
+            dt=float(audit_cfg.hit_dt_s),
+        )
+        return cls(
+            ships=list(ships),
+            cfg=audit_cfg,
+            times=times,
+            ship_position_cube=ship_position_cube,
+        )
+
+    def audit_profile(
+        self,
+        profile: AttackProfile,
+        *,
+        intent: Mapping[str, Any] | None = None,
+        rng_seed: int = 1945,
+        profile_index: int = 0,
+    ) -> dict[str, Any]:
+        return _audit_profile_outcome_precomputed(
+            profile,
+            self.ships,
+            intent=intent,
+            rng_seed=int(rng_seed),
+            profile_index=int(profile_index),
+            cfg=self.cfg,
+            times=self.times,
+            ship_position_cube=self.ship_position_cube,
+        )
+
+
 def build_standard_evasive_kinematics(
     ships: Sequence[Ship],
     *,
@@ -197,6 +258,23 @@ def _actual_outcome_label(
     return "miss"
 
 
+def outcome_matches_intent_label(
+    *,
+    intended_label: str,
+    actual_label: str,
+    intended_target_hit: bool,
+) -> bool:
+    """Return whether the dynamic sim outcome satisfies the intended training label."""
+
+    if intended_label == "credible_hit_threat":
+        return bool(intended_target_hit)
+    if intended_label == "credible_near_miss":
+        return str(actual_label) == "credible_near_miss"
+    if intended_label == "intentional_miss":
+        return str(actual_label) == "miss"
+    return False
+
+
 def audit_profile_outcome(
     profile: AttackProfile,
     ships: Sequence[Ship],
@@ -214,7 +292,12 @@ def audit_profile_outcome(
         t_max_s=float(audit_cfg.t_max_s),
         cfg=audit_cfg,
     )
-    times = np.arange(0.0, float(audit_cfg.t_max_s) + 1e-9, float(audit_cfg.hit_dt_s), dtype=float)
+    times = np.arange(
+        0.0,
+        float(audit_cfg.t_max_s) + 1e-9,
+        float(audit_cfg.hit_dt_s),
+        dtype=float,
+    )
     ship_position_cube = _ship_position_cube(
         formation=formation,
         kinematics=kinematics,
@@ -277,9 +360,10 @@ def _audit_profile_outcome_precomputed(
         nearest_relevant_radius_m=nearest_relevant_radius,
         near_miss_margin_m=float(cfg.near_miss_margin_m),
     )
-    outcome_matches_intent = (
-        (intended_label == "credible_hit_threat" and intended_target_hit)
-        or (intended_label == "credible_near_miss" and actual_label == "credible_near_miss")
+    outcome_matches_intent = outcome_matches_intent_label(
+        intended_label=intended_label,
+        actual_label=actual_label,
+        intended_target_hit=intended_target_hit,
     )
     first_hit = hit_events[0] if hit_events else None
     return {
@@ -288,6 +372,7 @@ def _audit_profile_outcome_precomputed(
         "intended_label": intended_label,
         "actual_outcome_label": actual_label,
         "outcome_matches_intent": bool(outcome_matches_intent),
+        "passes_outcome_gate": bool(outcome_matches_intent),
         "target_ship_ids": sorted(target_ship_ids),
         "n_torpedoes": int(len(torpedoes)),
         "n_hits": int(len(hit_events)),
@@ -322,32 +407,16 @@ def audit_dataset_outcomes(
 ) -> list[dict[str, Any]]:
     """Audit JSONL-style generated dataset records against dynamic sim outcomes."""
 
-    audit_cfg = cfg or OutcomeAuditConfig()
-    formation, kinematics = build_standard_evasive_kinematics(
-        ships,
-        t_max_s=float(audit_cfg.t_max_s),
-        cfg=audit_cfg,
-    )
-    times = np.arange(0.0, float(audit_cfg.t_max_s) + 1e-9, float(audit_cfg.hit_dt_s), dtype=float)
-    ship_position_cube = _ship_position_cube(
-        formation=formation,
-        kinematics=kinematics,
-        times=times,
-        dt=float(audit_cfg.hit_dt_s),
-    )
+    context = OutcomeAuditContext.from_ships(ships, cfg=cfg)
     rows: list[dict[str, Any]] = []
     for index, record in enumerate(records):
         profile = AttackProfile.from_dict(dict(record["profile"]))
         rows.append(
-            _audit_profile_outcome_precomputed(
+            context.audit_profile(
                 profile,
-                ships,
                 intent=dict(record.get("intent", {})),
                 rng_seed=int(rng_seed),
                 profile_index=index,
-                cfg=audit_cfg,
-                times=times,
-                ship_position_cube=ship_position_cube,
             )
         )
     return rows
@@ -372,6 +441,21 @@ def enrich_dataset_records_with_outcomes(
     return enriched
 
 
+def filter_records_by_outcome_gate(
+    records: Sequence[Mapping[str, Any]],
+    *,
+    outcome_key: str = "outcome",
+) -> list[dict[str, Any]]:
+    """Return enriched records whose dynamic outcome matches their intended label."""
+
+    filtered: list[dict[str, Any]] = []
+    for record in records:
+        outcome = dict(record.get(str(outcome_key), {}))
+        if bool(outcome.get("passes_outcome_gate", outcome.get("outcome_matches_intent", False))):
+            filtered.append(dict(record))
+    return filtered
+
+
 def summarize_outcome_rows(rows: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
     """Return compact aggregate diagnostics for outcome-audit rows."""
 
@@ -381,6 +465,7 @@ def summarize_outcome_rows(rows: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
             "actual_outcome_labels": {},
             "intended_labels": {},
             "outcome_match_rate": 0.0,
+            "outcome_gate_pass_count": 0,
         }
     actual_counter = Counter(str(row["actual_outcome_label"]) for row in rows)
     intended_counter = Counter(str(row["intended_label"]) for row in rows)
@@ -394,6 +479,7 @@ def summarize_outcome_rows(rows: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
         "actual_outcome_labels": dict(actual_counter),
         "intended_labels": dict(intended_counter),
         "outcome_match_rate": float(mean(1.0 if bool(row["outcome_matches_intent"]) else 0.0 for row in rows)),
+        "outcome_gate_pass_count": int(sum(1 for row in rows if bool(row["outcome_matches_intent"]))),
         "intended_target_hit_rate": float(mean(1.0 if bool(row["intended_target_hit"]) else 0.0 for row in rows)),
         "any_ship_hit_rate": float(mean(1.0 if bool(row["any_ship_hit"]) else 0.0 for row in rows)),
         "mean_hits": float(mean(float(row["n_hits"]) for row in rows)),

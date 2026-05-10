@@ -11,6 +11,7 @@ import numpy as np
 
 from convoy_sim.attack_profiles import AttackProfile
 from convoy_sim.profile_audit import AuditThresholds, audit_attack_profiles
+from convoy_sim.profile_outcome_audit import OutcomeAuditConfig, OutcomeAuditContext
 from convoy_sim.target_zones import (
     AttackIntent,
     build_curated_attack_intents,
@@ -101,16 +102,24 @@ DEFAULT_SUB_LENGTH_M = 67.0
 DEFAULT_SUB_BEAM_M = 6.5
 DEFAULT_MAX_BOW_OFFSET_DEG = 15.0
 DEFAULT_ACCEPTED_LABELS = ("credible_hit_threat", "credible_near_miss")
+HIT_THREAT_LABEL = "credible_hit_threat"
+NEAR_MISS_LABEL = "credible_near_miss"
+INTENTIONAL_MISS_LABEL = "intentional_miss"
+INTENT_LABELS = (HIT_THREAT_LABEL, NEAR_MISS_LABEL)
 MIN_SPAWN_CLEARANCE_M = 250.0
 RANGE_BAND_TOLERANCE_M = 250.0
 STANDARD_ZIGZAG_AMPLITUDE_RAD = 0.12
 STANDARD_ZIGZAG_PERIOD_S = 60.0
 STANDARD_LEAD_DT_S = 1.0
+TACTICAL_OUTCOME_GATE_T_MAX_S = 600.0
+TACTICAL_OUTCOME_GATE_HIT_DT_S = 0.5
 GENERATOR_SOURCE = "generate_attack_profile_scaffold"
 GENERATOR_VERSION = "v2"
 TARGET_ZONE_GENERATOR_VERSION = "v3"
 TACTICAL_GENERATOR_VERSION = "v4"
 DATASET_HIT_THREAT_FRACTION = 0.75
+TACTICAL_HIT_THREAT_FRACTION = 0.65
+TACTICAL_NEAR_MISS_FRACTION = 0.25
 LEGACY_MODES = {"curated", "dataset"}
 TARGET_ZONE_MODES = {"curated_zones", "random_zones"}
 TACTICAL_MODES = {"random_tactical_v4"}
@@ -213,15 +222,19 @@ def _spawn_has_clearance(
 
 
 def _target_zone_spread_deg(target_label: str, rng: np.random.Generator) -> float:
-    if target_label == "credible_hit_threat":
+    if target_label == HIT_THREAT_LABEL:
         return float(rng.choice(np.array([3.5, 4.0, 4.5, 5.0, 5.5, 6.0, 6.5, 7.0, 8.0], dtype=float)))
     return float(rng.choice(np.array([12.0, 14.0, 16.0], dtype=float)))
 
 
 def _tactical_spread_deg(target_label: str, rng: np.random.Generator) -> float:
-    if target_label == "credible_hit_threat":
+    if target_label == HIT_THREAT_LABEL:
         return float(rng.choice(np.array([3.0, 3.5, 4.0, 4.5, 5.0, 5.5, 6.0], dtype=float)))
-    return float(rng.choice(np.array([4.0, 5.0, 6.0, 7.0], dtype=float)))
+    if target_label == NEAR_MISS_LABEL:
+        return float(rng.choice(np.array([2.0, 2.5, 3.0, 3.5], dtype=float)))
+    if target_label == INTENTIONAL_MISS_LABEL:
+        return float(rng.choice(np.array([2.5, 3.0, 3.5, 4.0], dtype=float)))
+    raise ValueError(f"Unsupported tactical target label: {target_label}")
 
 
 def _standard_evasive_displacement(
@@ -304,11 +317,116 @@ def _lead_solution_for_standard_evasive_target(
     }
 
 
+def _ship_hit_radius_m(ship: object | None) -> float:
+    if ship is None:
+        return 80.0
+    radius_fn = getattr(ship, "effective_hit_radius", None)
+    if callable(radius_fn):
+        return float(radius_fn())
+    length = float(getattr(ship, "length", 120.0))
+    beam = float(getattr(ship, "beam", 20.0))
+    return float(0.5 * np.hypot(length, beam))
+
+
+def _offset_aim_payload_for_tactical_label(
+    aim_payload: dict[str, object],
+    *,
+    u_pos: tuple[float, float],
+    target_ship: object | None,
+    convoy_centroid: np.ndarray,
+    target_label: str,
+    rng: np.random.Generator,
+) -> dict[str, object]:
+    """Apply deliberate lateral aim offsets for training-data near/miss labels."""
+
+    if target_label == HIT_THREAT_LABEL:
+        enriched = dict(aim_payload)
+        enriched.update(
+            {
+                "aim_offset_kind": "none",
+                "aim_lateral_offset_m": 0.0,
+                "aim_offset_side": 0,
+            }
+        )
+        return enriched
+
+    aim_point = np.asarray(aim_payload["aim_point"], dtype=float)
+    u_arr = np.asarray(u_pos, dtype=float)
+    shot_vec = aim_point - u_arr
+    shot_len = float(np.linalg.norm(shot_vec))
+    if shot_len <= 1e-9:
+        enriched = dict(aim_payload)
+        enriched.update(
+            {
+                "aim_offset_kind": "none_degenerate",
+                "aim_lateral_offset_m": 0.0,
+                "aim_offset_side": 0,
+            }
+        )
+        return enriched
+
+    ship_radius_m = _ship_hit_radius_m(target_ship)
+    if target_label == NEAR_MISS_LABEL:
+        lateral_offset_m = float(ship_radius_m + rng.uniform(260.0, 420.0))
+        offset_kind = "near_miss_lateral_offset"
+    elif target_label == INTENTIONAL_MISS_LABEL:
+        outward = aim_point - np.asarray(convoy_centroid, dtype=float)
+        outward_norm = float(np.linalg.norm(outward))
+        if outward_norm <= 1e-9:
+            outward = shot_vec
+            outward_norm = shot_len
+        outward_unit = outward / outward_norm
+        lateral_offset_m = float(ship_radius_m + rng.uniform(900.0, 1700.0))
+        shifted = aim_point + lateral_offset_m * outward_unit
+        enriched = dict(aim_payload)
+        base_kind = str(enriched.get("aim_solution_kind", "direct"))
+        enriched.update(
+            {
+                "aim_point": [float(shifted[0]), float(shifted[1])],
+                "aim_solution_kind": f"{base_kind}_intentional_miss_clear_water_offset",
+                "aim_offset_kind": "intentional_miss_clear_water_offset",
+                "aim_lateral_offset_m": lateral_offset_m,
+                "aim_offset_side": 0,
+            }
+        )
+        return enriched
+    else:
+        raise ValueError(f"Unsupported tactical target label: {target_label}")
+
+    side = -1 if float(rng.random()) < 0.5 else 1
+    unit = shot_vec / shot_len
+    perp = np.asarray([-unit[1], unit[0]], dtype=float)
+    shifted = aim_point + float(side) * lateral_offset_m * perp
+    enriched = dict(aim_payload)
+    base_kind = str(enriched.get("aim_solution_kind", "direct"))
+    enriched.update(
+        {
+            "aim_point": [float(shifted[0]), float(shifted[1])],
+            "aim_solution_kind": f"{base_kind}_{offset_kind}",
+            "aim_offset_kind": offset_kind,
+            "aim_lateral_offset_m": lateral_offset_m,
+            "aim_offset_side": int(side),
+        }
+    )
+    return enriched
+
+
 def _target_zone_label_targets(count: int) -> dict[str, int]:
     hit_target = int(round(count * DATASET_HIT_THREAT_FRACTION))
     return {
-        "credible_hit_threat": hit_target,
-        "credible_near_miss": int(count - hit_target),
+        HIT_THREAT_LABEL: hit_target,
+        NEAR_MISS_LABEL: int(count - hit_target),
+    }
+
+
+def _tactical_label_targets(count: int) -> dict[str, int]:
+    hit_target = int(round(count * TACTICAL_HIT_THREAT_FRACTION))
+    near_target = int(round(count * TACTICAL_NEAR_MISS_FRACTION))
+    miss_target = int(count - hit_target - near_target)
+    return {
+        HIT_THREAT_LABEL: hit_target,
+        NEAR_MISS_LABEL: near_target,
+        INTENTIONAL_MISS_LABEL: miss_target,
     }
 
 
@@ -318,18 +436,17 @@ def _choose_remaining_target_label(
     targets: dict[str, int],
     counts: Counter[str],
 ) -> str:
-    remaining_hit = int(targets["credible_hit_threat"] - counts["credible_hit_threat"])
-    remaining_near = int(targets["credible_near_miss"] - counts["credible_near_miss"])
-    if remaining_hit <= 0 and remaining_near <= 0:
+    remaining = {
+        label: int(target - counts[label])
+        for label, target in targets.items()
+        if int(target - counts[label]) > 0
+    }
+    if not remaining:
         raise StopIteration
-    if remaining_hit > 0 and remaining_near > 0:
-        total_remaining = remaining_hit + remaining_near
-        if float(rng.random()) < (remaining_hit / total_remaining):
-            return "credible_hit_threat"
-        return "credible_near_miss"
-    if remaining_hit > 0:
-        return "credible_hit_threat"
-    return "credible_near_miss"
+    labels = list(remaining)
+    weights = np.asarray([float(remaining[label]) for label in labels], dtype=float)
+    weights = weights / float(np.sum(weights))
+    return str(rng.choice(np.asarray(labels, dtype=object), p=weights))
 
 
 def _generator_version_for_mode(mode: str) -> str:
@@ -390,6 +507,26 @@ def generate_attack_profile_scaffolds(
     specs = _all_profile_specs()
     rng = np.random.default_rng(seed)
     ships = get_convoy_layout_profile(convoy_profile).build_ships()
+    convoy_centroid = np.mean(
+        np.asarray([np.asarray(getattr(ship, "position"), dtype=float) for ship in ships]),
+        axis=0,
+    )
+    outcome_context = (
+        OutcomeAuditContext.from_ships(
+            ships,
+            cfg=OutcomeAuditConfig(
+                t_max_s=TACTICAL_OUTCOME_GATE_T_MAX_S,
+                hit_dt_s=TACTICAL_OUTCOME_GATE_HIT_DT_S,
+                near_miss_margin_m=250.0,
+                max_hits_per_torpedo=1,
+                zigzag_enabled=True,
+                zigzag_amplitude_rad=STANDARD_ZIGZAG_AMPLITUDE_RAD,
+                zigzag_period_s=STANDARD_ZIGZAG_PERIOD_S,
+            ),
+        )
+        if mode in TACTICAL_MODES
+        else None
+    )
     accepted = set(accepted_labels)
     if not accepted:
         raise ValueError("accepted_labels must not be empty")
@@ -404,12 +541,14 @@ def generate_attack_profile_scaffolds(
     dataset_label_counts: Counter[str] | None = None
     curated_zone_intents: list[AttackIntent] = []
     if mode in {"dataset", "random_zones", "random_tactical_v4"}:
-        if accepted != {"credible_hit_threat", "credible_near_miss"}:
+        if accepted != set(INTENT_LABELS):
             raise ValueError(
                 f"{mode} mode currently expects accepted_labels to be exactly "
                 "{credible_hit_threat, credible_near_miss}"
             )
-        dataset_label_targets = _target_zone_label_targets(count)
+        dataset_label_targets = (
+            _tactical_label_targets(count) if mode in TACTICAL_MODES else _target_zone_label_targets(count)
+        )
         dataset_label_counts = Counter()
     if mode == "curated_zones":
         curated_zone_intents = build_curated_attack_intents(
@@ -504,13 +643,22 @@ def generate_attack_profile_scaffolds(
                 "aim_lead_distance_m": 0.0,
             }
             if mode == "random_tactical_v4":
+                target_ship = _ship_for_intent(ships, intent)
                 aim_payload = _lead_solution_for_standard_evasive_target(
                     u_pos=u_pos,
                     target_point=target_point,
-                    target_ship=_ship_for_intent(ships, intent),
+                    target_ship=target_ship,
                     launch_delay_s=launch_delay_s,
                     torpedo_speed_mps=TORPEDO_SPEED_MPS,
                     torpedo_max_run_time_s=TORPEDO_MAX_RUN_TIME_S,
+                )
+                aim_payload = _offset_aim_payload_for_tactical_label(
+                    aim_payload,
+                    u_pos=u_pos,
+                    target_ship=target_ship,
+                    convoy_centroid=convoy_centroid,
+                    target_label=target_label,
+                    rng=rng,
                 )
             aim_point = np.asarray(aim_payload["aim_point"], dtype=float)
             bearing_to_target = float(np.arctan2(aim_point[1] - u_arr[1], aim_point[0] - u_arr[0]))
@@ -547,10 +695,33 @@ def generate_attack_profile_scaffolds(
                 thresholds=thresholds,
             )[0]
             audit_label = str(audit_row["suggested_label"])
-            if audit_label not in accepted:
+            accepted_for_mode = accepted | (
+                {INTENTIONAL_MISS_LABEL} if mode in TACTICAL_MODES else set()
+            )
+            if audit_label not in accepted_for_mode:
                 continue
             if mode in {"random_zones", "random_tactical_v4"} and audit_label != target_label:
                 continue
+            if mode == "random_tactical_v4":
+                assert outcome_context is not None
+                outcome_row = outcome_context.audit_profile(
+                    profile,
+                    intent=intent_dict,
+                    rng_seed=int(seed),
+                    profile_index=len(profiles),
+                )
+                if not bool(outcome_row["outcome_matches_intent"]):
+                    continue
+                audit_row["outcome_gate"] = {
+                    "actual_outcome_label": str(outcome_row["actual_outcome_label"]),
+                    "passes_outcome_gate": bool(outcome_row["passes_outcome_gate"]),
+                    "intended_target_hit": bool(outcome_row["intended_target_hit"]),
+                    "any_ship_hit": bool(outcome_row["any_ship_hit"]),
+                    "closest_intended_target_distance_m": float(
+                        outcome_row["closest_intended_target_distance_m"]
+                    ),
+                    "closest_any_ship_distance_m": float(outcome_row["closest_any_ship_distance_m"]),
+                }
             audit_row["intent"] = intent_dict
             used_signatures.add(signature)
             profiles.append(profile)
@@ -580,21 +751,21 @@ def generate_attack_profile_scaffolds(
         else:
             assert dataset_label_targets is not None
             assert dataset_label_counts is not None
-            remaining_hit = dataset_label_targets["credible_hit_threat"] - dataset_label_counts["credible_hit_threat"]
-            remaining_near = dataset_label_targets["credible_near_miss"] - dataset_label_counts["credible_near_miss"]
+            remaining_hit = dataset_label_targets[HIT_THREAT_LABEL] - dataset_label_counts[HIT_THREAT_LABEL]
+            remaining_near = dataset_label_targets[NEAR_MISS_LABEL] - dataset_label_counts[NEAR_MISS_LABEL]
             if remaining_hit <= 0 and remaining_near <= 0:
                 break
             if remaining_hit > 0 and remaining_near > 0:
                 total_remaining = remaining_hit + remaining_near
                 target_label = (
-                    "credible_hit_threat"
+                    HIT_THREAT_LABEL
                     if float(rng.random()) < (remaining_hit / total_remaining)
-                    else "credible_near_miss"
+                    else NEAR_MISS_LABEL
                 )
             elif remaining_hit > 0:
-                target_label = "credible_hit_threat"
+                target_label = HIT_THREAT_LABEL
             else:
-                target_label = "credible_near_miss"
+                target_label = NEAR_MISS_LABEL
             signature = (
                 approach.name,
                 range_preset.name,
@@ -604,7 +775,7 @@ def generate_attack_profile_scaffolds(
             )
             angle_jitter_deg = 10.0
             radius_jitter_m = 350.0
-            if target_label == "credible_hit_threat":
+            if target_label == HIT_THREAT_LABEL:
                 spread_deg = float(rng.choice(np.array([3.5, 4.0, 4.5, 5.0, 5.5, 6.0, 6.5, 7.0, 8.0], dtype=float)))
             else:
                 spread_deg = float(rng.choice(np.array([12.0, 14.0, 16.0], dtype=float)))
@@ -631,7 +802,7 @@ def generate_attack_profile_scaffolds(
             base_bearing_offset_deg = float(rng.uniform(-4.0, 4.0))
         else:
             assert target_label is not None
-            if target_label == "credible_hit_threat":
+            if target_label == HIT_THREAT_LABEL:
                 base_bearing_offset_deg = float(rng.uniform(-5.0, 5.0))
             else:
                 miss_sign = -1.0 if float(rng.random()) < 0.5 else 1.0
