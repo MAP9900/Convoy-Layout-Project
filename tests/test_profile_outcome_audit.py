@@ -11,6 +11,7 @@ from convoy_sim.profile_outcome_audit import (
     OutcomeAuditConfig,
     audit_dataset_outcomes,
     audit_profile_outcome,
+    enrich_dataset_records_with_outcomes,
     summarize_outcome_rows,
 )
 from experiments.generate_attack_profile_scaffold import generate_attack_profile_scaffolds, render_profiles_as_jsonl
@@ -90,3 +91,13 @@ def test_dataset_outcome_audit_runs_generated_v4_through_standard_dynamic_pipeli
     assert {row["spread_doctrine"] for row in rows} == {"uniform_divergent"}
     assert {row["u_boat_mode"] for row in rows} == {"moving"}
     assert all(np.isfinite(float(row["closest_any_ship_distance_m"])) for row in rows)
+
+    enriched = enrich_dataset_records_with_outcomes(
+        records[:2],
+        ships=ships,
+        rng_seed=1945,
+        cfg=OutcomeAuditConfig(t_max_s=120.0, hit_dt_s=1.0),
+    )
+    assert len(enriched) == 2
+    assert "outcome" in enriched[0]
+    assert "actual_outcome_label" in enriched[0]["outcome"]

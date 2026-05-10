@@ -103,6 +103,9 @@ DEFAULT_MAX_BOW_OFFSET_DEG = 15.0
 DEFAULT_ACCEPTED_LABELS = ("credible_hit_threat", "credible_near_miss")
 MIN_SPAWN_CLEARANCE_M = 250.0
 RANGE_BAND_TOLERANCE_M = 250.0
+STANDARD_ZIGZAG_AMPLITUDE_RAD = 0.12
+STANDARD_ZIGZAG_PERIOD_S = 60.0
+STANDARD_LEAD_DT_S = 1.0
 GENERATOR_SOURCE = "generate_attack_profile_scaffold"
 GENERATOR_VERSION = "v2"
 TARGET_ZONE_GENERATOR_VERSION = "v3"
@@ -213,6 +216,92 @@ def _target_zone_spread_deg(target_label: str, rng: np.random.Generator) -> floa
     if target_label == "credible_hit_threat":
         return float(rng.choice(np.array([3.5, 4.0, 4.5, 5.0, 5.5, 6.0, 6.5, 7.0, 8.0], dtype=float)))
     return float(rng.choice(np.array([12.0, 14.0, 16.0], dtype=float)))
+
+
+def _tactical_spread_deg(target_label: str, rng: np.random.Generator) -> float:
+    if target_label == "credible_hit_threat":
+        return float(rng.choice(np.array([3.0, 3.5, 4.0, 4.5, 5.0, 5.5, 6.0], dtype=float)))
+    return float(rng.choice(np.array([4.0, 5.0, 6.0, 7.0], dtype=float)))
+
+
+def _standard_evasive_displacement(
+    *,
+    speed_mps: float,
+    base_heading_rad: float,
+    t_s: float,
+    dt_s: float = STANDARD_LEAD_DT_S,
+) -> np.ndarray:
+    """Approximate standard zig-zag convoy displacement over ``t_s`` seconds."""
+
+    duration = float(t_s)
+    if duration <= 0.0 or speed_mps == 0.0:
+        return np.zeros(2, dtype=float)
+    dt = max(0.05, float(dt_s))
+    times = np.arange(0.0, duration, dt, dtype=float)
+    if times.size == 0:
+        times = np.asarray([0.0], dtype=float)
+    steps = np.full(times.shape, dt, dtype=float)
+    overshoot = float(np.sum(steps) - duration)
+    if overshoot > 0.0:
+        steps[-1] = max(0.0, steps[-1] - overshoot)
+    headings = (
+        float(base_heading_rad)
+        + float(STANDARD_ZIGZAG_AMPLITUDE_RAD)
+        * np.sin((2.0 * np.pi * times) / float(STANDARD_ZIGZAG_PERIOD_S))
+    )
+    directions = np.column_stack([np.cos(headings), np.sin(headings)])
+    return np.sum(directions * steps[:, None] * float(speed_mps), axis=0)
+
+
+def _ship_for_intent(ships: Sequence[object], intent: AttackIntent) -> object | None:
+    target_ids = {str(ship_id) for ship_id in intent.target_ship_ids}
+    for ship in ships:
+        if str(getattr(ship, "id", "")) in target_ids:
+            return ship
+    return None
+
+
+def _lead_solution_for_standard_evasive_target(
+    *,
+    u_pos: tuple[float, float],
+    target_point: np.ndarray,
+    target_ship: object | None,
+    launch_delay_s: float,
+    torpedo_speed_mps: float,
+    torpedo_max_run_time_s: float,
+    iterations: int = 8,
+) -> dict[str, object]:
+    """Return a lead aim point for the standard moving zig-zag convoy audit."""
+
+    if target_ship is None:
+        return {
+            "aim_point": [float(target_point[0]), float(target_point[1])],
+            "aim_solution_kind": "direct_no_target_ship",
+            "aim_intercept_time_s": float(launch_delay_s),
+            "aim_lead_distance_m": 0.0,
+        }
+    u_arr = np.asarray(u_pos, dtype=float)
+    target_arr = np.asarray(target_point, dtype=float)
+    speed = max(float(torpedo_speed_mps), 1e-9)
+    travel_time = min(float(torpedo_max_run_time_s), float(np.linalg.norm(target_arr - u_arr) / speed))
+    aim_point = target_arr.copy()
+    for _ in range(int(iterations)):
+        intercept_t = float(launch_delay_s) + float(travel_time)
+        displacement = _standard_evasive_displacement(
+            speed_mps=float(getattr(target_ship, "speed", 0.0)),
+            base_heading_rad=float(getattr(target_ship, "heading_rad", 0.0)),
+            t_s=intercept_t,
+        )
+        aim_point = target_arr + displacement
+        travel_time = min(float(torpedo_max_run_time_s), float(np.linalg.norm(aim_point - u_arr) / speed))
+    intercept_t = float(launch_delay_s) + float(travel_time)
+    lead_distance = float(np.linalg.norm(aim_point - target_arr))
+    return {
+        "aim_point": [float(aim_point[0]), float(aim_point[1])],
+        "aim_solution_kind": "standard_zigzag_lead",
+        "aim_intercept_time_s": float(intercept_t),
+        "aim_lead_distance_m": lead_distance,
+    }
 
 
 def _target_zone_label_targets(count: int) -> dict[str, int]:
@@ -406,13 +495,34 @@ def generate_attack_profile_scaffolds(
                 continue
             target_point = np.asarray(intent.target_point, dtype=float)
             u_arr = np.asarray(u_pos, dtype=float)
-            bearing_to_target = float(np.arctan2(target_point[1] - u_arr[1], target_point[0] - u_arr[0]))
+            launch_delay_s = float(rng.choice(np.round(np.arange(0.5, 2.51, 0.1), 1)))
+            salvo_interval_s = float(rng.choice(np.array([1.5, 2.0, 2.5, 3.0], dtype=float)))
+            aim_payload: dict[str, object] = {
+                "aim_point": [float(target_point[0]), float(target_point[1])],
+                "aim_solution_kind": "direct",
+                "aim_intercept_time_s": float(launch_delay_s),
+                "aim_lead_distance_m": 0.0,
+            }
+            if mode == "random_tactical_v4":
+                aim_payload = _lead_solution_for_standard_evasive_target(
+                    u_pos=u_pos,
+                    target_point=target_point,
+                    target_ship=_ship_for_intent(ships, intent),
+                    launch_delay_s=launch_delay_s,
+                    torpedo_speed_mps=TORPEDO_SPEED_MPS,
+                    torpedo_max_run_time_s=TORPEDO_MAX_RUN_TIME_S,
+                )
+            aim_point = np.asarray(aim_payload["aim_point"], dtype=float)
+            bearing_to_target = float(np.arctan2(aim_point[1] - u_arr[1], aim_point[0] - u_arr[0]))
             base_bearing_rad = _wrap_angle_rad(
                 bearing_to_target + float(np.deg2rad(intent.planned_bearing_error_deg))
             )
-            spread_rad = float(np.deg2rad(_target_zone_spread_deg(target_label, rng)))
-            launch_delay_s = float(rng.choice(np.round(np.arange(0.5, 2.51, 0.1), 1)))
-            salvo_interval_s = float(rng.choice(np.array([1.5, 2.0, 2.5, 3.0], dtype=float)))
+            spread_deg = (
+                _tactical_spread_deg(target_label, rng)
+                if mode == "random_tactical_v4"
+                else _target_zone_spread_deg(target_label, rng)
+            )
+            spread_rad = float(np.deg2rad(spread_deg))
             profile = _build_attack_profile(
                 profile_id=profile_id,
                 name=profile_name,
@@ -429,6 +539,7 @@ def generate_attack_profile_scaffolds(
                 gyro_straight_run_m=10.0,
             )
             intent_dict = intent.to_dict()
+            intent_dict.update(aim_payload)
             audit_row = audit_attack_profiles(
                 [profile],
                 ships,

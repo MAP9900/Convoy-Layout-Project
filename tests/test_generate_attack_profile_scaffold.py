@@ -212,6 +212,10 @@ def test_generate_attack_profile_scaffold_random_tactical_v4_jsonl_output(tmp_pa
     assert rows[0]["profile"]["profile_id"].startswith("T")
     assert rows[0]["intent"]["target_zone_id"].startswith("TV4")
     assert rows[0]["intent"]["spawn_region"]
+    assert rows[0]["intent"]["aim_solution_kind"] == "standard_zigzag_lead"
+    assert rows[0]["intent"]["aim_lead_distance_m"] > 0.0
+    assert "aim_point" in rows[0]["intent"]
+    assert rows[0]["audit"]["range_to_aim_m"] > 0.0
     assert rows[0]["intent"]["nearest_ship_clearance_m"] >= MIN_SPAWN_CLEARANCE_M
     assert rows[0]["audit"]["target_zone_id"] == rows[0]["intent"]["target_zone_id"]
 

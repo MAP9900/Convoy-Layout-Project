@@ -68,6 +68,7 @@ def audit_attack_profiles(
         intent = dict(intents[index]) if intents is not None else None
         if intent is None:
             target_point = centroid
+            aim_point = target_point
             target_zone_id = ""
             target_zone_kind = ""
             approach_lane = ""
@@ -77,16 +78,23 @@ def audit_attack_profiles(
             target_point = np.asarray(intent["target_point"], dtype=float)
             if target_point.shape != (2,):
                 raise ValueError("intent target_point must be a 2D vector")
+            aim_point = np.asarray(intent.get("aim_point", target_point), dtype=float)
+            if aim_point.shape != (2,):
+                raise ValueError("intent aim_point must be a 2D vector")
             target_zone_id = str(intent.get("target_zone_id", ""))
             target_zone_kind = str(intent.get("target_zone_kind", ""))
             approach_lane = str(intent.get("approach_lane", ""))
             approach_side = str(intent.get("approach_side", ""))
             intended_label = str(intent.get("intended_label", ""))
 
-        dx = float(target_point[0] - u_pos[0])
-        dy = float(target_point[1] - u_pos[1])
-        range_to_target_m = float(np.hypot(dx, dy))
-        intent_bearing_rad = float(np.arctan2(dy, dx))
+        target_dx = float(target_point[0] - u_pos[0])
+        target_dy = float(target_point[1] - u_pos[1])
+        range_to_target_m = float(np.hypot(target_dx, target_dy))
+        target_bearing_rad = float(np.arctan2(target_dy, target_dx))
+        aim_dx = float(aim_point[0] - u_pos[0])
+        aim_dy = float(aim_point[1] - u_pos[1])
+        range_to_aim_m = float(np.hypot(aim_dx, aim_dy))
+        intent_bearing_rad = float(np.arctan2(aim_dy, aim_dx))
 
         if profile.mode == "fan":
             active_bearing = float(profile.base_bearing_rad)
@@ -96,7 +104,7 @@ def audit_attack_profiles(
         bearing_error_rad = _wrap_to_pi(active_bearing - intent_bearing_rad)
         bearing_error_deg = float(np.degrees(abs(bearing_error_rad)))
 
-        threshold_deg = _error_threshold_deg(range_to_target_m, cfg)
+        threshold_deg = _error_threshold_deg(range_to_aim_m, cfg)
         flags: list[str] = []
 
         if bearing_error_deg > threshold_deg:
@@ -117,7 +125,9 @@ def audit_attack_profiles(
 
         if "near_range_opposite_direction" in flags:
             suggested_label = "implausible_geometry"
-        elif "near_range_large_error" in flags or "fan_not_covering_target" in flags:
+        elif "near_range_large_error" in flags:
+            suggested_label = "implausible_geometry"
+        elif "fan_not_covering_target" in flags and intended_label != "credible_near_miss":
             suggested_label = "implausible_geometry"
         elif bearing_error_deg <= 8.0:
             suggested_label = "credible_hit_threat"
@@ -141,8 +151,10 @@ def audit_attack_profiles(
                 "range_to_centroid_m": centroid_range_m,
                 "centroid_bearing_rad": centroid_bearing_rad,
                 "range_to_target_m": range_to_target_m,
-                "target_bearing_rad": intent_bearing_rad,
+                "target_bearing_rad": target_bearing_rad,
+                "aim_bearing_rad": intent_bearing_rad,
                 "intent_bearing_rad": intent_bearing_rad,
+                "range_to_aim_m": range_to_aim_m,
                 "active_bearing_rad": active_bearing,
                 "bearing_error_deg": bearing_error_deg,
                 "target_bearing_error_deg": bearing_error_deg,

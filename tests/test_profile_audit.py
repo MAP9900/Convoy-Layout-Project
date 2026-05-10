@@ -82,3 +82,34 @@ def test_audit_uses_target_intent_when_present() -> None:
     assert rows[0]["range_to_target_m"] == 1000.0
     assert rows[0]["target_bearing_error_deg"] < 1e-6
     assert rows[0]["suggested_label"] == "credible_hit_threat"
+
+
+def test_audit_uses_aim_point_for_fire_solution_when_present() -> None:
+    profile = AttackProfile(
+        profile_id="P01",
+        name="lead_aim",
+        mode="fan",
+        u_pos=(1000.0, 1000.0),
+        base_bearing_rad=0.0,
+        spread_rad=0.0873,
+        n=4,
+        speed=15.0,
+        max_run_time=500.0,
+    )
+    intent = {
+        "target_zone_id": "TZ000001_test",
+        "target_zone_kind": "lead_column",
+        "target_point": [1000.0, 0.0],
+        "aim_point": [2000.0, 1000.0],
+        "approach_side": "port",
+        "approach_lane": "port_broadside",
+        "intended_label": "credible_hit_threat",
+    }
+
+    rows = audit_attack_profiles([profile], _ships(), intents=[intent])
+
+    assert rows[0]["range_to_target_m"] == 1000.0
+    assert rows[0]["range_to_aim_m"] == 1000.0
+    assert rows[0]["aim_bearing_rad"] == 0.0
+    assert rows[0]["target_bearing_rad"] == -np.pi / 2.0
+    assert rows[0]["suggested_label"] == "credible_hit_threat"

@@ -24,6 +24,10 @@ Core question: does defender performance degrade under an adaptive, belief-limit
   - environment context already exposed by realism layer
 - Action output from attacker:
   - select/rank feasible VAE candidates (optional light parameter refinement)
+- Candidate metadata expected from the generation/audit pipeline:
+  - tactical intent fields (`spawn_region`, `approach_side`, `target_zone_kind`, target ship ids)
+  - firing-solution fields (`aim_point`, `aim_solution_kind`, lead distance/intercept time)
+  - dynamic outcome fields (`actual_outcome_label`, intended-target hit, other-ship hit, closest-pass distances)
 - Training setup:
   - phase 1: adversarial attacker against fixed defender with full-state input (debug/upper bound)
   - phase 2: belief-state attacker with partial observations (POMDP)

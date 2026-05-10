@@ -169,6 +169,10 @@ def test_dataset_audit_pipeline_flattens_v4_tactical_intent(tmp_path: Path) -> N
         "target_aspect_deg": 84.0,
         "target_score": 4.2,
         "nearest_ship_clearance_m": 312.0,
+        "aim_solution_kind": "standard_zigzag_lead",
+        "aim_intercept_time_s": 120.0,
+        "aim_lead_distance_m": 500.0,
+        "aim_point": [500.0, 1000.0],
         "target_point": [0.0, 1000.0],
         "target_local": [0.0, 1000.0],
         "spawn_local": [0.0, 1300.0],
@@ -182,6 +186,7 @@ def test_dataset_audit_pipeline_flattens_v4_tactical_intent(tmp_path: Path) -> N
     record["audit"]["approach_side"] = "inside_columns"
     record["audit"]["approach_lane"] = "inside_columns:inside_columns"
     record["audit"]["range_to_target_m"] = 300.0
+    record["audit"]["range_to_aim_m"] = 500.0
     record["generator_meta"]["mode"] = "random_tactical_v4"
     record["generator_meta"]["generator_version"] = "v4"
     path = tmp_path / "profiles_v4.jsonl"
@@ -196,6 +201,9 @@ def test_dataset_audit_pipeline_flattens_v4_tactical_intent(tmp_path: Path) -> N
     assert flat_rows[0]["inside_convoy_envelope"] is True
     assert flat_rows[0]["target_aspect_deg"] == 84.0
     assert flat_rows[0]["nearest_ship_clearance_m"] == 312.0
+    assert flat_rows[0]["aim_solution_kind"] == "standard_zigzag_lead"
+    assert flat_rows[0]["aim_lead_distance_m"] == 500.0
+    assert flat_rows[0]["range_to_aim_m"] == 500.0
     assert summary["spawn_regions"]["inside_columns"] == 1
     assert summary["inside_convoy_envelope"]["true"] == 1
     assert outputs["counts_by_spawn_region_csv"].exists()

@@ -108,9 +108,13 @@ class AttackIntent:
     target_aspect_deg: float = 0.0
     target_score: float = 0.0
     nearest_ship_clearance_m: float = 0.0
+    aim_point: tuple[float, float] | None = None
+    aim_solution_kind: str = "direct"
+    aim_intercept_time_s: float = 0.0
+    aim_lead_distance_m: float = 0.0
 
     def to_dict(self) -> dict[str, Any]:
-        return {
+        payload = {
             "target_zone_id": self.target_zone_id,
             "target_zone_kind": self.target_zone_kind,
             "target_ship_ids": list(self.target_ship_ids),
@@ -128,7 +132,13 @@ class AttackIntent:
             "target_aspect_deg": float(self.target_aspect_deg),
             "target_score": float(self.target_score),
             "nearest_ship_clearance_m": float(self.nearest_ship_clearance_m),
+            "aim_solution_kind": self.aim_solution_kind,
+            "aim_intercept_time_s": float(self.aim_intercept_time_s),
+            "aim_lead_distance_m": float(self.aim_lead_distance_m),
         }
+        if self.aim_point is not None:
+            payload["aim_point"] = [float(v) for v in self.aim_point]
+        return payload
 
 
 def _unique_sorted_with_tolerance(values: np.ndarray, *, tol: float = 1e-6) -> list[float]:
@@ -457,7 +467,7 @@ def sample_random_tactical_attack_intent(
             planned_error = float(rng.uniform(-4.5, 4.5))
         else:
             miss_sign = -1.0 if float(rng.random()) < 0.5 else 1.0
-            planned_error = float(miss_sign * rng.uniform(8.5, 11.5))
+            planned_error = float(miss_sign * rng.uniform(11.0, 16.0))
         return AttackIntent(
             target_zone_id=f"TV4{int(sequence_id):06d}_{spawn_region}_{zone_kind}",
             target_zone_kind=zone_kind,

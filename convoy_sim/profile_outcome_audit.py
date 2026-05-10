@@ -353,6 +353,25 @@ def audit_dataset_outcomes(
     return rows
 
 
+def enrich_dataset_records_with_outcomes(
+    records: Sequence[Mapping[str, Any]],
+    *,
+    ships: Sequence[Ship],
+    rng_seed: int = 1945,
+    cfg: OutcomeAuditConfig | None = None,
+    outcome_key: str = "outcome",
+) -> list[dict[str, Any]]:
+    """Return JSONL-style records with dynamic outcome audit payloads attached."""
+
+    outcome_rows = audit_dataset_outcomes(records, ships=ships, rng_seed=int(rng_seed), cfg=cfg)
+    enriched: list[dict[str, Any]] = []
+    for record, outcome in zip(records, outcome_rows):
+        item = dict(record)
+        item[str(outcome_key)] = dict(outcome)
+        enriched.append(item)
+    return enriched
+
+
 def summarize_outcome_rows(rows: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
     """Return compact aggregate diagnostics for outcome-audit rows."""
 
