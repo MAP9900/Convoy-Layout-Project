@@ -22,6 +22,7 @@ Core VAE logic:
 Training-data generation:
 - `experiments/generate_attack_profile_scaffold.py`
 - `experiments/generate_random_attack_profile_dataset.py`
+- `experiments/build_mixed_attack_profile_dataset.py`
 - `experiments/audit_attack_profile_dataset.py`
 - `convoy_sim/profile_outcome_audit.py`
 - `convoy_sim/target_zones.py`
@@ -34,6 +35,7 @@ Notebook workflows:
 - `notebooks/profile_generation_tests.ipynb`
 - `notebooks/vae_train.ipynb`
 - `notebooks/random_vae_train.ipynb`
+- `notebooks/mixed_vae_train.ipynb`
 - `notebooks/vae_candidate_pool.ipynb`
 - `notebooks/attack_candidate_pool_eval.ipynb`
 
@@ -74,6 +76,58 @@ This gives three useful comparisons:
 - mixed or downstream candidate pools built from both sources
 
 The random baseline is useful for research comparison, but the curated v4 source remains the better realism baseline.
+
+## Mixed Curated/Random Baseline
+
+The mixed comparison pipeline lives in `experiments/build_mixed_attack_profile_dataset.py` and `notebooks/mixed_vae_train.ipynb`.
+
+The default mixed split is `70%` curated v4 and `30%` random v1. The intent is to preserve curated v4 as the realism anchor while letting the random source broaden the training support.
+
+Current mixed dataset files:
+
+- `data/attack_profiles/synthetic/train_mixed_curated70_random30_45k.jsonl`
+- `data/attack_profiles/synthetic/valid_mixed_curated70_random30_5k.jsonl`
+
+Verified mixed dataset build:
+
+- train records: `45,000`
+- train source counts: `31,500` curated v4, `13,500` random v1
+- train intended labels: `29,285` hit threats, `11,295` near misses, `4,420` intentional misses
+- validation records: `5,000`
+- validation source counts: `3,500` curated v4, `1,500` random v1
+- validation intended labels: `3,220` hit threats, `1,275` near misses, `505` intentional misses
+
+This mixed VAE is a comparison point, not an assumed improvement. If it blurs tactical modes or increases decoded clearance failures, the curated v4 VAE remains the primary GenAI source.
+
+Verified mixed VAE training run:
+
+- run directory: `results/runs/vae/20260511_195317_mixed_curated70_random30_v1_notebook`
+- train set: `45,000` profiles
+- validation set: `5,000` profiles
+- input dimension: `8`
+- latent dimension: `6`
+- hidden dimension: `64`
+- beta: `0.03`
+- epochs: `60`
+- best epoch: `60`
+- best validation loss: `0.3324`
+- best validation reconstruction loss: `0.1208`
+- best validation KL loss: `7.0517`
+- final training loss: `0.3316`
+- training time in saved run: about `35.6 s`
+
+Mixed VAE latent-bank notebook QA:
+
+- samples: `1,000`
+- actual dynamic labels: `905` hit threats, `76` near misses, `19` misses
+- clearance pass rate: `0.913`
+- minimum decoded clearance: `28.7 m`
+- any-ship hit rate: `0.905`
+- mean hits: `2.729`
+- mean unique ships hit: `1.703`
+- mean closest-ship pass distance: `44.9 m`
+
+Interpretation: the mixed VAE trains cleanly and samples remain broadly plausible, but it is not obviously better than curated v4. It is useful as a comparison source before choosing the final GenAI candidate pool.
 
 ## VAE Feature Set
 
@@ -217,6 +271,7 @@ Current active notebooks:
 - `notebooks/profile_generation_tests.ipynb`: inspect and validate curated/random synthetic training-data generation.
 - `notebooks/vae_train.ipynb`: train the curated v4 VAE and sample from the trained model.
 - `notebooks/random_vae_train.ipynb`: train the random-baseline VAE for comparison.
+- `notebooks/mixed_vae_train.ipynb`: train the `70%` curated v4 / `30%` random v1 mixed VAE.
 - `notebooks/vae_candidate_pool.ipynb`: turn a trained VAE into a filtered candidate-pool JSONL.
 - `notebooks/attack_candidate_pool_eval.ipynb`: evaluate and rank an existing candidate pool with the Monte Carlo simulator.
 
@@ -244,6 +299,14 @@ Verified curated v4 VAE training run:
 - final validation reconstruction loss: `0.1193`
 - final validation KL loss: `7.0866`
 - training time in saved run: about `34.7 s`
+
+VAE training source comparison:
+
+| Source | Run directory | Best epoch | Best valid loss | Best valid recon | Best valid KL | Latent-bank QA summary |
+|---|---|---:|---:|---:|---:|---|
+| Curated v4 | `20260511_005053_v4_notebook` | `53` | `0.3312` | `0.1201` | `7.0368` | Strong current default; decoded samples looked much better after latent-bank sampling. |
+| Random v1 | `20260511_161735_random_v1_notebook` | `53` | `0.3220` | `0.1096` | `7.0779` | Useful diversity baseline, but not the preferred realism source. |
+| Mixed 70/30 | `20260511_195317_mixed_curated70_random30_v1_notebook` | `60` | `0.3324` | `0.1208` | `7.0517` | Stable and plausible, but not clearly better than curated v4. |
 
 Verified VAE candidate-pool generation:
 

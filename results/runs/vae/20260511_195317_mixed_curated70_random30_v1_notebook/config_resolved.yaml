@@ -1,0 +1,14 @@
+dataset:
+  train_path: "data/attack_profiles/synthetic/train_mixed_curated70_random30_45k.jsonl"
+  valid_path: "data/attack_profiles/synthetic/valid_mixed_curated70_random30_5k.jsonl"
+training:
+  epochs: 60
+  batch_size: 512
+  learning_rate: 0.001
+  beta: 0.03
+  latent_dim: 6
+  hidden_dim: 64
+  device: "mps"
+  num_workers: 0
+  sample_count: 1000
+  seed: 1945
