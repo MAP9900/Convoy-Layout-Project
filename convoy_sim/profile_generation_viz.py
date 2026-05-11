@@ -133,22 +133,42 @@ def plot_spawn_comparison(
     *,
     title: str,
     accepted_only: bool = False,
-    limits: tuple[float, float, float, float] | None = None,
-) -> None:
+    limits: tuple[float, float, float, float] | None = None,) -> None:
     """Plot decoded/generated spawn points with accepted/rejected coloring."""
-
     style_ax(ax, title)
     simple_ship_polygons(ax, ships)
     plot_df = sample_df.loc[sample_df["passes_gate"]].copy() if accepted_only else sample_df.copy()
     if len(plot_df):
         plot_xy = np.vstack(plot_df["u_pos"].to_list())
-        colors = [ACCEPT_COLOR if ok else REJECT_COLOR for ok in plot_df["passes_gate"].tolist()]
-        ax.scatter(plot_xy[:, 0], plot_xy[:, 1], c=colors, s=26, alpha=0.8, zorder=2)
+        accepted = plot_df["passes_gate"].to_numpy(dtype=bool)
+        rejected = ~accepted
+        if accepted.any():
+            acc_xy = plot_xy[accepted]
+            ax.scatter(
+                acc_xy[:, 0],
+                acc_xy[:, 1],
+                c=ACCEPT_COLOR,
+                s=26,
+                alpha=0.8,
+                zorder=2,
+                label="accepted",)
+        if rejected.any():
+            rej_xy = plot_xy[rejected]
+            ax.scatter(
+                rej_xy[:, 0],
+                rej_xy[:, 1],
+                c=REJECT_COLOR,
+                s=26,
+                alpha=0.8,
+                zorder=2,
+                label="rejected",)
+        ax.legend(frameon=False)
         apply_limits(ax, limits or combined_limits(ships, extra_points=plot_xy))
     else:
         apply_limits(ax, limits or combined_limits(ships))
     ax.set_xlabel("x (m)")
     ax.set_ylabel("y (m)")
+    
 
 
 def torpedo_path_xy(torpedo: Any, n_points: int = 120) -> np.ndarray:
