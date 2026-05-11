@@ -4,6 +4,8 @@
 frames/
 .frame*
 
+data/attack_profiles/synthetic*
+
 
 # gitignore
 
