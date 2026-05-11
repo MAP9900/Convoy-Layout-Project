@@ -157,10 +157,10 @@ Primary simulation feature reference:
 - `notebooks/random_vae_train.ipynb` (`canonical`; random-baseline VAE training workflow)
 - `notebooks/vae_candidate_pool.ipynb` (`canonical`; generates and audits filtered VAE candidate-pool JSONL files from trained checkpoints)
 - `notebooks/attack_candidate_pool_eval.ipynb` (`canonical`; evaluates and ranks existing candidate pools with the scored Monte Carlo simulator)
-- `notebooks/vae_exploration.ipynb` (`archived-reference-candidate`; older exploratory VAE notebook, now superseded by the focused VAE notebooks above)
 
 ## Archived
 
+- `vae_exploration.ipynb`: Older exploratory VAE notebook, archived outside the active workspace after the focused notebook workflow replaced it. (`archived-external-reference`)
 - `archive/vae/train_vae.py`: Archived terminal-first VAE runner kept for reference after moving the active VAE workflow into the notebook. (`archived-reference`)
 - `archive/vae/test_train_vae.py`: Archived smoke test for the old terminal-first VAE runner. (`archived-reference`)
 

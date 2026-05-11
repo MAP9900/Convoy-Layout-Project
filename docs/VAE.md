@@ -36,7 +36,6 @@ Notebook workflows:
 - `notebooks/random_vae_train.ipynb`
 - `notebooks/vae_candidate_pool.ipynb`
 - `notebooks/attack_candidate_pool_eval.ipynb`
-- `notebooks/vae_exploration.ipynb` is older exploratory work retained for reference.
 
 Related docs:
 - `docs/SIM_FEATURES.md`
@@ -223,7 +222,7 @@ Current active notebooks:
 
 Legacy notebook:
 
-- `notebooks/vae_exploration.ipynb`: older exploratory notebook. It is useful for historical context, but it is no longer the clean active workflow. It is safe to archive once any outputs you want to preserve have been captured elsewhere.
+- `vae_exploration.ipynb`: older exploratory notebook, now superseded by the focused notebooks above and archived outside the active workspace.
 
 ## Current Results Snapshot
 
