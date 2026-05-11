@@ -258,6 +258,22 @@ def _actual_outcome_label(
     return "miss"
 
 
+def _profile_first_actual_outcome_label(
+    *,
+    any_ship_hit: bool,
+    closest_any_ship_distance_m: float,
+    closest_any_ship_radius_m: float,
+    near_miss_margin_m: float,
+) -> str:
+    """Label an unconditioned random attack by its observed dynamic outcome."""
+
+    if any_ship_hit:
+        return "credible_hit_threat"
+    if float(closest_any_ship_distance_m) <= float(closest_any_ship_radius_m) + float(near_miss_margin_m):
+        return "credible_near_miss"
+    return "miss"
+
+
 def outcome_matches_intent_label(
     *,
     intended_label: str,
@@ -343,6 +359,7 @@ def _audit_profile_outcome_precomputed(
     unique_hit_ship_ids = sorted(set(hit_ship_ids))
     target_ship_ids = {str(value) for value in (intent or {}).get("target_ship_ids", [])}
     intended_label = str((intent or {}).get("intended_label", ""))
+    profile_first_outcome_label = bool((intent or {}).get("profile_first_outcome_label", False))
     intended_target_hit = bool(target_ship_ids.intersection(unique_hit_ship_ids))
     any_ship_hit = bool(unique_hit_ship_ids)
 
@@ -352,14 +369,22 @@ def _audit_profile_outcome_precomputed(
     closest_intended_distance = _min_distance_for_ship_ids(closest_rows, target_ship_ids)
     target_radii = [float(ship.effective_hit_radius()) for ship in ships if str(ship.id) in target_ship_ids]
     nearest_relevant_radius = float(max(target_radii) if target_radii else closest_any_radius)
-    actual_label = _actual_outcome_label(
-        intended_target_hit=intended_target_hit,
-        any_ship_hit=any_ship_hit,
-        closest_intended_target_distance_m=closest_intended_distance,
-        closest_any_ship_distance_m=closest_any_distance,
-        nearest_relevant_radius_m=nearest_relevant_radius,
-        near_miss_margin_m=float(cfg.near_miss_margin_m),
-    )
+    if profile_first_outcome_label:
+        actual_label = _profile_first_actual_outcome_label(
+            any_ship_hit=any_ship_hit,
+            closest_any_ship_distance_m=closest_any_distance,
+            closest_any_ship_radius_m=closest_any_radius,
+            near_miss_margin_m=float(cfg.near_miss_margin_m),
+        )
+    else:
+        actual_label = _actual_outcome_label(
+            intended_target_hit=intended_target_hit,
+            any_ship_hit=any_ship_hit,
+            closest_intended_target_distance_m=closest_intended_distance,
+            closest_any_ship_distance_m=closest_any_distance,
+            nearest_relevant_radius_m=nearest_relevant_radius,
+            near_miss_margin_m=float(cfg.near_miss_margin_m),
+        )
     outcome_matches_intent = outcome_matches_intent_label(
         intended_label=intended_label,
         actual_label=actual_label,
@@ -373,6 +398,7 @@ def _audit_profile_outcome_precomputed(
         "actual_outcome_label": actual_label,
         "outcome_matches_intent": bool(outcome_matches_intent),
         "passes_outcome_gate": bool(outcome_matches_intent),
+        "profile_first_outcome_label": bool(profile_first_outcome_label),
         "target_ship_ids": sorted(target_ship_ids),
         "n_torpedoes": int(len(torpedoes)),
         "n_hits": int(len(hit_events)),

@@ -4,6 +4,7 @@
 frames/
 .frame*
 
+#Large VAE Training Datasets
 data/attack_profiles/synthetic*
 
 

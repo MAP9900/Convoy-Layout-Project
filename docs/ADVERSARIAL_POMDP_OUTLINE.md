@@ -37,6 +37,7 @@ Core question: does defender performance degrade under an adaptive, belief-limit
 ## Method
 
 1. Freeze the outcome-gated VAE candidate generation protocol for reproducibility.
+   Compare curated v4, profile-first random baseline, and later curated/random mixed candidate pools before choosing the attacker source distribution.
 2. Define attacker action as candidate selection/ranking from VAE outputs.
 3. Train full-state strategic adversary policy as optimization baseline.
 4. Replace full-state input with partial-observation + belief-state policy.
