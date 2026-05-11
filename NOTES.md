@@ -77,3 +77,9 @@ Implementation follow-up:
   - hit rates and closest-ship distances
   - legacy centroid-static labels only as comparison fields
 - The notebook summary should therefore treat `passes_safety_gate` / clearance and dynamic outcome distribution as primary metrics, not the older centroid-static rejection rate.
+
+Adversarial/POMDP candidate-pool direction:
+- CVAE is not required for the immediate adversarial/POMDP phase.
+- Use the regular VAE as the GenAI source by sampling with the latent-bank method, then filter decoded profiles through the moving-convoy dynamic outcome audit.
+- The first candidate-pool pipeline should prioritize safe, successful attacks by default, while preserving enough derived metadata for later attacker candidate selection.
+- This is a cleaner research story than forcing the VAE to preserve the original training label mix: the curated generator defines a realistic source manifold, the VAE generates nearby novel candidates, and the simulator/audit stack keeps only physically meaningful candidates.
