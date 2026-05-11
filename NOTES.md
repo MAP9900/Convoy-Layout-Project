@@ -30,6 +30,10 @@ Important audit nuance:
 - The static audit is partly unfair to VAE samples because decoded profiles do not include v4 `intent`, `target_zone_kind`, `spawn_region`, `target_ship_ids`, or `aim_point`.
 - Without those fields, static audit falls back toward older centroid-style geometry checks.
 - However, the dynamic sim audit still shows a real issue: unconditional prior samples are not a reliable curated attack-profile generator.
+- This should be treated as two separate issues:
+  - The regular VAE sample path needs improvement because it does not preserve the curated multimodal tactical distribution.
+  - The regular VAE audit path also needs improvement because it evaluates decoded profiles without the intent metadata used by the v4 generator.
+- A high static rejection rate alone is therefore not enough to diagnose model failure. It should be paired with clearance checks and dynamic moving-convoy outcome audit results.
 
 Likely cause:
 - The current VAE learns only 8 continuous fields:
@@ -63,3 +67,13 @@ Recommended next VAE direction:
   - inside convoy envelope
 - Prefer modeling/reconstructing target/aim context as well, or at least preserving it in decoded outputs.
 - Evaluate decoded samples with the same moving zig-zag dynamic outcome audit, not only static centroid geometry.
+
+Implementation follow-up:
+- Regular VAE diagnostics now support an empirical latent-bank sampler in addition to the standard Gaussian-prior sampler.
+- The latent-bank sampler draws near encoded training examples and is meant to test whether failures are coming from bad prior coverage versus poor reconstruction/manifold learning.
+- Decoded VAE QA now uses a VAE-specific diagnostic helper that reports:
+  - minimum spawn clearance
+  - profile-first dynamic moving-convoy outcome labels
+  - hit rates and closest-ship distances
+  - legacy centroid-static labels only as comparison fields
+- The notebook summary should therefore treat `passes_safety_gate` / clearance and dynamic outcome distribution as primary metrics, not the older centroid-static rejection rate.

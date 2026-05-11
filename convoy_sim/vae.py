@@ -450,6 +450,95 @@ class AttackProfileVAE(nn.Module):
         z = torch.randn(int(n_samples), self.latent_dim, device=sample_device)
         return self.decode(z)
 
+    @torch.no_grad()
+    def sample_from_latent_bank(
+        self,
+        latent_bank: torch.Tensor,
+        n_samples: int,
+        *,
+        noise_scale: float = 0.10,
+        device: torch.device | None = None,
+        generator: torch.Generator | None = None,
+    ) -> torch.Tensor:
+        """Decode samples drawn near encoded training-set latent vectors.
+
+        This is an empirical sampler for diagnosing regular VAE behavior. It is
+        not a replacement for the standard normal prior, but it helps separate
+        "bad prior coverage" from "bad reconstruction manifold" when evaluating
+        decoded profiles.
+        """
+
+        if n_samples <= 0:
+            raise ValueError("n_samples must be positive")
+        if latent_bank.ndim != 2 or int(latent_bank.shape[1]) != int(self.latent_dim):
+            raise ValueError("latent_bank must have shape (n, latent_dim)")
+        if int(latent_bank.shape[0]) <= 0:
+            raise ValueError("latent_bank must be non-empty")
+        if noise_scale < 0.0:
+            raise ValueError("noise_scale must be non-negative")
+
+        parameter = next(self.parameters())
+        sample_device = device or parameter.device
+        bank = latent_bank.to(sample_device)
+        indices = torch.randint(
+            low=0,
+            high=int(bank.shape[0]),
+            size=(int(n_samples),),
+            device=torch.device("cpu"),
+            generator=generator,
+        ).to(sample_device)
+        z = bank[indices]
+        if float(noise_scale) > 0.0:
+            noise = torch.randn(
+                z.shape,
+                device=sample_device,
+                dtype=z.dtype,
+                generator=generator,
+            )
+            z = z + (float(noise_scale) * noise)
+        return self.decode(z)
+
+
+@torch.no_grad()
+def build_latent_bank(
+    model: AttackProfileVAE,
+    features: np.ndarray | torch.Tensor,
+    *,
+    batch_size: int = 4096,
+    device: torch.device | str | None = None,
+    use_mu: bool = True,
+) -> torch.Tensor:
+    """Encode normalized feature vectors into a reusable latent bank.
+
+    By default the bank stores posterior means. Set ``use_mu=False`` to sample
+    once from each posterior distribution instead.
+    """
+
+    if batch_size <= 0:
+        raise ValueError("batch_size must be positive")
+    if isinstance(features, torch.Tensor):
+        feature_tensor = features.detach().to(dtype=torch.float32)
+    else:
+        feature_tensor = torch.as_tensor(np.asarray(features, dtype=np.float32), dtype=torch.float32)
+    if feature_tensor.ndim != 2 or int(feature_tensor.shape[1]) != int(model.input_dim):
+        raise ValueError("features must have shape (n, input_dim)")
+    if int(feature_tensor.shape[0]) <= 0:
+        raise ValueError("features must be non-empty")
+
+    parameter = next(model.parameters())
+    encode_device = torch.device(device) if device is not None else parameter.device
+    was_training = bool(model.training)
+    model.eval()
+    chunks: list[torch.Tensor] = []
+    for start in range(0, int(feature_tensor.shape[0]), int(batch_size)):
+        batch = feature_tensor[start : start + int(batch_size)].to(encode_device)
+        mu, logvar = model.encode(batch)
+        z = mu if use_mu else model.reparameterize(mu, logvar)
+        chunks.append(z.detach().cpu())
+    if was_training:
+        model.train()
+    return torch.cat(chunks, dim=0)
+
 
 def vae_loss(
     recon_x: torch.Tensor,

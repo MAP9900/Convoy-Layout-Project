@@ -9,6 +9,7 @@ from convoy_sim.vae import (
     AttackProfileVAEDataset,
     AttackProfileVAEPreprocessor,
     FEATURE_NAMES,
+    build_latent_bank,
     vae_loss,
 )
 
@@ -83,3 +84,9 @@ def test_vae_preprocessor_dataset_and_model_roundtrip() -> None:
     assert decoded["n"] == 4
     assert decoded["spread_doctrine"] == "uniform_divergent"
     assert 1.0 <= decoded["u_boat_initial_speed_mps"] <= 2.0
+
+    latent_bank = build_latent_bank(model, dataset.features, batch_size=1)
+    assert latent_bank.shape == (2, 4)
+
+    bank_decoded = model.sample_from_latent_bank(latent_bank, 3, noise_scale=0.0)
+    assert bank_decoded.shape == (3, len(FEATURE_NAMES))
