@@ -1,0 +1,50 @@
+{
+  "dataset": {
+    "train_samples": 45000,
+    "valid_samples": 5000,
+    "input_dim": 8,
+    "feature_names": [
+      "u_pos_x",
+      "u_pos_y",
+      "sin_base_bearing_rad",
+      "cos_base_bearing_rad",
+      "spread_rad",
+      "launch_delay_s",
+      "salvo_interval_s",
+      "u_boat_initial_speed_mps"
+    ]
+  },
+  "model": {
+    "latent_dim": 6,
+    "hidden_dim": 64,
+    "parameter_count": 10644,
+    "beta": 0.03
+  },
+  "training": {
+    "epochs": 60,
+    "batch_size": 512,
+    "learning_rate": 0.001,
+    "best_epoch": 53,
+    "final_train_loss": 0.322103793986819,
+    "final_train_recon_loss": 0.11223415124484083,
+    "final_train_kl_loss": 6.9956549189307475,
+    "final_valid_loss": 0.32250926494598386,
+    "final_valid_recon_loss": 0.11283246502280235,
+    "final_valid_kl_loss": 6.989226961135865,
+    "best_valid_loss": 0.3219811677932739,
+    "best_valid_recon_loss": 0.10964278727769852,
+    "best_valid_kl_loss": 7.0779460906982425
+  },
+  "samples": {
+    "count": 1000,
+    "sampling_method": "latent_bank",
+    "latent_noise_scale": 0.1,
+    "output_file": "sampled_profiles.json"
+  },
+  "timing": {
+    "dataset_load_seconds": 3.771315542049706,
+    "training_seconds": 32.02974120806903,
+    "sample_decode_seconds": 0.42865495942533016,
+    "total_seconds": 37.38584804069251
+  }
+}

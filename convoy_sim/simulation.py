@@ -193,6 +193,37 @@ def torpedo_hits_ship_dynamic(
     return hits
 
 
+def _static_hit_events(
+    ships: Sequence[Ship],
+    torpedoes: Sequence[Torpedo],
+    t_max: float,
+    max_hits_per_torpedo: int | None = None,
+) -> list[tuple[int, int, float]]:
+    """Return static hit events as ``(torpedo_idx, ship_idx, hit_time)`` tuples."""
+
+    if t_max <= 0.0:
+        return []
+    events: list[tuple[int, int, float]] = []
+    for torpedo_idx, torpedo in enumerate(torpedoes):
+        if torpedo.is_dud:
+            continue
+        torpedo_hits: list[tuple[int, float]] = []
+        for ship_idx, ship in enumerate(ships):
+            hit_time = _earliest_hit_time(ship, torpedo, t_max)
+            if hit_time is not None:
+                torpedo_hits.append((ship_idx, float(hit_time)))
+        if max_hits_per_torpedo == 1:
+            if torpedo_hits:
+                ship_idx, hit_time = min(torpedo_hits, key=lambda item: (item[1], item[0]))
+                events.append((torpedo_idx, ship_idx, hit_time))
+        else:
+            events.extend(
+                (torpedo_idx, ship_idx, hit_time)
+                for ship_idx, hit_time in sorted(torpedo_hits, key=lambda item: (item[1], item[0]))
+            )
+    return sorted(events, key=lambda item: (item[2], item[0], item[1]))
+
+
 def simulate_attack_once_scored(
     ships: Sequence[Ship],
     torpedoes: Sequence[Torpedo],
@@ -209,18 +240,21 @@ def simulate_attack_once_scored(
     hits_by_class: dict[ShipClass, int] = {}
     value_by_class: dict[ShipClass, float] = {}
 
-    n_hits = simulate_attack_once(
+    hit_events = _static_hit_events(
         ships=ships,
         torpedoes=torpedoes,
         t_max=t_max,
         max_hits_per_torpedo=max_hits_per_torpedo,
     )
+    n_hits = int(len(hit_events))
 
-    for ship in ships:
-        if any(torpedo_hits_ship(ship=ship, torpedo=torpedo, t_max=t_max) for torpedo in torpedoes):
-            hit_ship_ids.add(ship.id)
-            hits_by_class[ship.ship_class] = hits_by_class.get(ship.ship_class, 0) + 1
-            value_by_class[ship.ship_class] = value_by_class.get(ship.ship_class, 0.0) + ship.value_weight
+    for _, ship_idx, _ in hit_events:
+        ship = ships[int(ship_idx)]
+        if ship.id in hit_ship_ids:
+            continue
+        hit_ship_ids.add(ship.id)
+        hits_by_class[ship.ship_class] = hits_by_class.get(ship.ship_class, 0) + 1
+        value_by_class[ship.ship_class] = value_by_class.get(ship.ship_class, 0.0) + ship.value_weight
 
     total_value_destroyed = float(sum(value_by_class.values()))
     unique_ships_hit = int(len(hit_ship_ids))

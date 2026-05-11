@@ -110,3 +110,50 @@ def test_scored_attack_reports_unique_and_repeat_hits() -> None:
     scored = simulate_attack_once_scored(ships, torpedoes, t_max=200.0)
     assert scored["unique_ships_hit"] == 1
     assert scored["repeat_hits"] == scored["n_hits"] - 1
+
+
+def test_scored_attack_respects_one_hit_per_torpedo_for_value_metrics() -> None:
+    ships = [
+        Ship(
+            id="S1",
+            position=as_vec(0.0, 0.0),
+            speed=0.0,
+            heading_rad=0.0,
+            length=120.0,
+            beam=20.0,
+            ship_class=ShipClass.FREIGHTER,
+            value_weight=1.0,
+        ),
+        Ship(
+            id="S2",
+            position=as_vec(50.0, 0.0),
+            speed=0.0,
+            heading_rad=0.0,
+            length=120.0,
+            beam=20.0,
+            ship_class=ShipClass.TANKER,
+            value_weight=3.0,
+        ),
+    ]
+    torpedoes = [
+        Torpedo(
+            id="T1",
+            launch_position=as_vec(-500.0, 0.0),
+            speed=20.0,
+            heading_rad=0.0,
+            max_run_time=200.0,
+        )
+    ]
+
+    capped = simulate_attack_once_scored(ships, torpedoes, t_max=200.0, max_hits_per_torpedo=1)
+    uncapped = simulate_attack_once_scored(ships, torpedoes, t_max=200.0, max_hits_per_torpedo=None)
+
+    assert capped["n_hits"] == 1
+    assert capped["unique_ships_hit"] == 1
+    assert capped["repeat_hits"] == 0
+    assert capped["total_value_destroyed"] == 1.0
+    assert capped["unique_ships_hit"] <= capped["n_hits"]
+
+    assert uncapped["n_hits"] == 2
+    assert uncapped["unique_ships_hit"] == 2
+    assert uncapped["total_value_destroyed"] == 4.0
