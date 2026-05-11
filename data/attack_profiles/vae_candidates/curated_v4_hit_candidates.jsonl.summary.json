@@ -1,0 +1,109 @@
+{
+  "workflow": "generate_vae_candidate_pool",
+  "mode": "vae_candidate_pool_v1",
+  "generator_version": "v1",
+  "git_sha": "d596efda095d1287663cabc7cd2aaa68e59453fb",
+  "vae_run_dir": "/Users/matthewplambeck/Desktop/Convoy Layout Project/results/runs/vae/20260511_005053_v4_notebook",
+  "checkpoint_name": "model_best.pt",
+  "train_path": "/Users/matthewplambeck/Desktop/Convoy Layout Project/data/attack_profiles/synthetic/train_random_tactical_v4_45k.jsonl",
+  "convoy_profile": "convoy_layout_1",
+  "seed": 1945,
+  "sample_count": 5000,
+  "keep_count": 1000,
+  "accepted_count": 1000,
+  "filtered_out_count": 4000,
+  "sampling_method": "latent_bank",
+  "latent_noise_scale": 0.1,
+  "min_clearance_m": 250.0,
+  "accepted_outcomes": [
+    "credible_hit_threat"
+  ],
+  "pre_filter_audit": {
+    "samples": 5000,
+    "actual_outcome_labels": {
+      "credible_hit_threat": 4583,
+      "credible_near_miss": 347,
+      "miss": 70
+    },
+    "centroid_static_labels": {
+      "implausible_geometry": 4611,
+      "credible_hit_threat": 389
+    },
+    "clearance_ok_rate": 0.9008,
+    "passes_safety_gate_rate": 0.9008,
+    "min_clearance_m": 4.498896234583991,
+    "any_ship_hit_rate": 0.9166,
+    "mean_hits": 2.8112,
+    "mean_unique_ships_hit": 1.683,
+    "mean_closest_any_ship_distance_m": 29.8366377588177
+  },
+  "accepted_labels": {
+    "credible_hit_threat": 1000
+  },
+  "accepted_spawn_regions": {
+    "port_vae": 161,
+    "inside_convoy_envelope": 180,
+    "astern_vae": 202,
+    "ahead_vae": 285,
+    "starboard_vae": 172
+  },
+  "source_manifest": {
+    "workflow": "vae_train_notebook",
+    "git_sha": "f5ca0cf0acf3fcee0cdcc33af029b5e68aabbd36",
+    "device": "mps",
+    "seed": 1945,
+    "train_path": "data/attack_profiles/synthetic/train_random_tactical_v4_45k.jsonl",
+    "valid_path": "data/attack_profiles/synthetic/valid_random_tactical_v4_5k.jsonl",
+    "output_root": "results/runs",
+    "run_name": "v4_notebook",
+    "hyperparameters": {
+      "epochs": 60,
+      "batch_size": 512,
+      "learning_rate": 0.001,
+      "beta": 0.03,
+      "latent_dim": 6,
+      "hidden_dim": 64,
+      "sample_count": 1000
+    },
+    "preprocessor": {
+      "feature_names": [
+        "u_pos_x",
+        "u_pos_y",
+        "sin_base_bearing_rad",
+        "cos_base_bearing_rad",
+        "spread_rad",
+        "launch_delay_s",
+        "salvo_interval_s",
+        "u_boat_initial_speed_mps"
+      ],
+      "mean": [
+        346.46954345703125,
+        -45.22896957397461,
+        0.007645471952855587,
+        0.13750021159648895,
+        0.06847093999385834,
+        1.4957882165908813,
+        2.2459888458251953,
+        1.4968857765197754
+      ],
+      "std": [
+        2137.59130859375,
+        3856.174072265625,
+        0.7869549989700317,
+        0.6014481782913208,
+        0.020666155964136124,
+        0.6011677384376526,
+        0.5597766041755676,
+        0.31637266278266907
+      ]
+    },
+    "artifacts": {
+      "history_csv": "training_history.csv",
+      "metrics_summary_json": "metrics_summary.json",
+      "run_manifest_json": "run_manifest.json",
+      "best_checkpoint": "checkpoints/model_best.pt",
+      "latest_checkpoint": "checkpoints/model_latest.pt",
+      "sampled_profiles_json": "sampled_profiles.json"
+    }
+  }
+}

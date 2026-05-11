@@ -41,7 +41,8 @@ Core question: does defender performance degrade under an adaptive, belief-limit
    The current GenAI source is `experiments/generate_vae_candidate_pool.py`, which loads a trained VAE checkpoint, samples decoded candidates, filters by clearance and dynamic outcome, and emits JSONL candidate pools.
    Compare VAE-derived candidate pools against curated v4 and profile-first random baseline pools before choosing the attacker source distribution.
 2. Define attacker action as candidate selection/ranking from VAE outputs.
-3. Train full-state strategic adversary policy as optimization baseline.
+3. Establish the full-state strategic adversary baseline with `experiments/evaluate_attack_candidate_pool.py`.
+   This ranks VAE candidates by defender loss or expected hits using the existing scored simulation and objective plumbing.
 4. Replace full-state input with partial-observation + belief-state policy.
 5. Evaluate on held-out profiles/seeds with matched artifact schema.
 

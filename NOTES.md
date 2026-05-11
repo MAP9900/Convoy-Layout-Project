@@ -83,3 +83,5 @@ Adversarial/POMDP candidate-pool direction:
 - Use the regular VAE as the GenAI source by sampling with the latent-bank method, then filter decoded profiles through the moving-convoy dynamic outcome audit.
 - The first candidate-pool pipeline should prioritize safe, successful attacks by default, while preserving enough derived metadata for later attacker candidate selection.
 - This is a cleaner research story than forcing the VAE to preserve the original training label mix: the curated generator defines a realistic source manifold, the VAE generates nearby novel candidates, and the simulator/audit stack keeps only physically meaningful candidates.
+- The next adversarial baseline is full-state candidate ranking: evaluate each VAE candidate against a convoy layout with the scored Monte Carlo simulation, then select the candidate with highest defender loss or expected hits.
+- This full-state selector is not yet POMDP, but it gives the upper-bound red-team baseline needed before adding noisy observations and belief-state limitations.
