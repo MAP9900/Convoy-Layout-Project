@@ -4,6 +4,7 @@ Current complete index of files in the repository, grouped by purpose.
 
 Primary simulation feature reference:
 - `docs/SIM_FEATURES.md`
+- `docs/VAE.md`
 
 ## Canonical Workflows
 
@@ -173,6 +174,7 @@ Primary simulation feature reference:
 
 - `docs/TODO.md` (`canonical`)
 - `docs/SIM_FEATURES.md` (`canonical`)
+- `docs/VAE.md` (`canonical`)
 - `docs/PROTOCOL_V2_REALISM.md` (`canonical`)
 - `docs/NOTES.md` (`supporting`)
 - `docs/RL_PLAN.md` (`canonical`)
