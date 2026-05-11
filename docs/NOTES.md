@@ -136,3 +136,47 @@ Recommended next VAE direction:
   - inside convoy envelope
 - Prefer modeling/reconstructing target/aim context as well, or at least preserving it in decoded outputs.
 - Evaluate decoded samples with the same moving zig-zag dynamic outcome audit, not only static centroid geometry.
+
+
+VAE 5/10 Key summary
+
+{'dataset': {'train_samples': 45000,
+  'valid_samples': 5000,
+  'input_dim': 8,
+  'feature_names': ['u_pos_x',
+   'u_pos_y',
+   'sin_base_bearing_rad',
+   'cos_base_bearing_rad',
+   'spread_rad',
+   'launch_delay_s',
+   'salvo_interval_s',
+   'u_boat_initial_speed_mps']},
+ 'model': {'latent_dim': 6,
+  'hidden_dim': 64,
+  'parameter_count': 10644,
+  'beta': 0.03},
+ 'training': {'epochs': 60,
+  'batch_size': 512,
+  'learning_rate': 0.001,
+  'best_epoch': 53,
+  'final_train_loss': 0.32973783869634976,
+  'final_train_recon_loss': 0.11938681665130636,
+  'final_train_kl_loss': 7.011700830676339,
+  'final_valid_loss': 0.3319258153438568,
+  'final_valid_recon_loss': 0.11932632029056549,
+  'final_valid_kl_loss': 7.086649942398071,
+  'best_valid_loss': 0.3311635583639145,
+  'best_valid_recon_loss': 0.12006057053804398,
+  'best_valid_kl_loss': 7.036766624450683},
+ 'samples': {'count': 1000, 'output_file': 'sampled_profiles.json'},
+ 'timing': {'dataset_load_seconds': 2.819287625141442,
+  'training_seconds': 34.67270758282393,
+  'sample_decode_seconds': 0.21951066702604294,
+  'total_seconds': 39.77002716716379}}
+
+
+  {'samples': 1000,
+ 'label_counts': {'implausible_geometry': 922, 'credible_hit_threat': 78},
+ 'passes_gate_rate': 0.076,
+ 'clearance_ok_rate': 0.905,
+ 'min_clearance_m': 51.073124926132344}
