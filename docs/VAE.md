@@ -147,6 +147,8 @@ For decoded VAE profiles, the dynamic moving-convoy audit is more important than
 
 `experiments/generate_vae_candidate_pool.py` turns a trained VAE run into a JSONL candidate pool for adversarial work.
 
+Purpose: generate and audit VAE-derived attack profiles.
+
 Typical workflow:
 
 1. Load a trained VAE checkpoint and preprocessor.
@@ -177,9 +179,15 @@ Example command:
 
 The notebook wrapper is `notebooks/vae_candidate_pool.ipynb`.
 
+Use this notebook when the question is: "Can the trained VAE produce a safe, plausible, diverse pool of attack profiles?"
+
+This notebook does not rank profiles strategically against a convoy layout. It only creates and audits the candidate source pool.
+
 ## Monte Carlo Candidate Evaluation
 
 `experiments/evaluate_attack_candidate_pool.py` evaluates candidate profiles through the existing scored simulation pipeline and ranks them from the attacker perspective.
+
+Purpose: evaluate an already-generated candidate pool and rank candidates by simulated attacker value.
 
 The Monte Carlo setup keeps each candidate profile fixed, then reruns the simulator across multiple seeds and trials. The average over those trials becomes the candidate estimate:
 
@@ -199,9 +207,64 @@ The evaluator uses the same scored simulation and objective plumbing as the rest
 
 The notebook wrapper is `notebooks/attack_candidate_pool_eval.ipynb`.
 
+Use this notebook when the question is: "Given a candidate pool, which attacks are most dangerous to this convoy layout under the simulator?"
+
+This notebook does not train the VAE and does not create new decoded VAE samples. It consumes a candidate JSONL file created by `notebooks/vae_candidate_pool.ipynb` or a comparable generator.
+
+## Notebook Purpose Split
+
+Current active notebooks:
+
+- `notebooks/profile_generation_tests.ipynb`: inspect and validate curated/random synthetic training-data generation.
+- `notebooks/vae_train.ipynb`: train the curated v4 VAE and sample from the trained model.
+- `notebooks/random_vae_train.ipynb`: train the random-baseline VAE for comparison.
+- `notebooks/vae_candidate_pool.ipynb`: turn a trained VAE into a filtered candidate-pool JSONL.
+- `notebooks/attack_candidate_pool_eval.ipynb`: evaluate and rank an existing candidate pool with the Monte Carlo simulator.
+
+Legacy notebook:
+
+- `notebooks/vae_exploration.ipynb`: older exploratory notebook. It is useful for historical context, but it is no longer the clean active workflow. It is safe to archive once any outputs you want to preserve have been captured elsewhere.
+
 ## Current Results Snapshot
 
 The latest curated latent-bank candidate-pool workflow produced a pool of accepted VAE hit-threat candidates with a much more plausible spawn distribution than raw prior sampling.
+
+Verified curated v4 VAE training run:
+
+- run directory: `results/runs/vae/20260511_005053_v4_notebook`
+- train set: `45,000` profiles
+- validation set: `5,000` profiles
+- input dimension: `8`
+- latent dimension: `6`
+- hidden dimension: `64`
+- beta: `0.03`
+- epochs: `60`
+- best epoch: `53`
+- best validation loss: `0.3312`
+- final validation loss: `0.3319`
+- final validation reconstruction loss: `0.1193`
+- final validation KL loss: `7.0866`
+- training time in saved run: about `34.7 s`
+
+Verified VAE candidate-pool generation:
+
+- source run: `results/runs/vae/20260511_005053_v4_notebook`
+- candidate file: `data/attack_profiles/vae_candidates/curated_v4_hit_candidates.jsonl`
+- sampling method: `latent_bank`
+- latent noise scale: `0.10`
+- decoded samples: `5,000`
+- kept candidates: `1,000`
+- accepted outcome filter: `credible_hit_threat`
+- minimum accepted clearance: `250 m`
+- pre-filter dynamic labels: `4,583` hit threats, `347` near misses, `70` misses
+- pre-filter clearance pass rate: `0.9008`
+- pre-filter any-ship hit rate: `0.9166`
+- accepted spawn regions:
+  - `ahead_vae`: `285`
+  - `astern_vae`: `202`
+  - `inside_convoy_envelope`: `180`
+  - `starboard_vae`: `172`
+  - `port_vae`: `161`
 
 One candidate-pool evaluation run used:
 
@@ -214,9 +277,18 @@ One candidate-pool evaluation run used:
 
 Observed aggregate result:
 
-- candidate-pool average expected loss was about `3.67`
-- top-25 selected-candidate expected loss was about `5.20`
-- best candidate reached about `4.0` expected hits and `6.43` expected loss
+- candidate-pool average expected hits: `2.9223`
+- candidate-pool average expected unique ships hit: `1.6927`
+- candidate-pool average expected loss: `3.6732`
+- candidate-pool average `p_hit_ge_1`: `0.9787`
+- top-25 expected hits: `3.2387`
+- top-25 expected unique ships hit: `2.4747`
+- top-25 expected loss: `5.1983`
+- best candidate: `VAE000046`
+- best candidate spawn region: `ahead_vae`
+- best candidate expected hits: `4.0000`
+- best candidate expected unique ships hit: `3.0667`
+- best candidate expected loss: `6.4267`
 
 Interpretation: the full-state selector is finding more dangerous VAE-derived profiles than random sampling from the candidate pool. That is a useful upper-bound red-team baseline before adding partial observations and belief-state limitations.
 
@@ -275,4 +347,3 @@ For the current notebook-first workflow:
 3. `notebooks/vae_candidate_pool.ipynb`
 4. `notebooks/attack_candidate_pool_eval.ipynb`
 5. future baseline-comparison notebook
-

@@ -152,7 +152,12 @@ Primary simulation feature reference:
 - `notebooks/attack_profile_tests.ipynb` (`diagnostic`)
 - `notebooks/attack_manual_verification.ipynb` (`diagnostic`)
 - `notebooks/torpedo_firing_doctrine_comparison.ipynb` (`diagnostic`; saves PNGs to `notebooks/results/torpedo_firing_doctrine_comparison/` by default)
-- `notebooks/vae_exploration.ipynb` (`canonical`; active notebook-first VAE training and analysis workflow)
+- `notebooks/profile_generation_tests.ipynb` (`canonical`; notebook-first QA for curated/random profile generation, spawn geometry, outcome labels, and training-data checks)
+- `notebooks/vae_train.ipynb` (`canonical`; active curated v4 VAE training workflow)
+- `notebooks/random_vae_train.ipynb` (`canonical`; random-baseline VAE training workflow)
+- `notebooks/vae_candidate_pool.ipynb` (`canonical`; generates and audits filtered VAE candidate-pool JSONL files from trained checkpoints)
+- `notebooks/attack_candidate_pool_eval.ipynb` (`canonical`; evaluates and ranks existing candidate pools with the scored Monte Carlo simulator)
+- `notebooks/vae_exploration.ipynb` (`archived-reference-candidate`; older exploratory VAE notebook, now superseded by the focused VAE notebooks above)
 
 ## Archived
 
