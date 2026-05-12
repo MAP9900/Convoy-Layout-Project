@@ -450,6 +450,18 @@ The intended POMDP progression is:
 
 This keeps the GenAI piece meaningful: the VAE proposes plausible attack candidates, while the adversarial/POMDP layer decides which candidate a limited-information attacker would choose.
 
+First implemented POMDP bridge:
+
+- module: `convoy_sim/pomdp_candidate_selector.py`
+- entrypoint: `experiments/run_pomdp_candidate_selector.py`
+- notebook: `notebooks/pomdp_candidate_selector.ipynb`
+- primary candidate source: `data/attack_profiles/vae_candidates/mixed_curated70_random30_hit_candidates.jsonl`
+- selector method: `belief_limited_heuristic_v1`
+- smoke run best candidate: `VAE000009`
+- smoke run best belief score: `0.9678`
+
+The belief selector uses noisy attacker-facing estimates and candidate profile/intent fields. It deliberately does not use true dynamic hit counts, value loss, expected loss, or full-state ranks while scoring.
+
 ## Known Limitations
 
 - The VAE only decodes 8 continuous fields, so tactical metadata must be derived after sampling.
@@ -465,8 +477,8 @@ This keeps the GenAI piece meaningful: the VAE proposes plausible attack candida
 1. Freeze `data/attack_profiles/vae_candidates/mixed_curated70_random30_hit_candidates.jsonl` as the primary GenAI candidate source for the first POMDP implementation.
 2. Keep `data/attack_profiles/vae_candidates/random_v1_hit_candidates.jsonl` as the comparison/stress candidate source.
 3. Build the POMDP layer as candidate selection under noisy observations, not as a new profile generator.
-4. Start with an observation builder that maps each candidate and convoy state into noisy range/bearing/course/speed/contact features.
-5. Add a simple belief-limited selector baseline before training a heavier policy.
+4. Run `notebooks/pomdp_candidate_selector.ipynb` and inspect the belief-vs-full-state rank gap.
+5. Next, evaluate the belief-selected top-k candidates through the same scored Monte Carlo pipeline used by the full-state selector.
 
 ## Practical Notebook Order
 

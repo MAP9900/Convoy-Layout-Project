@@ -4,7 +4,11 @@
 
 VAE-based attack profile generation is implemented as an upstream candidate source.
 The first practical candidate source is a latent-bank sampled VAE pool filtered by the moving-convoy dynamic outcome audit.
-The curated v4 generator remains the historical-realism source distribution used to train the VAE and to benchmark candidate quality.
+After matched source comparison, the primary POMDP candidate source is the mixed `70%` curated v4 / `30%` random v1 VAE pool:
+- `data/attack_profiles/vae_candidates/mixed_curated70_random30_hit_candidates.jsonl`
+
+Random v1 remains useful as a stress comparison for unique-ship/value-spread behavior.
+The curated v4 generator remains the historical-realism anchor used to train and interpret the VAE.
 
 ## Goal
 
@@ -25,6 +29,12 @@ Core question: does defender performance degrade under an adaptive, belief-limit
   - environment context already exposed by realism layer
 - Action output from attacker:
   - select/rank feasible VAE candidates (optional light parameter refinement)
+- Current baseline selector:
+  - `convoy_sim.pomdp_candidate_selector`
+  - `experiments/run_pomdp_candidate_selector.py`
+  - `notebooks/pomdp_candidate_selector.ipynb`
+  - builds noisy attacker observations and ranks candidates with a transparent heuristic
+  - deliberately avoids true simulation outcomes, hit counts, value loss, and full-state ranks when scoring
 - Candidate metadata expected from the generation/audit pipeline:
   - derived tactical fields (`spawn_region`, `approach_side`, `target_zone_kind`, hit/closest ship ids)
   - firing-solution fields where available (`aim_point`, `aim_solution_kind`, lead distance/intercept time, aim-offset fields)
@@ -44,6 +54,7 @@ Core question: does defender performance degrade under an adaptive, belief-limit
 3. Establish the full-state strategic adversary baseline with `experiments/evaluate_attack_candidate_pool.py`.
    This ranks VAE candidates by defender loss or expected hits using the existing scored simulation and objective plumbing.
 4. Replace full-state input with partial-observation + belief-state policy.
+   The first implemented bridge is `belief_limited_heuristic_v1`, which scores candidates from noisy range/bearing/course/speed/contact observations plus candidate profile/intent fields.
 5. Evaluate on held-out profiles/seeds with matched artifact schema.
 
 ## Evaluation
@@ -64,6 +75,15 @@ Comparisons:
 - new experiment entrypoint for attacker training/eval
 - run artifacts compatible with current baseline/RL reporting pattern
 - brief results table + 1 figure showing robustness gap under adaptive attacker
+
+Current implemented bridge:
+- `experiments/run_pomdp_candidate_selector.py`
+- `notebooks/pomdp_candidate_selector.ipynb`
+- smoke artifact: `results/runs/pomdp_candidate_selector/`
+
+Next implementation target:
+- evaluate the belief-selected top-k candidates through the same scored Monte Carlo pipeline
+- compare VAE-only sampling, full-state selector, and belief-limited selector on expected loss/value/hits
 
 ## Stretch (Optional)
 
