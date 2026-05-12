@@ -148,8 +148,8 @@ def plot_spawn_comparison(
                 acc_xy[:, 0],
                 acc_xy[:, 1],
                 c=ACCEPT_COLOR,
-                s=26,
-                alpha=0.8,
+                s=4,
+                alpha=0.4,
                 zorder=2,
                 label="accepted",)
         if rejected.any():

@@ -477,7 +477,7 @@ The belief selector uses noisy attacker-facing estimates and candidate profile/i
 - Direct curated v4 records used in the final baseline do not store source-audit `n_hits` in the same place as VAE candidate records. Use the Monte Carlo scoring table for hit/loss comparisons.
 - The final baseline uses a reasonable notebook-scale budget of `30` trials per candidate. Stronger publication-grade confidence would require more seeds/trials and additional convoy layouts.
 
-## Recommended Next Steps
+## Possible Next Steps
 
 1. Use the `Results Report` section above as the source of truth for the VAE final paper.
 2. Frame the main result as "VAE is competitive with direct curated generation and clearly improves beyond P01-P60," not as "VAE replaces the curated generator."
