@@ -163,6 +163,7 @@ Primary simulation feature reference:
 - `notebooks/mixed_vae_train.ipynb` (`canonical`; mixed `70%` curated v4 / `30%` random v1 VAE training workflow)
 - `notebooks/vae_candidate_pool.ipynb` (`canonical`; generates and audits filtered VAE candidate-pool JSONL files from trained checkpoints)
 - `notebooks/vae_source_comparison.ipynb` (`canonical`; matched curated/random/mixed VAE candidate-pool generation, summary comparison, and optional matched Monte Carlo source evaluation)
+- `notebooks/vae_final_baseline_comparison.ipynb` (`canonical`; final paper-facing comparison of original P01-P60 profiles, direct curated v4 synthetic candidates, and mixed 70/30 VAE-generated candidates through shared source summaries and optional matched Monte Carlo evaluation)
 - `notebooks/attack_candidate_pool_eval.ipynb` (`canonical`; evaluates and ranks existing candidate pools with the scored Monte Carlo simulator)
 - `notebooks/pomdp_candidate_selector.ipynb` (`canonical`; inspects noisy-observation candidate features, belief-limited ranking, and rank gap versus full-state selection)
 

@@ -1,0 +1,4 @@
+source_label,ahead,astern,beam_attack,inside_convoy_envelope,outside_perimeter,port,starboard
+Direct curated v4 synthetic,215,106,147,198,334,0,0
+Mixed 70/30 VAE candidates,297,181,0,210,0,154,158
+P01-P60 fixed library,33,12,0,15,0,0,0
