@@ -158,8 +158,8 @@ def plot_spawn_comparison(
                 rej_xy[:, 0],
                 rej_xy[:, 1],
                 c=REJECT_COLOR,
-                s=26,
-                alpha=0.8,
+                s=4,
+                alpha=0.4,
                 zorder=2,
                 label="rejected",)
         ax.legend(frameon=False)
