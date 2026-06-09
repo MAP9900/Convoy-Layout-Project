@@ -1,6 +1,6 @@
 # TODO
 
-Last updated: 2026-04-20
+Last updated: 2026-06-08
 
 ## Current Workflow (Canonical)
 
@@ -150,10 +150,10 @@ Last updated: 2026-04-20
 - [ ] Add confidence intervals or repeated-seed summaries to run metrics.
 - [ ] Add run-to-run comparator script for baseline vs RL outputs.
 - [ ] Add CI smoke checks for canonical config generation + baseline + RL entrypoints.
-- [ ] Train/evaluate conditional VAE generative adversary baseline on synthetic attack-profile data.
-- [ ] Add generation-time feasibility filtering and duplicate controls for sampled attack profiles.
-- [ ] Integrate generated attack profiles into canonical defender evaluation flow.
-- [ ] Add generated-vs-scripted comparison outputs for `expected_hits`, `CVaR_90`, and `p_hit_ge_1`.
+- [ ] Revisit conditional VAE only if future POMDP/cross-layout tests need explicit tactical conditioning; current VAE path uses latent-bank sampling and dynamic filtering.
+- [x] Add generation-time feasibility filtering and duplicate controls for sampled attack profiles.
+- [x] Integrate generated attack profiles into canonical defender evaluation flow.
+- [x] Add generated-vs-scripted comparison outputs for `expected_hits`, `CVaR_90`, and `p_hit_ge_1`.
 
 ## Later
 

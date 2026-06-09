@@ -49,7 +49,8 @@ Core question: does defender performance degrade under an adaptive, belief-limit
 
 1. Freeze the outcome-gated VAE candidate generation protocol for reproducibility.
    The current GenAI source is `experiments/generate_vae_candidate_pool.py`, which loads a trained VAE checkpoint, samples decoded candidates, filters by clearance and dynamic outcome, and emits JSONL candidate pools.
-   Compare VAE-derived candidate pools against curated v4 and profile-first random baseline pools before choosing the attacker source distribution.
+   Use the completed VAE source comparison and final baseline comparison in `docs/VAE.md` as the source decision record.
+   The active attacker source distribution is the mixed `70%` curated v4 / `30%` random v1 VAE pool; direct curated v4 remains the historical-realism baseline and random v1 remains a stress comparison.
 2. Define attacker action as candidate selection/ranking from VAE outputs.
 3. Establish the full-state strategic adversary baseline with `experiments/evaluate_attack_candidate_pool.py`.
    This ranks VAE candidates by defender loss or expected hits using the existing scored simulation and objective plumbing.
@@ -72,9 +73,10 @@ Comparisons:
 
 ## Deliverables
 
-- new experiment entrypoint for attacker training/eval
+- belief-selected top-k evaluation wrapper/notebook using the existing POMDP selector and scored candidate-pool evaluator
 - run artifacts compatible with current baseline/RL reporting pattern
-- brief results table + 1 figure showing robustness gap under adaptive attacker
+- matched comparison table for VAE-only sampling, full-state selector, and belief-limited selector
+- 1 figure/table showing robustness gap under adaptive attacker
 
 Current implemented bridge:
 - `experiments/run_pomdp_candidate_selector.py`

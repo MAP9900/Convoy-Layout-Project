@@ -75,6 +75,9 @@ print('Metric values match prior V2-realism logged values exactly.')
 
 ## Curated V4 VAE Findings - 2026-05-11
 
+Status note (2026-06-08): this section records the raw-prior VAE failure mode before latent-bank sampling and final baseline comparison.
+The current VAE conclusion is maintained in `docs/VAE.md`: latent-bank sampling plus dynamic filtering is the active path, the mixed `70%` curated v4 / `30%` random v1 VAE is the primary GenAI candidate source, and CVAE work is deferred.
+
 Context:
 - Training data used outcome-gated `random_tactical_v4` curated synthetic profiles.
 - Dataset size was `45k` train / `5k` valid.
@@ -123,12 +126,12 @@ Likely cause:
   - outcome label
 - The curated v4 distribution is multimodal. An unconditional Gaussian-prior VAE averages across modes and produces hybrid samples that are numerically plausible but tactically incoherent.
 
-Current conclusion:
+Historical conclusion at this stage:
 - Do not use raw unconditional VAE prior samples for convoy layout optimization yet.
 - Keep curated v4 synthetic data as the source-of-truth attack distribution for now.
 - The next VAE design should be conditional/outcome-aware rather than simply trained longer.
 
-Recommended next VAE direction:
+Then-recommended VAE direction (now deferred):
 - Build a conditional VAE that conditions on tactical metadata such as:
   - intended label
   - spawn region
