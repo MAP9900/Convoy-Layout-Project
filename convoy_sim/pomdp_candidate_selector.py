@@ -39,16 +39,17 @@ class CandidateSelectorConfig:
     ideal_spread_rad: float = float(np.deg2rad(5.0))
     spread_width_rad: float = float(np.deg2rad(5.0))
     range_weight: float = 0.30
-    bearing_alignment_weight: float = 0.25
-    aspect_weight: float = 0.20
+    bearing_alignment_weight: float = 0.24
+    aspect_weight: float = 0.18
     formation_span_weight: float = 0.10
-    contact_density_weight: float = 0.05
-    spread_weight: float = 0.10
+    contact_density_weight: float = 0.07
+    spread_weight: float = 0.08
     contact_weight: float = 0.05
-    inside_bonus_weight: float = 0.05
-    uncertainty_penalty_weight: float = 0.15
+    inside_bonus_weight: float = 0.03
+    uncertainty_penalty_weight: float = 0.35
+    inside_uncertainty_penalty_weight: float = 0.35
     ideal_contact_density_per_km2: float = 8.0
-    broadside_span_m: float = 2600.0
+    broadside_span_m: float = 4200.0
 
 
 def _profile_dict(record: Mapping[str, Any]) -> dict[str, Any]:
@@ -156,6 +157,7 @@ def build_candidate_observation_row(
         + resolved_selector_cfg.contact_weight * contact_score
         + resolved_selector_cfg.inside_bonus_weight * inside_score
         - resolved_selector_cfg.uncertainty_penalty_weight * uncertainty_score
+        - resolved_selector_cfg.inside_uncertainty_penalty_weight * inside_score * uncertainty_score
     )
 
     profile_id, name = _candidate_identity(record)
@@ -185,6 +187,7 @@ def build_candidate_observation_row(
         "contact_score": float(contact_score),
         "inside_score": float(inside_score),
         "uncertainty_score": float(uncertainty_score),
+        "inside_uncertainty_penalty": float(inside_score * uncertainty_score),
         "spawn_region": str(_intent_value(record, "spawn_region", "")),
         "approach_side": str(_intent_value(record, "approach_side", "")),
         "inside_convoy_envelope": bool(_intent_value(record, "inside_convoy_envelope", False)),

@@ -29,6 +29,7 @@ Available to the attacker:
 - noisy range and bearing to the convoy/contact cluster
 - noisy convoy heading and speed estimate
 - noisy contact count
+- noisy contact-detection fraction, so poor contact may only see a subset of the convoy
 - noisy formation width/depth estimate
 - noisy contact density estimate
 - noisy class-confidence counts
@@ -81,22 +82,43 @@ The heuristic scores:
 - estimated contact density
 - spread suitability
 - noisy contact count
-- inside-envelope opportunity
+- inside-envelope opportunity when the contact picture is good enough
 - observation uncertainty penalty
+- additional inside-envelope uncertainty penalty, because internal convoy geometry is harder to resolve under poor contact
 
 This is not a learned POMDP policy yet. It is an auditable baseline that establishes the information boundary and comparison pipeline before RL or belief-state training.
+
+## First Eval Finding
+
+The first single-seed evaluation showed the desired separation between belief-limited selection and the full-state oracle, but the three observation presets were too similar to each other.
+The likely causes were:
+
+- top-k selections were dominated by inside-convoy-envelope candidates
+- formation-span score saturated near `1.0`
+- contact count stayed near the full convoy size even under poor contact
+- uncertainty penalty reduced scores but did not change candidate ordering enough
+
+Current mitigation:
+
+- prevent formation-span score from saturating as quickly
+- model contact detection as a fraction of true convoy contacts
+- make poor-contact observations see a smaller/noisier contact subset
+- increase uncertainty penalties
+- add a specific penalty for choosing inside-envelope attacks under high uncertainty
+- evaluate each preset across multiple observation seeds and report mean/std
 
 ## Evaluation Pipeline
 
 1. Load the mixed `70/30` VAE candidate pool.
-2. Build noisy attacker-facing observations for each candidate under each preset.
+2. Build noisy attacker-facing observations for each candidate under each preset and observation seed.
 3. Rank candidates with `belief_limited_heuristic_v1`.
 4. Write:
    - `belief_ranked_candidates.csv`
    - `top_belief_candidates.json`
    - `top_belief_candidate_pool.jsonl`
 5. Evaluate each selected top-k JSONL pool with `experiments/evaluate_attack_candidate_pool.py`.
-6. Compare against the existing full-state mixed-VAE candidate-pool evaluation.
+6. Aggregate expected hits/loss and overlap metrics across observation seeds.
+7. Compare against the existing full-state mixed-VAE candidate-pool evaluation.
 
 Expected ordering:
 
@@ -113,8 +135,9 @@ Use `notebooks/pomdp_candidate_eval.ipynb` for the current notebook-first workfl
 The notebook:
 
 - runs belief selection for all three observation presets
+- repeats selection over multiple observation seeds
 - evaluates selected top-k candidates through the scored Monte Carlo simulator
-- summarizes expected hits, expected loss, unique ships hit, and CVaR
+- summarizes expected hits, expected loss, unique ships hit, and CVaR with mean/std by preset
 - compares top-k overlap with the full-state oracle run when available
 
 ## Next Step

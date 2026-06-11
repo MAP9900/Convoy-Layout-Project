@@ -26,6 +26,7 @@ Core question: does defender performance degrade under an adaptive, belief-limit
 - Add attacker policy layer (agent) on top of the existing attack profile/action interface.
 - Observation input to attacker:
   - noisy bearing/range/course/speed/contact estimates
+  - noisy contact-detection fraction
   - noisy formation width/depth and contact-density estimates
   - observation-quality presets: `good_contact`, `baseline_night`, `poor_contact`
   - environment context already exposed by realism layer
@@ -89,7 +90,8 @@ Current implemented bridge:
 - smoke artifact: `results/runs/pomdp_candidate_selector/`
 
 Next implementation target:
-- evaluate the belief-selected top-k candidates through the same scored Monte Carlo pipeline
+- rerun `notebooks/pomdp_candidate_eval.ipynb` after the multi-seed / stronger uncertainty update
+- confirm observation-quality degradation is visible across `good_contact`, `baseline_night`, and `poor_contact`
 - compare VAE-only sampling, full-state selector, and belief-limited selector on expected loss/value/hits
 
 ## Stretch (Optional)

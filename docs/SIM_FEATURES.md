@@ -402,6 +402,7 @@ Conceptual split from partial observability:
 - convoy bearing/range
 - convoy heading/speed
 - contact count
+- contact-detection fraction
 - formation width/depth
 - contact density
 - class-confidence counts
@@ -419,6 +420,8 @@ Observation presets:
 - `good_contact` is the default and represents a strong track / clearer contact picture
 - `baseline_night` preserves the earlier moderate night-contact noise scale
 - `poor_contact` represents degraded contact quality
+
+Poorer presets both increase measurement noise and reduce the fraction of convoy contacts visible to the attacker.
 
 These presets are used by the POMDP candidate selector and are documented in `docs/POMDP.md`.
 

@@ -465,7 +465,7 @@ First implemented POMDP bridge:
 - smoke run best candidate: `VAE000009`
 - smoke run best belief score: `0.9678`
 
-The belief selector uses noisy attacker-facing estimates, formation-level estimates, and candidate profile/intent fields. It deliberately does not use true dynamic hit counts, value loss, expected loss, or full-state ranks while scoring. Observation presets are `good_contact`, `baseline_night`, and `poor_contact`, with `good_contact` as the default.
+The belief selector uses noisy attacker-facing estimates, formation-level estimates, contact-detection fraction, and candidate profile/intent fields. It deliberately does not use true dynamic hit counts, value loss, expected loss, or full-state ranks while scoring. Observation presets are `good_contact`, `baseline_night`, and `poor_contact`, with `good_contact` as the default. The current evaluation notebook repeats selection across multiple observation seeds and reports preset mean/std.
 
 ## Known Limitations
 

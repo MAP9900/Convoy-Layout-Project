@@ -80,6 +80,7 @@ def test_observation_presets_order_uncertainty() -> None:
     assert good.range_sigma_m < baseline.range_sigma_m < poor.range_sigma_m
     assert good.formation_width_sigma_m < baseline.formation_width_sigma_m < poor.formation_width_sigma_m
     assert good.class_count_sigma < baseline.class_count_sigma < poor.class_count_sigma
+    assert good.contact_detection_fraction > baseline.contact_detection_fraction > poor.contact_detection_fraction
 
 
 def test_candidate_score_does_not_use_outcome_hit_count() -> None:

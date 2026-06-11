@@ -172,6 +172,8 @@ class AttackerObservationConfig:
     formation_width_sigma_m: float = 100.0
     formation_depth_sigma_m: float = 120.0
     class_count_sigma: float = 0.5
+    contact_detection_fraction: float = 0.85
+    contact_detection_fraction_sigma: float = 0.05
 
     @classmethod
     def from_dict(cls, payload: dict[str, Any] | None) -> "AttackerObservationConfig":
@@ -186,6 +188,8 @@ class AttackerObservationConfig:
             formation_width_sigma_m=float(payload.get("formation_width_sigma_m", 100.0)),
             formation_depth_sigma_m=float(payload.get("formation_depth_sigma_m", 120.0)),
             class_count_sigma=float(payload.get("class_count_sigma", 0.5)),
+            contact_detection_fraction=float(payload.get("contact_detection_fraction", 0.85)),
+            contact_detection_fraction_sigma=float(payload.get("contact_detection_fraction_sigma", 0.05)),
         )
 
     def to_dict(self) -> dict[str, float]:
@@ -198,6 +202,8 @@ class AttackerObservationConfig:
             "formation_width_sigma_m": float(self.formation_width_sigma_m),
             "formation_depth_sigma_m": float(self.formation_depth_sigma_m),
             "class_count_sigma": float(self.class_count_sigma),
+            "contact_detection_fraction": float(self.contact_detection_fraction),
+            "contact_detection_fraction_sigma": float(self.contact_detection_fraction_sigma),
         }
 
 
@@ -212,6 +218,8 @@ ATTACKER_OBSERVATION_PRESETS: dict[str, AttackerObservationConfig] = {
         formation_width_sigma_m=180.0,
         formation_depth_sigma_m=200.0,
         class_count_sigma=0.8,
+        contact_detection_fraction=0.65,
+        contact_detection_fraction_sigma=0.10,
     ),
     "poor_contact": AttackerObservationConfig(
         bearing_sigma_rad=0.09,
@@ -222,6 +230,8 @@ ATTACKER_OBSERVATION_PRESETS: dict[str, AttackerObservationConfig] = {
         formation_width_sigma_m=450.0,
         formation_depth_sigma_m=500.0,
         class_count_sigma=1.5,
+        contact_detection_fraction=0.35,
+        contact_detection_fraction_sigma=0.18,
     ),
 }
 
@@ -279,7 +289,14 @@ def build_attacker_observation(
     obs_range = float(max(0.0, true_range + rng.normal(0.0, cfg.range_sigma_m)))
     obs_heading = float(true_heading + rng.normal(0.0, cfg.heading_sigma_rad))
     obs_speed = float(max(0.0, true_speed + rng.normal(0.0, cfg.speed_sigma_mps)))
-    obs_contacts = int(max(0, round(true_contacts + rng.normal(0.0, cfg.contact_count_sigma))))
+    observed_fraction = float(
+        np.clip(
+            cfg.contact_detection_fraction + rng.normal(0.0, cfg.contact_detection_fraction_sigma),
+            0.0,
+            1.0,
+        )
+    )
+    obs_contacts = int(max(0, round(true_contacts * observed_fraction + rng.normal(0.0, cfg.contact_count_sigma))))
     obs_width = float(max(0.0, true_width + rng.normal(0.0, cfg.formation_width_sigma_m)))
     obs_depth = float(max(0.0, true_depth + rng.normal(0.0, cfg.formation_depth_sigma_m)))
     obs_area_km2 = float(max(obs_width * obs_depth / 1_000_000.0, 1e-9))
@@ -336,6 +353,8 @@ def build_attacker_observation(
             "formation_width_sigma_m": float(cfg.formation_width_sigma_m),
             "formation_depth_sigma_m": float(cfg.formation_depth_sigma_m),
             "class_count_sigma": float(cfg.class_count_sigma),
+            "contact_detection_fraction": float(cfg.contact_detection_fraction),
+            "contact_detection_fraction_sigma": float(cfg.contact_detection_fraction_sigma),
         },
     }
 
