@@ -1,0 +1,8 @@
+{
+  "belief_top_k": 25,
+  "full_state_top_k": 25,
+  "top_k_overlap": 2,
+  "top_k_overlap_rate": 0.08,
+  "belief_best_profile_id": "VAE000009",
+  "full_state_best_profile_id": "VAE000124"
+}

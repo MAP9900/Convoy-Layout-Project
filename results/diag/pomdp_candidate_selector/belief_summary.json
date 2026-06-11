@@ -1,0 +1,19 @@
+{
+  "candidate_path": "/Users/matthewplambeck/Desktop/Convoy Layout Project/data/attack_profiles/vae_candidates/mixed_curated70_random30_hit_candidates.jsonl",
+  "profiles_ranked": 100,
+  "top_k": 25,
+  "best_profile_id": "VAE000009",
+  "best_belief_score": 1.0316393580370653,
+  "mean_belief_score": 0.7910191797544273,
+  "observation_preset": "good_contact",
+  "observation_config": {
+    "bearing_sigma_rad": 0.025,
+    "range_sigma_m": 80.0,
+    "heading_sigma_rad": 0.035,
+    "speed_sigma_mps": 0.3,
+    "contact_count_sigma": 0.25,
+    "formation_width_sigma_m": 100.0,
+    "formation_depth_sigma_m": 120.0,
+    "class_count_sigma": 0.5
+  }
+}
