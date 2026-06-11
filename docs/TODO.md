@@ -154,6 +154,7 @@ Last updated: 2026-06-08
 - [x] Add generation-time feasibility filtering and duplicate controls for sampled attack profiles.
 - [x] Integrate generated attack profiles into canonical defender evaluation flow.
 - [x] Add generated-vs-scripted comparison outputs for `expected_hits`, `CVaR_90`, and `p_hit_ge_1`.
+- [ ] Run `notebooks/pomdp_candidate_eval.ipynb` and compare `good_contact`, `baseline_night`, and `poor_contact` selection quality before starting attacker RL.
 
 ## Later
 
@@ -262,10 +263,3 @@ Last updated: 2026-06-08
 - [x] Add intelligence uncertainty model:
   - attacker decisions based on partial/noisy belief state
   - no direct use of full true convoy state for attacker/generative conditioning
-
-## Deferred / Out Of Scope For Current Phase
-
-- [ ] Stern-tube doctrine
-- [ ] Reload / re-attack timing doctrine
-- [ ] G7e / electric torpedo branch
-- [ ] Continuous curved gyro-turn hydrodynamics

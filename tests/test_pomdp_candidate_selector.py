@@ -12,7 +12,7 @@ from convoy_sim.pomdp_candidate_selector import (
     build_candidate_observation_rows,
     rank_candidate_observation_rows,
 )
-from convoy_sim.realism import AttackerObservationConfig
+from convoy_sim.realism import AttackerObservationConfig, get_attacker_observation_config
 from experiments.run_pomdp_candidate_selector import run_belief_selector
 from scenarios.convoy_profiles import get_convoy_layout_profile
 
@@ -68,6 +68,18 @@ def test_candidate_observation_is_reproducible() -> None:
     assert rows_a[0]["profile_id"] == "C001"
     assert rows_a[0]["selector_method"] == "belief_limited_heuristic_v1"
     assert "belief_score" in rows_a[0]
+    assert "estimated_formation_width_m" in rows_a[0]
+    assert "formation_span_score" in rows_a[0]
+
+
+def test_observation_presets_order_uncertainty() -> None:
+    good = get_attacker_observation_config("good_contact")
+    baseline = get_attacker_observation_config("baseline_night")
+    poor = get_attacker_observation_config("poor_contact")
+
+    assert good.range_sigma_m < baseline.range_sigma_m < poor.range_sigma_m
+    assert good.formation_width_sigma_m < baseline.formation_width_sigma_m < poor.formation_width_sigma_m
+    assert good.class_count_sigma < baseline.class_count_sigma < poor.class_count_sigma
 
 
 def test_candidate_score_does_not_use_outcome_hit_count() -> None:
@@ -121,7 +133,15 @@ def test_run_belief_selector_writes_artifacts(tmp_path: Path) -> None:
 
     assert (run_dir / "belief_ranked_candidates.csv").exists()
     assert (run_dir / "top_belief_candidates.json").exists()
+    assert (run_dir / "top_belief_candidate_pool.jsonl").exists()
     assert (run_dir / "metrics_summary.json").exists()
     metrics = json.loads((run_dir / "metrics_summary.json").read_text(encoding="utf-8"))
     assert metrics["selection"]["method"] == "belief_limited_heuristic_v1"
+    assert metrics["selection"]["observation_preset"] == "good_contact"
     assert metrics["top_k"]["profiles"] == 1
+    selected = [
+        json.loads(line)
+        for line in (run_dir / "top_belief_candidate_pool.jsonl").read_text(encoding="utf-8").splitlines()
+    ]
+    assert len(selected) == 1
+    assert selected[0]["selection_meta"]["observation_preset"] == "good_contact"

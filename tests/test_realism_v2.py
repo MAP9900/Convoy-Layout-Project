@@ -296,6 +296,9 @@ def test_partial_observation_is_reproducible() -> None:
     )
     assert obs_a == obs_b
     assert "estimated_bearing_rad" in obs_a
+    assert "estimated_formation_width_m" in obs_a
+    assert "estimated_formation_depth_m" in obs_a
+    assert "estimated_contact_density_per_km2" in obs_a
     assert "observation_quality" in obs_a
 
 

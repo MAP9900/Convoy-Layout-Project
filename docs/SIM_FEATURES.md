@@ -402,6 +402,8 @@ Conceptual split from partial observability:
 - convoy bearing/range
 - convoy heading/speed
 - contact count
+- formation width/depth
+- contact density
 - class-confidence counts
 - environment snapshot
 - observation quality sigmas
@@ -412,6 +414,13 @@ Role in the stack:
 - starts from true convoy state
 - applies uncertainty to produce what the attacker thinks it sees
 - does not choose aimpoint, spread, gyro offsets, or torpedo speed setting
+
+Observation presets:
+- `good_contact` is the default and represents a strong track / clearer contact picture
+- `baseline_night` preserves the earlier moderate night-contact noise scale
+- `poor_contact` represents degraded contact quality
+
+These presets are used by the POMDP candidate selector and are documented in `docs/POMDP.md`.
 
 Relationship to `fire_control_lite`:
 - partial observability answers: "what does the attacker know?"

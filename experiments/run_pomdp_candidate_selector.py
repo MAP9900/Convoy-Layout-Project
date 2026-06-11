@@ -10,10 +10,15 @@ from convoy_sim.feasibility import Environment
 from convoy_sim.pomdp_candidate_selector import (
     build_candidate_observation_rows,
     rank_candidate_observation_rows,
+    write_belief_selected_candidate_pool,
     write_belief_ranked_csv,
     write_belief_ranked_json,
 )
-from convoy_sim.realism import AttackerObservationConfig
+from convoy_sim.realism import (
+    AttackerObservationConfig,
+    get_attacker_observation_config,
+    list_attacker_observation_presets,
+)
 from convoy_sim.workflows import git_sha, resolve_run_dir, write_json
 from experiments.evaluate_attack_candidate_pool import load_candidate_records
 from scenarios.convoy_profiles import get_convoy_layout_profile, list_convoy_layout_profiles
@@ -32,12 +37,43 @@ def _parse_args() -> argparse.Namespace:
     parser.add_argument("--max-profiles", type=int, default=100)
     parser.add_argument("--top-k", type=int, default=25)
     parser.add_argument("--seed", type=int, default=1945)
-    parser.add_argument("--bearing-sigma-rad", type=float, default=0.04)
-    parser.add_argument("--range-sigma-m", type=float, default=120.0)
-    parser.add_argument("--heading-sigma-rad", type=float, default=0.06)
-    parser.add_argument("--speed-sigma-mps", type=float, default=0.5)
-    parser.add_argument("--contact-count-sigma", type=float, default=0.4)
+    parser.add_argument("--observation-preset", choices=list_attacker_observation_presets(), default="good_contact")
+    parser.add_argument("--bearing-sigma-rad", type=float, default=None)
+    parser.add_argument("--range-sigma-m", type=float, default=None)
+    parser.add_argument("--heading-sigma-rad", type=float, default=None)
+    parser.add_argument("--speed-sigma-mps", type=float, default=None)
+    parser.add_argument("--contact-count-sigma", type=float, default=None)
+    parser.add_argument("--formation-width-sigma-m", type=float, default=None)
+    parser.add_argument("--formation-depth-sigma-m", type=float, default=None)
+    parser.add_argument("--class-count-sigma", type=float, default=None)
     return parser.parse_args()
+
+
+def _with_observation_overrides(
+    cfg: AttackerObservationConfig,
+    *,
+    bearing_sigma_rad: float | None = None,
+    range_sigma_m: float | None = None,
+    heading_sigma_rad: float | None = None,
+    speed_sigma_mps: float | None = None,
+    contact_count_sigma: float | None = None,
+    formation_width_sigma_m: float | None = None,
+    formation_depth_sigma_m: float | None = None,
+    class_count_sigma: float | None = None,
+) -> AttackerObservationConfig:
+    values = cfg.to_dict()
+    overrides = {
+        "bearing_sigma_rad": bearing_sigma_rad,
+        "range_sigma_m": range_sigma_m,
+        "heading_sigma_rad": heading_sigma_rad,
+        "speed_sigma_mps": speed_sigma_mps,
+        "contact_count_sigma": contact_count_sigma,
+        "formation_width_sigma_m": formation_width_sigma_m,
+        "formation_depth_sigma_m": formation_depth_sigma_m,
+        "class_count_sigma": class_count_sigma,
+    }
+    values.update({key: float(value) for key, value in overrides.items() if value is not None})
+    return AttackerObservationConfig.from_dict(values)
 
 
 def run_belief_selector(
@@ -50,6 +86,7 @@ def run_belief_selector(
     max_profiles: int | None = 100,
     top_k: int = 25,
     seed: int = 1945,
+    observation_preset: str = "good_contact",
     observation_cfg: AttackerObservationConfig | None = None,
 ) -> Path:
     records_all = load_candidate_records(candidate_path)
@@ -58,7 +95,7 @@ def run_belief_selector(
         raise ValueError("candidate pool is empty")
     ships = get_convoy_layout_profile(convoy_profile).build_ships()
     env = Environment(time_of_day="night", visibility_m=3500.0, sea_state=4)
-    obs_cfg = observation_cfg or AttackerObservationConfig()
+    obs_cfg = observation_cfg or get_attacker_observation_config(observation_preset)
     rows = build_candidate_observation_rows(
         records,
         ships=ships,
@@ -71,6 +108,12 @@ def run_belief_selector(
     output_dir = resolve_run_dir(project_root / output_root, "pomdp_candidate_selector", run_name)
     write_belief_ranked_csv(output_dir / "belief_ranked_candidates.csv", ranked)
     write_belief_ranked_json(output_dir / "top_belief_candidates.json", top_rows)
+    write_belief_selected_candidate_pool(
+        output_dir / "top_belief_candidate_pool.jsonl",
+        records=records,
+        rows=top_rows,
+        observation_preset=observation_preset,
+    )
     write_json(
         output_dir / "metrics_summary.json",
         {
@@ -87,6 +130,7 @@ def run_belief_selector(
             },
             "selection": {
                 "method": "belief_limited_heuristic_v1",
+                "observation_preset": str(observation_preset),
                 "score": "belief_score",
                 "higher_is_better_for_attacker": True,
                 "top_k": int(top_k),
@@ -103,16 +147,12 @@ def run_belief_selector(
             "evaluated_profile_count": int(len(records)),
             "convoy_profile": str(convoy_profile),
             "seed": int(seed),
-            "observation_config": {
-                "bearing_sigma_rad": float(obs_cfg.bearing_sigma_rad),
-                "range_sigma_m": float(obs_cfg.range_sigma_m),
-                "heading_sigma_rad": float(obs_cfg.heading_sigma_rad),
-                "speed_sigma_mps": float(obs_cfg.speed_sigma_mps),
-                "contact_count_sigma": float(obs_cfg.contact_count_sigma),
-            },
+            "observation_preset": str(observation_preset),
+            "observation_config": obs_cfg.to_dict(),
             "artifacts": {
                 "belief_ranked_candidates_csv": "belief_ranked_candidates.csv",
                 "top_belief_candidates_json": "top_belief_candidates.json",
+                "top_belief_candidate_pool_jsonl": "top_belief_candidate_pool.jsonl",
                 "metrics_summary_json": "metrics_summary.json",
                 "run_manifest_json": "run_manifest.json",
             },
@@ -123,12 +163,16 @@ def run_belief_selector(
 
 def main() -> None:
     args = _parse_args()
-    obs_cfg = AttackerObservationConfig(
-        bearing_sigma_rad=float(args.bearing_sigma_rad),
-        range_sigma_m=float(args.range_sigma_m),
-        heading_sigma_rad=float(args.heading_sigma_rad),
-        speed_sigma_mps=float(args.speed_sigma_mps),
-        contact_count_sigma=float(args.contact_count_sigma),
+    obs_cfg = _with_observation_overrides(
+        get_attacker_observation_config(str(args.observation_preset)),
+        bearing_sigma_rad=args.bearing_sigma_rad,
+        range_sigma_m=args.range_sigma_m,
+        heading_sigma_rad=args.heading_sigma_rad,
+        speed_sigma_mps=args.speed_sigma_mps,
+        contact_count_sigma=args.contact_count_sigma,
+        formation_width_sigma_m=args.formation_width_sigma_m,
+        formation_depth_sigma_m=args.formation_depth_sigma_m,
+        class_count_sigma=args.class_count_sigma,
     )
     run_dir = run_belief_selector(
         candidate_path=args.candidate_path,
@@ -139,6 +183,7 @@ def main() -> None:
         max_profiles=args.max_profiles,
         top_k=int(args.top_k),
         seed=int(args.seed),
+        observation_preset=str(args.observation_preset),
         observation_cfg=obs_cfg,
     )
     print(json.dumps({"run_dir": str(run_dir)}, indent=2))

@@ -26,6 +26,8 @@ Core question: does defender performance degrade under an adaptive, belief-limit
 - Add attacker policy layer (agent) on top of the existing attack profile/action interface.
 - Observation input to attacker:
   - noisy bearing/range/course/speed/contact estimates
+  - noisy formation width/depth and contact-density estimates
+  - observation-quality presets: `good_contact`, `baseline_night`, `poor_contact`
   - environment context already exposed by realism layer
 - Action output from attacker:
   - select/rank feasible VAE candidates (optional light parameter refinement)
@@ -33,6 +35,7 @@ Core question: does defender performance degrade under an adaptive, belief-limit
   - `convoy_sim.pomdp_candidate_selector`
   - `experiments/run_pomdp_candidate_selector.py`
   - `notebooks/pomdp_candidate_selector.ipynb`
+  - `notebooks/pomdp_candidate_eval.ipynb`
   - builds noisy attacker observations and ranks candidates with a transparent heuristic
   - deliberately avoids true simulation outcomes, hit counts, value loss, and full-state ranks when scoring
 - Candidate metadata expected from the generation/audit pipeline:
@@ -81,6 +84,8 @@ Comparisons:
 Current implemented bridge:
 - `experiments/run_pomdp_candidate_selector.py`
 - `notebooks/pomdp_candidate_selector.ipynb`
+- `notebooks/pomdp_candidate_eval.ipynb`
+- `docs/POMDP.md`
 - smoke artifact: `results/runs/pomdp_candidate_selector/`
 
 Next implementation target:

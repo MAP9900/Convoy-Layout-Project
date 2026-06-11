@@ -74,12 +74,15 @@ from convoy_sim.attack_profiles import (
     DEFAULT_ATTACK_PROFILE_LIBRARY,
 )
 from convoy_sim.realism import (
+    ATTACKER_OBSERVATION_PRESETS,
     AttackerObservationConfig,
     ShipMovementRealismConfig,
     UBoatLeg,
     UBoatMotionPlan,
     apply_ship_movement_realism,
     build_attacker_observation,
+    get_attacker_observation_config,
+    list_attacker_observation_presets,
 )
 
 __all__ = [
@@ -153,10 +156,13 @@ __all__ = [
     "make_placeholder_profile",
     "make_placeholder_profile_library",
     "DEFAULT_ATTACK_PROFILE_LIBRARY",
+    "ATTACKER_OBSERVATION_PRESETS",
     "UBoatLeg",
     "UBoatMotionPlan",
     "AttackerObservationConfig",
     "ShipMovementRealismConfig",
     "build_attacker_observation",
+    "get_attacker_observation_config",
+    "list_attacker_observation_presets",
     "apply_ship_movement_realism",
 ]

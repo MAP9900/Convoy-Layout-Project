@@ -164,23 +164,82 @@ def _bounded_transition(current: float, target: float, step_s: float, rate_limit
 class AttackerObservationConfig:
     """Noise model for partial-observability attacker context."""
 
-    bearing_sigma_rad: float = 0.04
-    range_sigma_m: float = 120.0
-    heading_sigma_rad: float = 0.06
-    speed_sigma_mps: float = 0.5
-    contact_count_sigma: float = 0.4
+    bearing_sigma_rad: float = 0.025
+    range_sigma_m: float = 80.0
+    heading_sigma_rad: float = 0.035
+    speed_sigma_mps: float = 0.3
+    contact_count_sigma: float = 0.25
+    formation_width_sigma_m: float = 100.0
+    formation_depth_sigma_m: float = 120.0
+    class_count_sigma: float = 0.5
 
     @classmethod
     def from_dict(cls, payload: dict[str, Any] | None) -> "AttackerObservationConfig":
         if not payload:
             return cls()
         return cls(
-            bearing_sigma_rad=float(payload.get("bearing_sigma_rad", 0.04)),
-            range_sigma_m=float(payload.get("range_sigma_m", 120.0)),
-            heading_sigma_rad=float(payload.get("heading_sigma_rad", 0.06)),
-            speed_sigma_mps=float(payload.get("speed_sigma_mps", 0.5)),
-            contact_count_sigma=float(payload.get("contact_count_sigma", 0.4)),
+            bearing_sigma_rad=float(payload.get("bearing_sigma_rad", 0.025)),
+            range_sigma_m=float(payload.get("range_sigma_m", 80.0)),
+            heading_sigma_rad=float(payload.get("heading_sigma_rad", 0.035)),
+            speed_sigma_mps=float(payload.get("speed_sigma_mps", 0.3)),
+            contact_count_sigma=float(payload.get("contact_count_sigma", 0.25)),
+            formation_width_sigma_m=float(payload.get("formation_width_sigma_m", 100.0)),
+            formation_depth_sigma_m=float(payload.get("formation_depth_sigma_m", 120.0)),
+            class_count_sigma=float(payload.get("class_count_sigma", 0.5)),
         )
+
+    def to_dict(self) -> dict[str, float]:
+        return {
+            "bearing_sigma_rad": float(self.bearing_sigma_rad),
+            "range_sigma_m": float(self.range_sigma_m),
+            "heading_sigma_rad": float(self.heading_sigma_rad),
+            "speed_sigma_mps": float(self.speed_sigma_mps),
+            "contact_count_sigma": float(self.contact_count_sigma),
+            "formation_width_sigma_m": float(self.formation_width_sigma_m),
+            "formation_depth_sigma_m": float(self.formation_depth_sigma_m),
+            "class_count_sigma": float(self.class_count_sigma),
+        }
+
+
+ATTACKER_OBSERVATION_PRESETS: dict[str, AttackerObservationConfig] = {
+    "good_contact": AttackerObservationConfig(),
+    "baseline_night": AttackerObservationConfig(
+        bearing_sigma_rad=0.04,
+        range_sigma_m=120.0,
+        heading_sigma_rad=0.06,
+        speed_sigma_mps=0.5,
+        contact_count_sigma=0.4,
+        formation_width_sigma_m=180.0,
+        formation_depth_sigma_m=200.0,
+        class_count_sigma=0.8,
+    ),
+    "poor_contact": AttackerObservationConfig(
+        bearing_sigma_rad=0.09,
+        range_sigma_m=300.0,
+        heading_sigma_rad=0.12,
+        speed_sigma_mps=1.0,
+        contact_count_sigma=1.5,
+        formation_width_sigma_m=450.0,
+        formation_depth_sigma_m=500.0,
+        class_count_sigma=1.5,
+    ),
+}
+
+
+def list_attacker_observation_presets() -> tuple[str, ...]:
+    return tuple(ATTACKER_OBSERVATION_PRESETS.keys())
+
+
+def get_attacker_observation_config(preset: str = "good_contact") -> AttackerObservationConfig:
+    try:
+        return ATTACKER_OBSERVATION_PRESETS[str(preset)]
+    except KeyError as exc:
+        valid = ", ".join(list_attacker_observation_presets())
+        raise ValueError(f"unknown attacker observation preset {preset!r}; expected one of: {valid}") from exc
+
+
+def _noisy_count(value: int, sigma: float, rng: np.random.Generator) -> int:
+    return int(max(0, round(float(value) + rng.normal(0.0, float(sigma)))))
 
 
 def build_attacker_observation(
@@ -198,21 +257,55 @@ def build_attacker_observation(
     delta = centroid - np.asarray(u_boat_pos, dtype=float)
     true_range = float(np.linalg.norm(delta))
     true_bearing = float(np.arctan2(delta[1], delta[0]))
-    true_heading = float(np.arctan2(np.mean([np.sin(ship.heading_rad) for ship in ships]), np.mean([np.cos(ship.heading_rad) for ship in ships])))
+    true_heading = float(
+        np.arctan2(
+            np.mean([np.sin(ship.heading_rad) for ship in ships]),
+            np.mean([np.cos(ship.heading_rad) for ship in ships]),
+        )
+    )
     true_speed = float(np.mean([ship.speed for ship in ships]))
     true_contacts = float(len(ships))
+    heading_vec = np.array([np.cos(true_heading), np.sin(true_heading)], dtype=float)
+    cross_vec = np.array([-np.sin(true_heading), np.cos(true_heading)], dtype=float)
+    rel_positions = positions - centroid
+    along = rel_positions @ heading_vec
+    cross = rel_positions @ cross_vec
+    mean_length = float(np.mean([ship.length for ship in ships])) if ships else 0.0
+    mean_beam = float(np.mean([ship.beam for ship in ships])) if ships else 0.0
+    true_depth = float(np.max(along) - np.min(along) + mean_length) if len(along) else 0.0
+    true_width = float(np.max(cross) - np.min(cross) + mean_beam) if len(cross) else 0.0
 
     obs_bearing = float(true_bearing + rng.normal(0.0, cfg.bearing_sigma_rad))
     obs_range = float(max(0.0, true_range + rng.normal(0.0, cfg.range_sigma_m)))
     obs_heading = float(true_heading + rng.normal(0.0, cfg.heading_sigma_rad))
     obs_speed = float(max(0.0, true_speed + rng.normal(0.0, cfg.speed_sigma_mps)))
     obs_contacts = int(max(0, round(true_contacts + rng.normal(0.0, cfg.contact_count_sigma))))
+    obs_width = float(max(0.0, true_width + rng.normal(0.0, cfg.formation_width_sigma_m)))
+    obs_depth = float(max(0.0, true_depth + rng.normal(0.0, cfg.formation_depth_sigma_m)))
+    obs_area_km2 = float(max(obs_width * obs_depth / 1_000_000.0, 1e-9))
+    obs_density = float(obs_contacts / obs_area_km2)
 
     class_counts = {
-        "freighter": int(sum(1 for ship in ships if ship.ship_class == ShipClass.FREIGHTER)),
-        "tanker": int(sum(1 for ship in ships if ship.ship_class == ShipClass.TANKER)),
-        "escort": int(sum(1 for ship in ships if ship.ship_class == ShipClass.ESCORT)),
-        "decoy": int(sum(1 for ship in ships if ship.ship_class == ShipClass.DECOY)),
+        "freighter": _noisy_count(
+            sum(1 for ship in ships if ship.ship_class == ShipClass.FREIGHTER),
+            cfg.class_count_sigma,
+            rng,
+        ),
+        "tanker": _noisy_count(
+            sum(1 for ship in ships if ship.ship_class == ShipClass.TANKER),
+            cfg.class_count_sigma,
+            rng,
+        ),
+        "escort": _noisy_count(
+            sum(1 for ship in ships if ship.ship_class == ShipClass.ESCORT),
+            cfg.class_count_sigma,
+            rng,
+        ),
+        "decoy": _noisy_count(
+            sum(1 for ship in ships if ship.ship_class == ShipClass.DECOY),
+            cfg.class_count_sigma,
+            rng,
+        ),
     }
 
     return {
@@ -221,6 +314,9 @@ def build_attacker_observation(
         "estimated_convoy_heading_rad": obs_heading,
         "estimated_convoy_speed_mps": obs_speed,
         "estimated_contact_count": obs_contacts,
+        "estimated_formation_width_m": obs_width,
+        "estimated_formation_depth_m": obs_depth,
+        "estimated_contact_density_per_km2": obs_density,
         "class_confidence_counts": class_counts,
         "environment": (
             None
@@ -237,6 +333,9 @@ def build_attacker_observation(
             "heading_sigma_rad": float(cfg.heading_sigma_rad),
             "speed_sigma_mps": float(cfg.speed_sigma_mps),
             "contact_count_sigma": float(cfg.contact_count_sigma),
+            "formation_width_sigma_m": float(cfg.formation_width_sigma_m),
+            "formation_depth_sigma_m": float(cfg.formation_depth_sigma_m),
+            "class_count_sigma": float(cfg.class_count_sigma),
         },
     }
 
@@ -322,4 +421,3 @@ def _class_scale(ship_class: ShipClass, cfg: ShipMovementRealismConfig) -> float
     if ship_class == ShipClass.DECOY:
         return float(cfg.decoy_scale)
     return float(cfg.freighter_scale)
-
