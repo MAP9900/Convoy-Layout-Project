@@ -167,7 +167,7 @@ Primary simulation feature reference:
 - `notebooks/vae_final_baseline_comparison.ipynb` (`canonical`; final paper-facing comparison of original P01-P60 profiles, direct curated v4 synthetic candidates, and mixed 70/30 VAE-generated candidates through shared source summaries and optional matched Monte Carlo evaluation)
 - `notebooks/attack_candidate_pool_eval.ipynb` (`canonical`; evaluates and ranks existing candidate pools with the scored Monte Carlo simulator)
 - `notebooks/pomdp_candidate_selector.ipynb` (`canonical`; inspects noisy-observation candidate features, belief-limited ranking, and rank gap versus full-state selection)
-- `notebooks/pomdp_candidate_eval.ipynb` (`canonical`; evaluates belief-selected top-k candidates from the mixed 70/30 VAE pool under good/baseline/poor observation presets across multiple observation seeds, reports mean/std, and compares against the full-state oracle run when available)
+- `notebooks/pomdp_candidate_eval.ipynb` (`canonical`; evaluates belief-selected top-k candidates from the mixed 70/30 VAE pool under good/baseline/poor observation presets across multiple observation seeds, reports mean/std, compares against the full-state oracle run when available, and writes compact reporting artifacts under `results/diag/pomdp_candidate_eval/`)
 
 ## Archived
 

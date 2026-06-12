@@ -107,6 +107,41 @@ Current mitigation:
 - add a specific penalty for choosing inside-envelope attacks under high uncertainty
 - evaluate each preset across multiple observation seeds and report mean/std
 
+## Current Results - 2026-06-12
+
+Latest notebook run:
+
+- notebook: `notebooks/pomdp_candidate_eval.ipynb`
+- candidate source: `data/attack_profiles/vae_candidates/mixed_curated70_random30_hit_candidates.jsonl`
+- full-state comparison run: `results/runs/candidate_pool_eval/20260512_144030_vae_final_baseline_mixed_vae`
+- observation seeds: `1945, 1946, 1947, 1948, 1949`
+- top-k candidates evaluated per observation run: `25`
+
+Aggregate results:
+
+| Selector / preset | Expected hits | Expected loss | Unique ships hit | CVaR_90 loss |
+|---|---:|---:|---:|---:|
+| full-state oracle | `3.851` | `6.607` | `3.180` | `6.880` |
+| `good_contact` | `3.449 +/- 0.063` | `4.096 +/- 0.173` | `1.865 +/- 0.095` | `4.581 +/- 0.193` |
+| `baseline_night` | `3.466 +/- 0.112` | `3.967 +/- 0.249` | `1.791 +/- 0.146` | `4.424 +/- 0.291` |
+| `poor_contact` | `3.031 +/- 0.156` | `3.561 +/- 0.181` | `1.617 +/- 0.084` | `4.095 +/- 0.161` |
+
+Interpretation:
+
+- The belief-limited selector is materially weaker than the full-state oracle, which is the expected POMDP behavior.
+- `poor_contact` now clearly degrades attack quality relative to `good_contact` and `baseline_night`.
+- `good_contact` and `baseline_night` remain close, which is acceptable because they are adjacent contact-quality regimes and use the same candidate source.
+- `poor_contact` had `0%` top-25 overlap with the full-state oracle across the five observation seeds.
+- Top-k composition shifted with degraded observation quality: `good_contact` mostly selected inside-convoy-envelope candidates, while `poor_contact` shifted toward `ahead_vae` and `astern_vae` candidates.
+
+Saved reporting artifacts:
+
+- `results/diag/pomdp_candidate_eval/pomdp_candidate_eval_summary.csv`
+- `results/diag/pomdp_candidate_eval/pomdp_candidate_eval_summary.json`
+- `results/diag/pomdp_candidate_eval/pomdp_candidate_eval_per_run.csv`
+- `results/diag/pomdp_candidate_eval/pomdp_candidate_eval_oracle_overlap.csv`
+- `results/diag/pomdp_candidate_eval/pomdp_candidate_eval_preset_pair_overlap.csv`
+
 ## Evaluation Pipeline
 
 1. Load the mixed `70/30` VAE candidate pool.

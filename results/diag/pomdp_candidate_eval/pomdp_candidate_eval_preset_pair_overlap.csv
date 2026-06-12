@@ -1,0 +1,16 @@
+observation_seed,preset_a,preset_b,overlap_count,overlap_rate
+1945,good_contact,baseline_night,18,0.72
+1945,good_contact,poor_contact,4,0.16
+1945,baseline_night,poor_contact,10,0.4
+1946,good_contact,baseline_night,20,0.8
+1946,good_contact,poor_contact,4,0.16
+1946,baseline_night,poor_contact,9,0.36
+1947,good_contact,baseline_night,17,0.68
+1947,good_contact,poor_contact,5,0.2
+1947,baseline_night,poor_contact,8,0.32
+1948,good_contact,baseline_night,20,0.8
+1948,good_contact,poor_contact,1,0.04
+1948,baseline_night,poor_contact,3,0.12
+1949,good_contact,baseline_night,18,0.72
+1949,good_contact,poor_contact,6,0.24
+1949,baseline_night,poor_contact,11,0.44
