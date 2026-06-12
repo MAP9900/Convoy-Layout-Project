@@ -1,0 +1,44 @@
+candidate_path: "/Users/matthewplambeck/Desktop/Convoy Layout Project/results/runs/pomdp_candidate_selector/20260612_132251_pomdp_poor_contact_seed1947_notebook/top_belief_candidate_pool.jsonl"
+convoy_profile: "convoy_layout_1"
+profile_count: 25
+seeds:
+  - 1942
+  - 1943
+  - 1944
+n_trials_per_seed: 10
+t_max: 400.0
+max_hits_per_torpedo: 1
+objective:
+  preset_name: "balanced_default"
+  w_total_value: 1.0
+  w_total_hits: 0.0
+  w_unique_ships_hit: 1.0
+  w_repeat_hits: 0.2
+  class_value_weights:
+    freighter: 1.0
+    tanker: 1.5
+    escort: 0.5
+    decoy: 0.2
+  escort_loss_discount: 0.75
+  mode: "defender_minimize"
+  risk_alpha: null
+noise:
+  sigma_heading_rad: 0.0
+  sigma_launch_delay: 0.0
+  sigma_speed_mps: 0.0
+  p_dud: 0.0
+environment:
+  time_of_day: "night"
+  visibility_m: 3500.0
+  sea_state: 4
+  detection_risk_scale: 1.0
+ship_movement_realism:
+  position_jitter_std_m: 8.0
+  heading_jitter_std_rad: 0.015
+  deviation_offset_cap_m: 12.0
+  enable_slot_swaps: false
+  max_swap_fraction: 0.0
+  freighter_scale: 1.0
+  tanker_scale: 0.9
+  escort_scale: 0.6
+  decoy_scale: 1.1

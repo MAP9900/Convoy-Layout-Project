@@ -1,0 +1,40 @@
+{
+  "workflow": "candidate_pool_eval",
+  "git_sha": "0e512994d35e8f4ceda01f8743fec60c19c764a2",
+  "candidate_path": "/Users/matthewplambeck/Desktop/Convoy Layout Project/results/runs/pomdp_candidate_selector/20260612_132248_pomdp_good_contact_seed1947_notebook/top_belief_candidate_pool.jsonl",
+  "candidate_record_count": 25,
+  "evaluated_profile_count": 25,
+  "convoy_profile": "convoy_layout_1",
+  "seed_sets": {
+    "eval": [
+      1942,
+      1943,
+      1944
+    ]
+  },
+  "n_trials_per_seed": 10,
+  "t_max": 400.0,
+  "objective": {
+    "preset_name": "balanced_default",
+    "w_total_value": 1.0,
+    "w_total_hits": 0.0,
+    "w_unique_ships_hit": 1.0,
+    "w_repeat_hits": 0.2,
+    "class_value_weights": {
+      "freighter": 1.0,
+      "tanker": 1.5,
+      "escort": 0.5,
+      "decoy": 0.2
+    },
+    "escort_loss_discount": 0.75,
+    "mode": "defender_minimize",
+    "risk_alpha": null
+  },
+  "artifacts": {
+    "ranked_candidates_csv": "ranked_candidates.csv",
+    "top_candidates_json": "top_candidates.json",
+    "metrics_summary_json": "metrics_summary.json",
+    "run_manifest_json": "run_manifest.json",
+    "config_resolved_yaml": "config_resolved.yaml"
+  }
+}

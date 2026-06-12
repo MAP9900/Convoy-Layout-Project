@@ -1,0 +1,20 @@
+{
+  "candidate_pool": {
+    "profiles": 1000,
+    "mean_belief_score": 0.7523195123004736,
+    "best_belief_score": 1.0111972110304208,
+    "best_profile_id": "VAE000463"
+  },
+  "top_k": {
+    "profiles": 25,
+    "mean_belief_score": 0.9939629446606116,
+    "best_profile_id": "VAE000463"
+  },
+  "selection": {
+    "method": "belief_limited_heuristic_v1",
+    "observation_preset": "poor_contact",
+    "score": "belief_score",
+    "higher_is_better_for_attacker": true,
+    "top_k": 25
+  }
+}
