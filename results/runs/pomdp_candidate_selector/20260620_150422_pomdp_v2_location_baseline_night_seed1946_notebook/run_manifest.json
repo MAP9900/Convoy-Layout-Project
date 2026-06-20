@@ -1,0 +1,29 @@
+{
+  "workflow": "pomdp_candidate_selector",
+  "git_sha": "f1eb69009cd2bf09a5355885e98095c7cdaf8197",
+  "candidate_path": "/Users/matthewplambeck/Desktop/Convoy Layout Project/data/attack_profiles/vae_candidates/mixed_curated70_random30_hit_candidates.jsonl",
+  "candidate_record_count": 1000,
+  "evaluated_profile_count": 1000,
+  "convoy_profile": "convoy_layout_1",
+  "seed": 1946,
+  "observation_preset": "baseline_night",
+  "observation_config": {
+    "bearing_sigma_rad": 0.04,
+    "range_sigma_m": 120.0,
+    "heading_sigma_rad": 0.06,
+    "speed_sigma_mps": 0.5,
+    "contact_count_sigma": 0.4,
+    "formation_width_sigma_m": 180.0,
+    "formation_depth_sigma_m": 200.0,
+    "class_count_sigma": 0.8,
+    "contact_detection_fraction": 0.65,
+    "contact_detection_fraction_sigma": 0.1
+  },
+  "artifacts": {
+    "belief_ranked_candidates_csv": "belief_ranked_candidates.csv",
+    "top_belief_candidates_json": "top_belief_candidates.json",
+    "top_belief_candidate_pool_jsonl": "top_belief_candidate_pool.jsonl",
+    "metrics_summary_json": "metrics_summary.json",
+    "run_manifest_json": "run_manifest.json"
+  }
+}
