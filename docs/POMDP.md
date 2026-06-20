@@ -141,6 +141,24 @@ Important comparison caveat:
 - that fixed-location comparison isolates how much degradation comes from observation-limited fire control rather than different spawn/location choices
 - default fixed-location source: `good_contact`, observation seed `1945`, top-k `25`
 
+Current fixed-location result:
+
+- source location set: `good_contact`, observation seed `1945`, top-k `25`
+- source composition: `23` inside-convoy-envelope candidates, `1` astern candidate, `1` ahead candidate
+- each preset rebuilt fire control from those same `25` source locations across observation seeds `1945` to `1949`
+
+| Fixed locations, rebuilt preset | Expected hits | Expected loss | Unique ships hit | CVaR_90 loss |
+|---|---:|---:|---:|---:|
+| `good_contact` | `2.700 +/- 0.086` | `3.816 +/- 0.219` | `1.795` | `4.074` |
+| `baseline_night` | `2.557 +/- 0.088` | `3.805 +/- 0.187` | `1.803` | `4.194` |
+| `poor_contact` | `2.430 +/- 0.111` | `3.640 +/- 0.163` | `1.724` | `3.989` |
+
+Interpretation:
+
+- holding locations fixed gives the expected monotonic hit-count degradation from `good_contact` to `poor_contact`
+- the earlier variable-location v2 result where `poor_contact` had higher expected loss was mainly a location-selection/composition effect, not evidence that poor-contact fire control was better
+- `good_contact` and `baseline_night` remain close, which is acceptable because they are adjacent observation-quality regimes
+
 ## First Eval Finding
 
 The first single-seed evaluation showed the desired separation between belief-limited selection and the full-state oracle, but the three observation presets were too similar to each other.
