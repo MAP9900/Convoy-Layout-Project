@@ -1,6 +1,6 @@
 # POMDP Attacker Notes
 
-Status: active planning / MVP evaluation track as of 2026-06-10.
+Status: POMDP v2 MVP complete as of 2026-06-20.
 
 ## Purpose
 
@@ -141,7 +141,37 @@ Important comparison caveat:
 - that fixed-location comparison isolates how much degradation comes from observation-limited fire control rather than different spawn/location choices
 - default fixed-location source: `good_contact`, observation seed `1945`, top-k `25`
 
-Current fixed-location result:
+## Current Results - 2026-06-20
+
+Latest notebook run:
+
+- notebook: `notebooks/pomdp_fire_control_eval.ipynb`
+- candidate source: `data/attack_profiles/vae_candidates/mixed_curated70_random30_hit_candidates.jsonl`
+- full-state comparison run: `results/runs/candidate_pool_eval/20260512_144030_vae_final_baseline_mixed_vae`
+- observation seeds: `1945, 1946, 1947, 1948, 1949`
+- top-k candidates evaluated per observation run: `25`
+- POMDP v2 model: convoy/formation-level partial-observation fire control
+
+Main variable-location comparison:
+
+| Selector / preset | Expected hits | Expected loss | Unique ships hit | CVaR_90 loss |
+|---|---:|---:|---:|---:|
+| full-state oracle | `3.851` | `6.607` | `3.180` | `6.880` |
+| v1 selected original VAE, `good_contact` | `3.449 +/- 0.063` | `4.096 +/- 0.173` | `1.865` | `4.581` |
+| v1 selected original VAE, `baseline_night` | `3.466 +/- 0.112` | `3.967 +/- 0.249` | `1.791` | `4.424` |
+| v1 selected original VAE, `poor_contact` | `3.031 +/- 0.156` | `3.561 +/- 0.181` | `1.617` | `4.095` |
+| v2 fire-control rebuild, `good_contact` | `2.544 +/- 0.137` | `3.574 +/- 0.154` | `1.679` | `3.869` |
+| v2 fire-control rebuild, `baseline_night` | `2.425 +/- 0.176` | `3.748 +/- 0.300` | `1.791` | `4.157` |
+| v2 fire-control rebuild, `poor_contact` | `2.269 +/- 0.136` | `3.998 +/- 0.309` | `1.947` | `4.521` |
+
+Interpretation:
+
+- v2 reduces raw hit count relative to v1 because it no longer reuses the VAE candidate's original firing solution
+- this is the expected realism penalty from partial-observation fire control
+- the variable-location `poor_contact` case has lower expected hits but higher expected loss than `good_contact`; this comes from different location/target-composition selection, not from better poor-contact fire control
+- the full-state oracle remains strongest, as expected
+
+Fixed-location diagnostic:
 
 - source location set: `good_contact`, observation seed `1945`, top-k `25`
 - source composition: `23` inside-convoy-envelope candidates, `1` astern candidate, `1` ahead candidate
@@ -158,6 +188,16 @@ Interpretation:
 - holding locations fixed gives the expected monotonic hit-count degradation from `good_contact` to `poor_contact`
 - the earlier variable-location v2 result where `poor_contact` had higher expected loss was mainly a location-selection/composition effect, not evidence that poor-contact fire control was better
 - `good_contact` and `baseline_night` remain close, which is acceptable because they are adjacent observation-quality regimes
+
+Saved reporting artifacts:
+
+- `results/diag/pomdp_fire_control_eval/pomdp_fire_control_eval_summary.csv`
+- `results/diag/pomdp_fire_control_eval/pomdp_fire_control_eval_per_run.csv`
+- `results/diag/pomdp_fire_control_eval/pomdp_fire_control_rebuilt_pools.csv`
+- `results/diag/pomdp_fire_control_eval/pomdp_fire_control_fixed_location_summary.csv`
+- `results/diag/pomdp_fire_control_eval/pomdp_fire_control_fixed_location_per_run.csv`
+- `results/diag/pomdp_fire_control_eval/pomdp_fire_control_fixed_location_rebuilt_pools.csv`
+- `results/diag/pomdp_fire_control_eval/pomdp_fire_control_eval_summary.json`
 
 ## First Eval Finding
 
@@ -178,7 +218,7 @@ Current mitigation:
 - add a specific penalty for choosing inside-envelope attacks under high uncertainty
 - evaluate each preset across multiple observation seeds and report mean/std
 
-## Current Results - 2026-06-12
+## POMDP v1 Results - 2026-06-12
 
 Latest notebook run:
 

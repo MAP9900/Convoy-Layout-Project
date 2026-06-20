@@ -468,7 +468,17 @@ First implemented POMDP bridge:
 
 The belief selector uses noisy attacker-facing estimates, formation-level estimates, contact-detection fraction, and candidate profile/intent fields. It deliberately does not use true dynamic hit counts, value loss, expected loss, or full-state ranks while scoring. Observation presets are `good_contact`, `baseline_night`, and `poor_contact`, with `good_contact` as the default. The current evaluation notebook repeats selection across multiple observation seeds and reports preset mean/std.
 
-POMDP v2 keeps the VAE as a plausible attack-location source, then rebuilds firing parameters from noisy observation with `fire_control_lite` before simulation. This is the preferred next realism bridge before any learned attacker policy work.
+POMDP v2 keeps the VAE as a plausible attack-location source, then rebuilds firing parameters from noisy convoy/formation-level observation with `fire_control_lite` before simulation. This is the preferred realism bridge before any learned attacker policy work.
+
+Current POMDP v2 interpretation:
+
+- full-state mixed-VAE oracle remains the attacker upper bound
+- v1 POMDP selects complete VAE profiles under partial observation
+- v2 POMDP selects VAE-derived locations/context, then rebuilds the firing solution from noisy observation
+- v2 reduces expected simulated torpedo hits relative to v1, which is the expected realism penalty from not reusing the VAE profile's original firing solution
+- fixed-location diagnostics confirm that observation quality degrades fire-control performance when spawn/location selection is held constant
+
+Use `docs/POMDP.md` as the source of truth for current POMDP v1/v2 result tables.
 
 ## Known Limitations
 
