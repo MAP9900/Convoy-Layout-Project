@@ -1,0 +1,62 @@
+{
+  "candidate_pool": {
+    "profiles": 25,
+    "samples": 750,
+    "expected_hits": 2.578666666666667,
+    "CVaR_90": 2.763076923076923,
+    "VaR_90": 3.0,
+    "p_hit_ge_1": 1.0,
+    "value_lost": 1.9682666666666666,
+    "expected_unique_ships_hit": 1.9186666666666667,
+    "expected_repeat_hits": 0.66,
+    "expected_loss": 4.018933333333334,
+    "CVaR_90_loss": 4.346615384615385
+  },
+  "top_k": {
+    "profiles": 25,
+    "samples": 750,
+    "expected_hits": 2.578666666666667,
+    "CVaR_90": 2.763076923076923,
+    "VaR_90": 3.0,
+    "p_hit_ge_1": 1.0,
+    "value_lost": 1.9682666666666666,
+    "expected_unique_ships_hit": 1.9186666666666667,
+    "expected_repeat_hits": 0.66,
+    "expected_loss": 4.018933333333334,
+    "CVaR_90_loss": 4.346615384615385
+  },
+  "best_candidate": {
+    "model_name": "vae_candidate_pool_full_state",
+    "profile_id": "POMDP_FC_FIXED_BASELINE_NIGHT_1946_0004",
+    "samples": 30,
+    "expected_hits": 3.0,
+    "CVaR_90": 3.0,
+    "p_hit_ge_1": 1.0,
+    "value_lost": 3.049999999999999,
+    "expected_unique_ships_hit": 3.0,
+    "expected_repeat_hits": 0.0,
+    "expected_loss": 6.050000000000002,
+    "CVaR_90_loss": 6.050000000000002,
+    "spawn_region": "inside_convoy_envelope",
+    "approach_side": "inside",
+    "inside_convoy_envelope": true,
+    "source_label": "",
+    "source_actual_outcome_label": "",
+    "source_clearance_m": 432.26143884834147,
+    "source_n_hits": "",
+    "source_unique_ships_hit": "",
+    "source_closest_any_ship_distance_m": "",
+    "source_closest_any_ship_id": "",
+    "attacker_score": 6.050000000000002,
+    "rank": 1
+  },
+  "selection": {
+    "method": "full_state_attacker_rank",
+    "score": "expected_loss",
+    "higher_is_better_for_attacker": true,
+    "top_k": 25
+  },
+  "timing": {
+    "total_seconds": 4.67593999998644
+  }
+}

@@ -137,8 +137,9 @@ Important comparison caveat:
 
 - the main v2 notebook currently compares each preset's own selected locations and rebuilt fire-control solutions
 - this combines location-selection quality and firing-solution quality
-- the next diagnostic should hold selected source locations fixed, then rebuild only the fire-control solution under `good_contact`, `baseline_night`, and `poor_contact`
-- that fixed-location comparison will isolate how much degradation comes from observation-limited fire control rather than different spawn/location choices
+- the notebook also includes a fixed-location diagnostic that holds selected source locations fixed, then rebuilds only the fire-control solution under `good_contact`, `baseline_night`, and `poor_contact`
+- that fixed-location comparison isolates how much degradation comes from observation-limited fire control rather than different spawn/location choices
+- default fixed-location source: `good_contact`, observation seed `1945`, top-k `25`
 
 ## First Eval Finding
 
@@ -261,6 +262,8 @@ The notebook:
 - evaluates selected top-k candidates through the scored Monte Carlo simulator
 - summarizes expected hits, expected loss, unique ships hit, and CVaR with mean/std by preset
 - compares top-k overlap with the full-state oracle run when available
+- runs a fixed-location POMDP v2 diagnostic so each preset rebuilds fire control from the same selected source locations
+- writes fixed-location summary CSVs alongside the main POMDP v2 artifacts
 
 ## Next Step
 

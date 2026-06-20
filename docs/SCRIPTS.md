@@ -170,7 +170,7 @@ Primary simulation feature reference:
 - `notebooks/attack_candidate_pool_eval.ipynb` (`canonical`; evaluates and ranks existing candidate pools with the scored Monte Carlo simulator)
 - `notebooks/pomdp_candidate_selector.ipynb` (`canonical`; inspects noisy-observation candidate features, belief-limited ranking, and rank gap versus full-state selection)
 - `notebooks/pomdp_candidate_eval.ipynb` (`canonical`; evaluates belief-selected top-k candidates from the mixed 70/30 VAE pool under good/baseline/poor observation presets across multiple observation seeds, reports mean/std, compares against the full-state oracle run when available, and writes compact reporting artifacts under `results/diag/pomdp_candidate_eval/`)
-- `notebooks/pomdp_fire_control_eval.ipynb` (`canonical`; POMDP v2 notebook that selects VAE attack locations, rebuilds firing solutions with noisy observations and `fire_control_lite`, evaluates the rebuilt candidate pools, and writes compact artifacts under `results/diag/pomdp_fire_control_eval/`)
+- `notebooks/pomdp_fire_control_eval.ipynb` (`canonical`; POMDP v2 notebook that selects VAE attack locations, rebuilds firing solutions with noisy observations and `fire_control_lite`, evaluates the rebuilt candidate pools, runs a fixed-location diagnostic that rebuilds all presets from the same source locations, and writes compact artifacts under `results/diag/pomdp_fire_control_eval/`)
 
 ## Archived
 

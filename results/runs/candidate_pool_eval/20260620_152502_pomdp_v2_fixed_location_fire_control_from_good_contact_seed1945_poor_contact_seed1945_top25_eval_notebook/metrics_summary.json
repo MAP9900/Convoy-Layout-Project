@@ -1,0 +1,62 @@
+{
+  "candidate_pool": {
+    "profiles": 25,
+    "samples": 750,
+    "expected_hits": 2.413333333333333,
+    "CVaR_90": 2.5693333333333332,
+    "VaR_90": 3.04,
+    "p_hit_ge_1": 0.9626666666666667,
+    "value_lost": 1.7648,
+    "expected_unique_ships_hit": 1.7133333333333334,
+    "expected_repeat_hits": 0.7,
+    "expected_loss": 3.618133333333333,
+    "CVaR_90_loss": 3.882666666666667
+  },
+  "top_k": {
+    "profiles": 25,
+    "samples": 750,
+    "expected_hits": 2.413333333333333,
+    "CVaR_90": 2.5693333333333332,
+    "VaR_90": 3.04,
+    "p_hit_ge_1": 0.9626666666666667,
+    "value_lost": 1.7648,
+    "expected_unique_ships_hit": 1.7133333333333334,
+    "expected_repeat_hits": 0.7,
+    "expected_loss": 3.618133333333333,
+    "CVaR_90_loss": 3.882666666666667
+  },
+  "best_candidate": {
+    "model_name": "vae_candidate_pool_full_state",
+    "profile_id": "POMDP_FC_FIXED_POOR_CONTACT_1945_0022",
+    "samples": 30,
+    "expected_hits": 4.0,
+    "CVaR_90": 4.0,
+    "p_hit_ge_1": 1.0,
+    "value_lost": 4.150000000000001,
+    "expected_unique_ships_hit": 4.0,
+    "expected_repeat_hits": 0.0,
+    "expected_loss": 8.15,
+    "CVaR_90_loss": 8.15,
+    "spawn_region": "inside_convoy_envelope",
+    "approach_side": "inside",
+    "inside_convoy_envelope": true,
+    "source_label": "",
+    "source_actual_outcome_label": "",
+    "source_clearance_m": 465.349023982639,
+    "source_n_hits": "",
+    "source_unique_ships_hit": "",
+    "source_closest_any_ship_distance_m": "",
+    "source_closest_any_ship_id": "",
+    "attacker_score": 8.15,
+    "rank": 1
+  },
+  "selection": {
+    "method": "full_state_attacker_rank",
+    "score": "expected_loss",
+    "higher_is_better_for_attacker": true,
+    "top_k": 25
+  },
+  "timing": {
+    "total_seconds": 5.118704874999821
+  }
+}
