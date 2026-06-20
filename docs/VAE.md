@@ -459,6 +459,7 @@ First implemented POMDP bridge:
 - entrypoint: `experiments/run_pomdp_candidate_selector.py`
 - notebook: `notebooks/pomdp_candidate_selector.ipynb`
 - evaluation notebook: `notebooks/pomdp_candidate_eval.ipynb`
+- fire-control v2 notebook: `notebooks/pomdp_fire_control_eval.ipynb`
 - POMDP notes: `docs/POMDP.md`
 - primary candidate source: `data/attack_profiles/vae_candidates/mixed_curated70_random30_hit_candidates.jsonl`
 - selector method: `belief_limited_heuristic_v1`
@@ -466,6 +467,8 @@ First implemented POMDP bridge:
 - smoke run best belief score: `0.9678`
 
 The belief selector uses noisy attacker-facing estimates, formation-level estimates, contact-detection fraction, and candidate profile/intent fields. It deliberately does not use true dynamic hit counts, value loss, expected loss, or full-state ranks while scoring. Observation presets are `good_contact`, `baseline_night`, and `poor_contact`, with `good_contact` as the default. The current evaluation notebook repeats selection across multiple observation seeds and reports preset mean/std.
+
+POMDP v2 keeps the VAE as a plausible attack-location source, then rebuilds firing parameters from noisy observation with `fire_control_lite` before simulation. This is the preferred next realism bridge before any learned attacker policy work.
 
 ## Known Limitations
 

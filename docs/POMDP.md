@@ -65,9 +65,11 @@ cfg = get_attacker_observation_config("good_contact")
 Implemented bridge:
 
 - `convoy_sim/pomdp_candidate_selector.py`
+- `convoy_sim/pomdp_fire_control.py`
 - `experiments/run_pomdp_candidate_selector.py`
 - `notebooks/pomdp_candidate_selector.ipynb`
 - `notebooks/pomdp_candidate_eval.ipynb`
+- `notebooks/pomdp_fire_control_eval.ipynb`
 
 Current method:
 
@@ -87,6 +89,44 @@ The heuristic scores:
 - additional inside-envelope uncertainty penalty, because internal convoy geometry is harder to resolve under poor contact
 
 This is not a learned POMDP policy yet. It is an auditable baseline that establishes the information boundary and comparison pipeline before RL or belief-state training.
+
+## POMDP v2 Fire-Control Rebuild
+
+POMDP v1 selects among complete VAE-generated `AttackProfile`s.
+POMDP v2 keeps the VAE role narrower: it uses the VAE candidate as a plausible U-boat location / approach context, then rebuilds the firing solution from noisy observation.
+
+Current v2 flow:
+
+1. Load the mixed `70/30` VAE candidate pool.
+2. Run the belief-limited selector to choose top-k candidate locations.
+3. For each selected location, build a noisy attacker observation with the selected preset.
+4. Point the U-boat toward the estimated convoy/contact bearing.
+5. Use `fire_control_lite` to rebuild:
+   - centerline bearing
+   - spread
+   - salvo size
+   - G7a speed setting
+   - torpedo speed and max run time
+6. Write rebuilt JSONL records under `results/diag/pomdp_fire_control_eval/candidate_pools/`.
+7. Evaluate rebuilt profiles with the same Monte Carlo candidate-pool evaluator.
+
+V2 deliberately does not copy the source candidate's original `base_bearing_rad`, `spread_rad`, source outcome labels, or source audit fields into the rebuilt candidate record.
+This keeps the partial-observability boundary cleaner: the attacker gets a plausible position, then derives the firing solution from imperfect information.
+
+Notebook:
+
+- `notebooks/pomdp_fire_control_eval.ipynb`
+
+Expected comparison:
+
+```text
+full-state oracle
+> POMDP v1 selected original VAE profiles
+> POMDP v2 fire-control rebuilt profiles under good/baseline contact
+> POMDP v2 fire-control rebuilt profiles under poor contact
+```
+
+Individual v2 profiles may occasionally beat their v1 source if `fire_control_lite` corrects a weak VAE firing parameter, so the intended comparison is aggregate behavior across presets and observation seeds.
 
 ## First Eval Finding
 
@@ -177,4 +217,4 @@ The notebook:
 
 ## Next Step
 
-Run `notebooks/pomdp_candidate_eval.ipynb`, inspect whether metrics degrade as observation quality worsens, and then decide whether the heuristic is sufficient as a baseline or whether to replace it with an attacker policy learner.
+Run `notebooks/pomdp_fire_control_eval.ipynb`, compare v1 selected profiles against v2 fire-control rebuilt profiles, and then pause for codebase audit/cleanup before any learned attacker policy work.

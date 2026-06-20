@@ -84,6 +84,11 @@ from convoy_sim.realism import (
     get_attacker_observation_config,
     list_attacker_observation_presets,
 )
+from convoy_sim.pomdp_fire_control import (
+    build_fire_control_rebuilt_record,
+    rebuild_records_with_fire_control,
+    write_fire_control_candidate_pool,
+)
 
 __all__ = [
     "Vec2",
@@ -165,4 +170,7 @@ __all__ = [
     "get_attacker_observation_config",
     "list_attacker_observation_presets",
     "apply_ship_movement_realism",
+    "build_fire_control_rebuilt_record",
+    "rebuild_records_with_fire_control",
+    "write_fire_control_candidate_pool",
 ]

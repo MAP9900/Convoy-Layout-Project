@@ -259,6 +259,7 @@ Profile supports:
 - explicit fan spread doctrine controls
 
 `fire_control.py` provides a deterministic attacker-side baseline that can turn noisy observation into a resolved `AttackProfile`.
+`pomdp_fire_control.py` uses that baseline for POMDP v2: VAE candidates provide plausible U-boat locations, while noisy observation plus `fire_control_lite` rebuilds the firing solution before Monte Carlo evaluation.
 
 ## 8.2 V2 U-Boat Motion Controls
 
@@ -355,6 +356,7 @@ Role in the stack:
 - `build_attacker_observation(...)` produces the attacker-facing estimate of convoy state
 - `fire_control.py` consumes that estimate and turns it into a firing solution
 - it does not replace the observation layer and it does not generate observation noise itself
+- `pomdp_fire_control.py` applies this to selected VAE candidate locations so the attacker does not reuse the VAE candidate's original bearing/spread
 
 Inputs:
 - U-boat position

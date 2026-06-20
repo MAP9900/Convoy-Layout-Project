@@ -58,6 +58,7 @@ Primary simulation feature reference:
 - `experiments/generate_vae_candidate_pool.py`: GenAI candidate-pool generator for adversarial/POMDP work. It loads a trained attack-profile VAE checkpoint, samples decoded profiles with either the Gaussian prior or empirical latent-bank sampler, runs minimum-clearance and moving zig-zag dynamic outcome diagnostics, filters to selected actual outcomes by default `credible_hit_threat`, derives candidate metadata such as spawn region and closest/hit ships, and writes JSONL records shaped like the existing profile datasets. (`canonical`)
 - `experiments/evaluate_attack_candidate_pool.py`: Full-state adversarial candidate selector baseline. It loads JSONL candidate pools such as VAE-derived candidates, evaluates each profile against a chosen convoy layout using the existing Monte Carlo scored simulation and objective plumbing, then ranks candidates from the attacker perspective by highest defender loss or expected hits. Outputs ranked CSV plus top-candidate and metrics artifacts under `results/runs/candidate_pool_eval/`. (`canonical`)
 - `experiments/run_pomdp_candidate_selector.py`: First POMDP bridge. It loads a VAE candidate pool, builds noisy attacker-facing observations for each candidate, ranks candidates with the belief-limited heuristic selector, and writes ranked CSV/JSON artifacts plus a selected top-k candidate-pool JSONL under `results/runs/pomdp_candidate_selector/`. Observation presets are `good_contact`, `baseline_night`, and `poor_contact`, with `good_contact` as the default. Poorer presets reduce contact-detection fraction and increase range/bearing/formation/class uncertainty. This is a baseline selector, not a learned policy. (`canonical`)
+- `convoy_sim/pomdp_fire_control.py`: POMDP v2 helper module. It takes selected VAE candidate locations, builds noisy attacker observations, rebuilds firing parameters with `fire_control_lite`, and writes rebuilt JSONL candidate pools for normal Monte Carlo evaluation. (`canonical`)
 - `experiments/audit_attack_profile_dataset.py`: Audits JSONL synthetic attack-profile corpora, writes a flattened `profiles_flat.csv`, per-dimension count CSVs, and a summary JSON. v3 target-zone records add counts by `target_zone_kind`, `approach_side`, and `approach_lane`; v4 tactical records also add `spawn_region`, `inside_convoy_envelope`, target-aspect, target-score, nearest-ship clearance, lead-solution fields, and aim-offset fields. The module functions can also be imported directly into a notebook for ad hoc inspection. (`diagnostic`)
 - `convoy_sim/profile_outcome_audit.py`: Reusable dynamic outcome audit for generated profile datasets. It converts records back into `AttackProfile`s, builds sim-native torpedoes, evaluates them against moving zig-zag convoy kinematics, and reports intended-target hits, other-ship hits, closest passes, and outcome-vs-intent agreement. It can also attach those outcome labels back onto JSONL-style records, filter records by the outcome gate, and support future adversarial candidate-selection work. Used by `random_tactical_v4` generation and `notebooks/profile_generation_tests.ipynb`. (`diagnostic`)
 - `experiments/audit_attack_profiles.py`: Attack-profile geometry plausibility audit. (`diagnostic`)
@@ -93,6 +94,7 @@ Primary simulation feature reference:
 - `convoy_sim/objectives.py` (`canonical`)
 - `convoy_sim/profile_audit.py` (`diagnostic`)
 - `convoy_sim/pomdp_candidate_selector.py` (`canonical`)
+- `convoy_sim/pomdp_fire_control.py` (`canonical`)
 - `convoy_sim/profile_generation_viz.py` (`diagnostic`)
 - `convoy_sim/realism.py` (`canonical`)
 - `convoy_sim/risk.py` (`canonical`)
@@ -168,6 +170,7 @@ Primary simulation feature reference:
 - `notebooks/attack_candidate_pool_eval.ipynb` (`canonical`; evaluates and ranks existing candidate pools with the scored Monte Carlo simulator)
 - `notebooks/pomdp_candidate_selector.ipynb` (`canonical`; inspects noisy-observation candidate features, belief-limited ranking, and rank gap versus full-state selection)
 - `notebooks/pomdp_candidate_eval.ipynb` (`canonical`; evaluates belief-selected top-k candidates from the mixed 70/30 VAE pool under good/baseline/poor observation presets across multiple observation seeds, reports mean/std, compares against the full-state oracle run when available, and writes compact reporting artifacts under `results/diag/pomdp_candidate_eval/`)
+- `notebooks/pomdp_fire_control_eval.ipynb` (`canonical`; POMDP v2 notebook that selects VAE attack locations, rebuilds firing solutions with noisy observations and `fire_control_lite`, evaluates the rebuilt candidate pools, and writes compact artifacts under `results/diag/pomdp_fire_control_eval/`)
 
 ## Archived
 
