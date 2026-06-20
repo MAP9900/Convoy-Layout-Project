@@ -95,6 +95,11 @@ This is not a learned POMDP policy yet. It is an auditable baseline that establi
 POMDP v1 selects among complete VAE-generated `AttackProfile`s.
 POMDP v2 keeps the VAE role narrower: it uses the VAE candidate as a plausible U-boat location / approach context, then rebuilds the firing solution from noisy observation.
 
+The current v2 fire-control model is formation-level, not ship-identification-level.
+The attacker estimates convoy/contact bearing, range, heading, speed, contact count, class mix, and formation dimensions, then fires a fan/spread into that estimated convoy picture.
+It does not yet select one observed merchant ship and solve a precise intended-target torpedo shot against that ship.
+This is intentional for now: it keeps the POMDP bridge compact, auditable, and useful for convoy-layout optimization without pretending to model a full human periscope/TDC workflow.
+
 Current v2 flow:
 
 1. Load the mixed `70/30` VAE candidate pool.
@@ -127,6 +132,13 @@ full-state oracle
 ```
 
 Individual v2 profiles may occasionally beat their v1 source if `fire_control_lite` corrects a weak VAE firing parameter, so the intended comparison is aggregate behavior across presets and observation seeds.
+
+Important comparison caveat:
+
+- the main v2 notebook currently compares each preset's own selected locations and rebuilt fire-control solutions
+- this combines location-selection quality and firing-solution quality
+- the next diagnostic should hold selected source locations fixed, then rebuild only the fire-control solution under `good_contact`, `baseline_night`, and `poor_contact`
+- that fixed-location comparison will isolate how much degradation comes from observation-limited fire control rather than different spawn/location choices
 
 ## First Eval Finding
 
@@ -202,6 +214,41 @@ full-state selector >= good_contact POMDP >= baseline_night POMDP >= poor_contac
 ```
 
 The POMDP selector may still beat random VAE-only sampling because it is not random; it uses noisy but tactically meaningful estimates.
+
+## Metric Interpretation and Historical Plausibility
+
+The simulator metrics are useful for comparing layouts and attack-candidate policies, but they should not be read as direct historical ship-sinking rates.
+
+Current metric units:
+
+- `expected_hits`: mean simulated torpedo/ship hits, not confirmed sinkings
+- `expected_unique_ships_hit`: mean number of distinct ships hit in a trial
+- `expected_loss`: objective-weighted defender loss, so it can rise even when raw hit count falls if the hits land on higher-value or more distinct ships
+- candidate-pool summaries average metrics across the selected top-k profiles, usually `25`, after each profile has been evaluated over multiple Monte Carlo trials
+
+Historical sanity check:
+
+- At the campaign level, only a minority of transatlantic convoys were attacked, and attacked convoys lost a minority of ships on average.
+- Extreme early-war convoy disasters existed, especially before mature escort doctrine, radar, HF/DF, air cover, and support groups. Examples include HX 72, SC 7, and HX 79 in 1940.
+- Those worst cases often involved multiple U-boats, confused escorts, night surface attacks, and U-boats penetrating the convoy columns. They are not a good baseline for a normal single-attack expected value.
+- Later-war convoy defense became much more effective; by 1943 some heavily contested convoys lost few or no merchant ships while U-boats took severe losses.
+
+Therefore, POMDP v2 values around `2.2` to `2.5` expected hits for selected high-quality attack profiles are plausible only as an optimistic, conditional, attack-event metric.
+They are likely too high if described as normal ships sunk per U-boat contact, normal convoy battle losses, or campaign-level convoy attrition.
+
+For reporting, phrase the result as:
+
+```text
+Under a deliberately attack-conditioned simulator that evaluates selected high-threat U-boat attack profiles, partial-observation fire control reduces expected torpedo hits from the original VAE-selected profiles. The raw hit counts are comparative simulator metrics rather than calibrated historical sinking rates.
+```
+
+Useful historical references for calibration:
+
+- Battle of the Atlantic overview: <https://en.wikipedia.org/wiki/Battle_of_the_Atlantic>
+- Convoy HX 72: <https://en.wikipedia.org/wiki/Convoy_HX_72>
+- Convoy SC 7: <https://en.wikipedia.org/wiki/Convoy_SC_7>
+- Convoy SC 130: <https://en.wikipedia.org/wiki/Convoy_SC_130>
+- Time article on Western Approaches Tactical Unit convoy wargaming and internal-column U-boat attacks: <https://time.com/5772665/uboat-wargames/>
 
 ## Notebook
 
