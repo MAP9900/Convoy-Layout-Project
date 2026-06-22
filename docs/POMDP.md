@@ -9,7 +9,7 @@ The VAE provides realistic candidate attacks; the POMDP selector decides which c
 
 The current primary candidate source is:
 
-- `data/attack_profiles/vae_candidates/mixed_curated70_random30_hit_candidates.jsonl`
+- `results/notebook-results/vae_source_comparison/candidate_pools/mixed_curated70_random30_hit_candidates.jsonl`
 
 This is the mixed `70%` curated v4 / `30%` random v1 VAE candidate pool selected in `docs/VAE.md`.
 
@@ -112,7 +112,7 @@ Current v2 flow:
    - salvo size
    - G7a speed setting
    - torpedo speed and max run time
-6. Write rebuilt JSONL records under `results/diag/pomdp_fire_control_eval/candidate_pools/`.
+6. Write rebuilt JSONL records under `results/notebook-results/pomdp_fire_control_eval/candidate_pools/`.
 7. Evaluate rebuilt profiles with the same Monte Carlo candidate-pool evaluator.
 
 V2 deliberately does not copy the source candidate's original `base_bearing_rad`, `spread_rad`, source outcome labels, or source audit fields into the rebuilt candidate record.
@@ -146,7 +146,7 @@ Important comparison caveat:
 Latest notebook run:
 
 - notebook: `notebooks/pomdp_fire_control_eval.ipynb`
-- candidate source: `data/attack_profiles/vae_candidates/mixed_curated70_random30_hit_candidates.jsonl`
+- candidate source: `results/notebook-results/vae_source_comparison/candidate_pools/mixed_curated70_random30_hit_candidates.jsonl`
 - full-state comparison run: `results/runs/candidate_pool_eval/20260512_144030_vae_final_baseline_mixed_vae`
 - observation seeds: `1945, 1946, 1947, 1948, 1949`
 - top-k candidates evaluated per observation run: `25`
@@ -191,13 +191,13 @@ Interpretation:
 
 Saved reporting artifacts:
 
-- `results/diag/pomdp_fire_control_eval/pomdp_fire_control_eval_summary.csv`
-- `results/diag/pomdp_fire_control_eval/pomdp_fire_control_eval_per_run.csv`
-- `results/diag/pomdp_fire_control_eval/pomdp_fire_control_rebuilt_pools.csv`
-- `results/diag/pomdp_fire_control_eval/pomdp_fire_control_fixed_location_summary.csv`
-- `results/diag/pomdp_fire_control_eval/pomdp_fire_control_fixed_location_per_run.csv`
-- `results/diag/pomdp_fire_control_eval/pomdp_fire_control_fixed_location_rebuilt_pools.csv`
-- `results/diag/pomdp_fire_control_eval/pomdp_fire_control_eval_summary.json`
+- `results/notebook-results/pomdp_fire_control_eval/pomdp_fire_control_eval_summary.csv`
+- `results/notebook-results/pomdp_fire_control_eval/pomdp_fire_control_eval_per_run.csv`
+- `results/notebook-results/pomdp_fire_control_eval/pomdp_fire_control_rebuilt_pools.csv`
+- `results/notebook-results/pomdp_fire_control_eval/pomdp_fire_control_fixed_location_summary.csv`
+- `results/notebook-results/pomdp_fire_control_eval/pomdp_fire_control_fixed_location_per_run.csv`
+- `results/notebook-results/pomdp_fire_control_eval/pomdp_fire_control_fixed_location_rebuilt_pools.csv`
+- `results/notebook-results/pomdp_fire_control_eval/pomdp_fire_control_eval_summary.json`
 
 ## First Eval Finding
 
@@ -223,7 +223,7 @@ Current mitigation:
 Latest notebook run:
 
 - notebook: `notebooks/pomdp_candidate_eval.ipynb`
-- candidate source: `data/attack_profiles/vae_candidates/mixed_curated70_random30_hit_candidates.jsonl`
+- candidate source: `results/notebook-results/vae_source_comparison/candidate_pools/mixed_curated70_random30_hit_candidates.jsonl`
 - full-state comparison run: `results/runs/candidate_pool_eval/20260512_144030_vae_final_baseline_mixed_vae`
 - observation seeds: `1945, 1946, 1947, 1948, 1949`
 - top-k candidates evaluated per observation run: `25`
@@ -247,11 +247,11 @@ Interpretation:
 
 Saved reporting artifacts:
 
-- `results/diag/pomdp_candidate_eval/pomdp_candidate_eval_summary.csv`
-- `results/diag/pomdp_candidate_eval/pomdp_candidate_eval_summary.json`
-- `results/diag/pomdp_candidate_eval/pomdp_candidate_eval_per_run.csv`
-- `results/diag/pomdp_candidate_eval/pomdp_candidate_eval_oracle_overlap.csv`
-- `results/diag/pomdp_candidate_eval/pomdp_candidate_eval_preset_pair_overlap.csv`
+- `results/notebook-results/pomdp_candidate_eval/pomdp_candidate_eval_summary.csv`
+- `results/notebook-results/pomdp_candidate_eval/pomdp_candidate_eval_summary.json`
+- `results/notebook-results/pomdp_candidate_eval/pomdp_candidate_eval_per_run.csv`
+- `results/notebook-results/pomdp_candidate_eval/pomdp_candidate_eval_oracle_overlap.csv`
+- `results/notebook-results/pomdp_candidate_eval/pomdp_candidate_eval_preset_pair_overlap.csv`
 
 ## Evaluation Pipeline
 

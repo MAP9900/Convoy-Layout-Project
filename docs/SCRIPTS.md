@@ -159,7 +159,7 @@ Primary simulation feature reference:
 
 - `notebooks/attack_profile_tests.ipynb` (`diagnostic`)
 - `notebooks/attack_manual_verification.ipynb` (`diagnostic`)
-- `notebooks/torpedo_firing_doctrine_comparison.ipynb` (`diagnostic`; saves PNGs to `notebooks/results/torpedo_firing_doctrine_comparison/` by default)
+- `notebooks/torpedo_firing_doctrine_comparison.ipynb` (`diagnostic`; saves PNGs to `results/notebook-results/torpedo_firing_doctrine_comparison/` by default)
 - `notebooks/profile_generation_tests.ipynb` (`canonical`; notebook-first QA for curated/random profile generation, spawn geometry, outcome labels, and training-data checks)
 - `notebooks/vae_train.ipynb` (`canonical`; active curated v4 VAE training workflow)
 - `notebooks/random_vae_train.ipynb` (`canonical`; random-baseline VAE training workflow)
@@ -169,8 +169,8 @@ Primary simulation feature reference:
 - `notebooks/vae_final_baseline_comparison.ipynb` (`canonical`; final paper-facing comparison of original P01-P60 profiles, direct curated v4 synthetic candidates, and mixed 70/30 VAE-generated candidates through shared source summaries and optional matched Monte Carlo evaluation)
 - `notebooks/attack_candidate_pool_eval.ipynb` (`canonical`; evaluates and ranks existing candidate pools with the scored Monte Carlo simulator)
 - `notebooks/pomdp_candidate_selector.ipynb` (`canonical`; inspects noisy-observation candidate features, belief-limited ranking, and rank gap versus full-state selection)
-- `notebooks/pomdp_candidate_eval.ipynb` (`canonical`; evaluates belief-selected top-k candidates from the mixed 70/30 VAE pool under good/baseline/poor observation presets across multiple observation seeds, reports mean/std, compares against the full-state oracle run when available, and writes compact reporting artifacts under `results/diag/pomdp_candidate_eval/`)
-- `notebooks/pomdp_fire_control_eval.ipynb` (`canonical`; POMDP v2 notebook that selects VAE attack locations, rebuilds firing solutions with noisy observations and `fire_control_lite`, evaluates the rebuilt candidate pools, runs a fixed-location diagnostic that rebuilds all presets from the same source locations, and writes compact artifacts under `results/diag/pomdp_fire_control_eval/`)
+- `notebooks/pomdp_candidate_eval.ipynb` (`canonical`; evaluates belief-selected top-k candidates from the mixed 70/30 VAE pool under good/baseline/poor observation presets across multiple observation seeds, reports mean/std, compares against the full-state oracle run when available, and writes compact reporting artifacts under `results/notebook-results/pomdp_candidate_eval/`)
+- `notebooks/pomdp_fire_control_eval.ipynb` (`canonical`; POMDP v2 notebook that selects VAE attack locations, rebuilds firing solutions with noisy observations and `fire_control_lite`, evaluates the rebuilt candidate pools, runs a fixed-location diagnostic that rebuilds all presets from the same source locations, and writes compact artifacts under `results/notebook-results/pomdp_fire_control_eval/`)
 
 ## Archived
 

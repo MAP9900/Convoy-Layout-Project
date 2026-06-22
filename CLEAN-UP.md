@@ -26,9 +26,9 @@ Framing:
 
 ## Results And Artifact Layout
 
-- [ ] Replace `notebooks/results/` with `results/notebook-results/`.
-- [ ] Update every notebook output path that currently writes to `notebooks/results/`.
-- [ ] Update any docs that reference `notebooks/results/`.
+- [x] Replace `notebooks/results/` with `results/notebook-results/`.
+- [x] Update every notebook output path that currently writes to `notebooks/results/`.
+- [x] Update docs that reference `notebooks/results/`.
 - [ ] Decide final public results structure, likely:
 
 ```text

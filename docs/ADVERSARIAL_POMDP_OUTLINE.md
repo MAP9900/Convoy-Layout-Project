@@ -5,7 +5,7 @@
 VAE-based attack profile generation is implemented as an upstream candidate source.
 The first practical candidate source is a latent-bank sampled VAE pool filtered by the moving-convoy dynamic outcome audit.
 After matched source comparison, the primary POMDP candidate source is the mixed `70%` curated v4 / `30%` random v1 VAE pool:
-- `data/attack_profiles/vae_candidates/mixed_curated70_random30_hit_candidates.jsonl`
+- `results/notebook-results/vae_source_comparison/candidate_pools/mixed_curated70_random30_hit_candidates.jsonl`
 
 Random v1 remains useful as a stress comparison for unique-ship/value-spread behavior.
 The curated v4 generator remains the historical-realism anchor used to train and interpret the VAE.

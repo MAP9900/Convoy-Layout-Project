@@ -223,7 +223,7 @@ Example command:
 /opt/homebrew/Caskroom/miniforge/base/envs/Python-ML/bin/python -m experiments.generate_vae_candidate_pool \
   --run-dir results/runs/vae/20260511_005053_v4_notebook \
   --train-path data/attack_profiles/synthetic/train_random_tactical_v4_45k.jsonl \
-  --output data/attack_profiles/vae_candidates/curated_v4_hit_candidates.jsonl \
+  --output results/notebook-results/vae_candidate_pool/curated_v4_hit_candidates.jsonl \
   --sample-count 5000 \
   --keep-count 1000 \
   --device cpu \
@@ -302,9 +302,9 @@ Inputs:
 
 - original baseline: `DEFAULT_ATTACK_PROFILE_LIBRARY` P01-P60 profiles
 - direct synthetic baseline: `1,000` hit-threat records sampled from `data/attack_profiles/synthetic/train_random_tactical_v4_45k.jsonl`
-- VAE baseline: `data/attack_profiles/vae_candidates/mixed_curated70_random30_hit_candidates.jsonl`
-- generated comparison pools: `results/diag/vae_final_baseline_comparison/candidate_pools/`
-- summary outputs: `results/diag/vae_final_baseline_comparison/final_baseline_*`
+- VAE baseline: `results/notebook-results/vae_source_comparison/candidate_pools/mixed_curated70_random30_hit_candidates.jsonl`
+- generated comparison pools: `results/notebook-results/vae_final_baseline_comparison/candidate_pools/`
+- summary outputs: `results/notebook-results/vae_final_baseline_comparison/final_baseline_*`
 - convoy profile: `convoy_layout_1`
 - evaluated profiles: all `60` P01-P60 profiles, all `1,000` direct curated v4 candidates, all `1,000` mixed VAE candidates
 - trials per candidate: `30` (`3` seeds x `10` trials)
@@ -461,7 +461,7 @@ First implemented POMDP bridge:
 - evaluation notebook: `notebooks/pomdp_candidate_eval.ipynb`
 - fire-control v2 notebook: `notebooks/pomdp_fire_control_eval.ipynb`
 - POMDP notes: `docs/POMDP.md`
-- primary candidate source: `data/attack_profiles/vae_candidates/mixed_curated70_random30_hit_candidates.jsonl`
+- primary candidate source: `results/notebook-results/vae_source_comparison/candidate_pools/mixed_curated70_random30_hit_candidates.jsonl`
 - selector method: `belief_limited_heuristic_v1`
 - smoke run best candidate: `VAE000009`
 - smoke run best belief score: `0.9678`
@@ -496,7 +496,7 @@ Use `docs/POMDP.md` as the source of truth for current POMDP v1/v2 result tables
 
 1. Use the `Results Report` section above as the source of truth for the VAE final paper.
 2. Frame the main result as "VAE is competitive with direct curated generation and clearly improves beyond P01-P60," not as "VAE replaces the curated generator."
-3. Keep `data/attack_profiles/vae_candidates/mixed_curated70_random30_hit_candidates.jsonl` as the primary GenAI candidate source for later adversarial/POMDP work.
+3. Keep `results/notebook-results/vae_source_comparison/candidate_pools/mixed_curated70_random30_hit_candidates.jsonl` as the primary GenAI candidate source for later adversarial/POMDP work.
 4. Keep direct curated v4 synthetic sampling as the realism baseline in the paper.
 5. If more runtime is available, rerun the final baseline on additional convoy layouts or with more Monte Carlo trials per candidate.
 

@@ -71,7 +71,7 @@ Default output roots:
 Notebook-first verification:
 - `notebooks/attack_manual_verification.ipynb` (historical realism checks, MP4/frames, hit summaries)
 - `notebooks/attack_profile_tests.ipynb` (profile-oriented geometry checks)
-- `notebooks/torpedo_firing_doctrine_comparison.ipynb` (large, submarine-centric doctrine comparison plots for static vs moving U-boat cases; saves PNGs by default to `notebooks/results/torpedo_firing_doctrine_comparison/`)
+- `notebooks/torpedo_firing_doctrine_comparison.ipynb` (large, submarine-centric doctrine comparison plots for static vs moving U-boat cases; saves PNGs by default to `results/notebook-results/torpedo_firing_doctrine_comparison/`)
 
 Script-based diagnostics:
 - `python -m experiments.render_attack_profile_previews --help`

@@ -345,7 +345,7 @@ Backward compatibility:
 
 Focused visual comparison:
 - `notebooks/torpedo_firing_doctrine_comparison.ipynb` renders end-of-firing-cycle doctrine snapshots for static and moving U-boat cases using the same attack-profile semantics described above
-- its `show_case(..., save=True)` and `show_summary_grid(save=True)` helpers save PNGs by default to `notebooks/results/torpedo_firing_doctrine_comparison/`
+- its `show_case(..., save=True)` and `show_summary_grid(save=True)` helpers save PNGs by default to `results/notebook-results/torpedo_firing_doctrine_comparison/`
 - its current longitudinal views are visualization aids for comparing spread geometry; the core simulator doctrine remains steady-boat timing spread, not a pivot or heading-sweep tactic
 
 ## 8.6 Fire Control Lite Baseline
@@ -624,7 +624,7 @@ Current U-boat rendering options:
 
 Key manual verification notebook:
 - `notebooks/attack_manual_verification.ipynb`
-- `notebooks/torpedo_firing_doctrine_comparison.ipynb` for zoomed doctrine-comparison views and saved PNG outputs under `notebooks/results/torpedo_firing_doctrine_comparison/`
+- `notebooks/torpedo_firing_doctrine_comparison.ipynb` for zoomed doctrine-comparison views and saved PNG outputs under `results/notebook-results/torpedo_firing_doctrine_comparison/`
 
 ---
 
