@@ -1,4 +1,0 @@
-source_id,source_label,profile_count,hit_threat_count,hit_threat_rate,inside_convoy_envelope_rate,mean_clearance_m,median_clearance_m,min_clearance_m,mean_hits_source_audit,mean_unique_ships_hit_source_audit,x_min_m,x_max_m,y_min_m,y_max_m,occupied_250m_bins,occupied_500m_bins
-p01_p60,P01-P60 fixed library,60,0,0.0,0.25,1049.1987652401704,767.9838005204533,244.13971409830052,,,-3200.0,3600.0,-3500.0,3500.0,48,41
-curated_v4_direct,Direct curated v4 synthetic,1000,1000,1.0,0.198,1546.0884773620726,1394.63475884763,284.2389629275748,,,-4860.7062060684375,4913.456185440383,-7453.672405712892,7599.466550035517,689,370
-mixed_vae,Mixed 70/30 VAE candidates,1000,1000,1.0,0.21,1564.9409585085493,1315.7148481325926,250.4566430606224,3.041,1.896,-4754.330078125,5125.3857421875,-9775.298828125,9638.978515625,708,410

@@ -21,9 +21,10 @@ Framing:
 
 - [x] Create a cleanup branch.
 - [x] Create and publish an archive branch preserving the pre-cleanup state.
-- [ ] Confirm all old run artifacts are recoverable from the archive branch before deleting tracked generated outputs.
+- [x] Move generated historical artifacts into local ignored archive folder `Archive-June-23/`.
+- [ ] Confirm all old run artifacts are recoverable from the archive branch before committing tracked generated-output deletions.
 - [ ] Optionally copy heavy results/data/checkpoints to a local external archive folder outside the repo.
-- [ ] Before untracking files now covered by `.gitignore`, confirm they are either reproducible, preserved on the archive branch, or copied to external archive storage.
+- [x] Before untracking files now covered by `.gitignore`, confirm they are either reproducible, preserved on the archive branch, or copied to local archive storage.
 
 ## Results And Artifact Layout
 
@@ -42,8 +43,8 @@ results/
 ```
 
 - [ ] Keep `results/final/` small and curated.
-- [ ] Treat `results/notebook-results/` as generated output, usually ignored unless a specific final artifact is intentionally promoted.
-- [ ] Ignore future generated run folders such as `results/runs/`, `results/diag/`, `results/frames/`, and `results/notebook-results/`.
+- [x] Treat `results/notebook-results/` as generated output, usually ignored unless a specific final artifact is intentionally promoted.
+- [x] Ignore future generated run folders such as `results/runs/`, `results/diag/`, `results/frames/`, and `results/notebook-results/`.
 
 ## Data Folder Policy
 
@@ -61,8 +62,9 @@ data/
   processed/    # final generated datasets, usually ignored unless small/canonical
 ```
 
-- [ ] Decide whether current `data/attack_profiles/vae_candidates/` files are final artifacts, reproducible generated artifacts, or archive-only outputs.
-- [ ] Decide whether current `data/attack_profiles/synthetic/` files should be regenerated from scripts rather than tracked.
+- [x] Move current `data/attack_profiles/vae_candidates/` files to local archive as generated/stale experiment artifacts.
+- [x] Move current `data/attack_profiles/synthetic/` files to local archive as generated/stale experiment artifacts.
+- [ ] Decide whether any future small canonical attack-profile datasets should be promoted back into Git after the final rerun.
 
 ## Notebook Standardization
 
@@ -135,6 +137,44 @@ Docs likely to archive, rewrite, or consolidate:
 - [ ] Update final results documentation from the rerun.
 - [ ] Confirm all README commands work from a fresh environment.
 
+### Draft Regeneration Protocol
+
+Goal: after cleanup, rerun the project from source code/configs and keep only the results that support the final project story. Treat this as the working protocol until the exact final commands are validated.
+
+Environment notes:
+- [ ] Use the project conda environment consistently. Likely commands should run with `/opt/homebrew/Caskroom/miniforge/base/envs/Python-DS/bin/python` for data/analysis work and `Python-ML` only where model training needs it.
+- [ ] Record the exact environment used for the final rerun in `docs/REPRODUCING.md` or the final README.
+- [ ] Before rerunning, confirm ignored/generated folders are empty or intentionally absent: `results/runs/`, `results/diag/`, `results/figures/`, `results/frames/`, `results/notebook-results/`, `data/attack_profiles/synthetic/`, and `data/attack_profiles/vae_candidates/`.
+
+Recommended order:
+- [ ] Run lightweight tests/import checks first so failures are caught before expensive notebook/model work.
+- [ ] Regenerate synthetic attack-profile datasets using the current generation scripts/notebooks.
+  - Candidate entry points: `experiments/generate_random_attack_profile_dataset.py`, `experiments/build_mixed_attack_profile_dataset.py`, `notebooks/profile_generation_tests.ipynb`, `notebooks/attack_profile_tests.ipynb`.
+- [ ] Audit regenerated attack-profile geometry and labels before training.
+  - Candidate entry points: `experiments/audit_attack_profiles.py`, `experiments/audit_attack_profile_dataset.py`, `notebooks/attack_manual_verification.ipynb`.
+- [ ] Run baseline simulation/layout workflows and keep only useful summaries.
+  - Candidate entry points: `experiments/run_baseline_suite.py`, `notebooks/torpedo_firing_doctrine_comparison.ipynb`.
+- [ ] Train or rerun final VAE variants.
+  - Candidate notebooks: `notebooks/vae_train.ipynb`, `notebooks/random_vae_train.ipynb`, `notebooks/mixed_vae_train.ipynb`.
+- [ ] Generate VAE candidate pools from the final trained models.
+  - Candidate entry points: `experiments/generate_vae_candidate_pool.py`, `notebooks/vae_candidate_pool.ipynb`.
+- [ ] Evaluate candidate-pool quality and compare sources.
+  - Candidate entry points: `experiments/evaluate_attack_candidate_pool.py`, `notebooks/attack_candidate_pool_eval.ipynb`, `notebooks/vae_source_comparison.ipynb`, `notebooks/vae_final_baseline_comparison.ipynb`.
+- [ ] Run final POMDP candidate selector/evaluation work.
+  - Candidate entry points: `experiments/run_pomdp_candidate_selector.py`, `notebooks/pomdp_candidate_selector.ipynb`, `notebooks/pomdp_candidate_eval.ipynb`, `notebooks/pomdp_fire_control_eval.ipynb`.
+- [ ] Run final RL work only after the POMDP/RL scope is settled.
+  - Candidate entry points: `experiments/run_rl_train.py`, `experiments/audit_rl_actions.py`.
+- [ ] Promote only final, explainable artifacts into `results/final/`.
+  - Suggested contents: selected figures, compact metrics tables, final configs, run manifests, and a short notes file explaining what each artifact supports.
+- [ ] Update final docs from the rerun rather than preserving old working logs.
+  - Likely docs: `README.md`, `docs/METHODS.md`, `docs/EXPERIMENTS.md`, `docs/RESULTS.md`, `docs/REPRODUCING.md`.
+
+Open decisions before the rerun:
+- [ ] Decide whether final notebooks should be committed with outputs cleared, representative outputs kept, or outputs omitted from Git entirely.
+- [ ] Decide whether any regenerated dataset is small/canonical enough to track under `data/`, or whether all regenerated data remains ignored.
+- [ ] Decide which final figures/metrics are portfolio-facing and deserve promotion to `results/final/`.
+- [ ] Decide whether to create a small driver script or Makefile after the exact rerun order is proven manually.
+
 ## Git Ignore Updates
 
 - [x] Ignore `.DS_Store`.
@@ -146,6 +186,7 @@ Docs likely to archive, rewrite, or consolidate:
 results/runs/
 results/diag/
 results/debug/
+results/figures/
 results/frames/
 results/notebook-results/
 notebooks/results/
@@ -167,19 +208,20 @@ Do not delete until the archive branch and/or local external archive is confirme
 
 ### Entire Folders Likely To Remove From Main Presentation
 
-- [ ] `results/runs/`
-- [ ] `results/diag/`
-- [ ] `results/debug/`
-- [ ] `results/figures/` unless selected figures are promoted to `results/final/figures/`
-- [ ] `results/frames/`
-- [ ] `notebooks/results/` after migrating paths to `results/notebook-results/`
+- [x] `results/runs/` moved to `Archive-June-23/results/runs/`
+- [x] `results/diag/` moved to `Archive-June-23/results/diag/`
+- [x] `results/debug/` moved to `Archive-June-23/results/debug/`
+- [x] `results/figures/` moved to `Archive-June-23/results/figures/`; selected final figures should later be promoted to `results/final/figures/`
+- [x] `results/frames/` moved to `Archive-June-23/results/frames/`
+- [x] `results/notebook-results/` moved to `Archive-June-23/results/notebook-results/`
+- [x] `notebooks/results/` after migrating paths to `results/notebook-results/`
 - [ ] `.pytest_cache/`
 - [ ] `.vscode/` unless intentionally keeping shared editor settings
 
 ### Data Folders To Review Before Removing
 
-- [ ] `data/attack_profiles/synthetic/`
-- [ ] `data/attack_profiles/vae_candidates/`
+- [x] `data/attack_profiles/synthetic/` moved to `Archive-June-23/data/attack_profiles/synthetic/`
+- [x] `data/attack_profiles/vae_candidates/` moved to `Archive-June-23/data/attack_profiles/vae_candidates/`
 
 Decision needed: keep small canonical data, regenerate derived data, or move old snapshots to archive-only.
 

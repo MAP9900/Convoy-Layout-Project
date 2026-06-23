@@ -10,6 +10,7 @@ results/frames/
 results/runs/
 results/diag/
 results/debug/
+results/figures/
 results/notebook-results/
 notebooks/results/
 
@@ -36,6 +37,9 @@ final_comparison_by_region.png
 
 # OS/editor local files.
 .DS_Store
+
+# Local cleanup archives.
+Archive-June-23/
 
 
 # gitignore
@@ -257,4 +261,3 @@ __marimo__/
 # Streamlit
 .streamlit/secrets.toml
 # results/
-
