@@ -1,11 +1,41 @@
-#Project Specifics:
+# Project generated artifacts
 
-#Frames (Avoids Uploading so many frames all the time)
+# Frames and visual previews.
 frames/
 .frame*
+results/frames/
 
-#Large VAE Training Datasets
+# Generated experiment outputs. Curated final outputs can still be tracked
+# under results/final/ because it is not ignored here.
+results/runs/
+results/diag/
+results/debug/
+results/notebook-results/
+notebooks/results/
+
+# Generated data artifacts. Keep data/ itself for source-of-truth inputs and
+# documentable regeneration scripts, but do not track derived datasets by default.
+data/attack_profiles/synthetic/
 data/attack_profiles/synthetic*
+data/attack_profiles/vae_candidates/
+data/interim/
+data/processed/
+
+# Model checkpoints and trained weights.
+checkpoints/
+*.pt
+*.pth
+
+# One-off root-level plot artifacts from earlier exploration.
+Mixed_Loss_Plot.png
+VAE_Curated.png
+VAE_Mixed.png
+VAE_Random.png
+final_comparison.png
+final_comparison_by_region.png
+
+# OS/editor local files.
+.DS_Store
 
 
 # gitignore
@@ -228,6 +258,3 @@ __marimo__/
 .streamlit/secrets.toml
 # results/
 
-
-# .DS_Store
-.DS_Store

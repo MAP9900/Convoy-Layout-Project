@@ -23,6 +23,7 @@ Framing:
 - [x] Create and publish an archive branch preserving the pre-cleanup state.
 - [ ] Confirm all old run artifacts are recoverable from the archive branch before deleting tracked generated outputs.
 - [ ] Optionally copy heavy results/data/checkpoints to a local external archive folder outside the repo.
+- [ ] Before untracking files now covered by `.gitignore`, confirm they are either reproducible, preserved on the archive branch, or copied to external archive storage.
 
 ## Results And Artifact Layout
 
@@ -136,10 +137,10 @@ Docs likely to archive, rewrite, or consolidate:
 
 ## Git Ignore Updates
 
-- [ ] Ignore `.DS_Store`.
-- [ ] Ignore `.pytest_cache/`.
-- [ ] Ignore `.vscode/` unless intentionally shared.
-- [ ] Ignore generated result paths:
+- [x] Ignore `.DS_Store`.
+- [x] Ignore `.pytest_cache/`.
+- [x] Ignore `.vscode/` unless intentionally shared.
+- [x] Ignore generated result paths:
 
 ```gitignore
 results/runs/
@@ -150,14 +151,15 @@ results/notebook-results/
 notebooks/results/
 ```
 
-- [ ] Ignore generated model/checkpoint artifacts unless intentionally promoted:
+- [x] Ignore generated model/checkpoint artifacts unless intentionally promoted:
 
 ```gitignore
 *.pt
 checkpoints/
 ```
 
-- [ ] Decide whether generated datasets under `data/attack_profiles/` should be ignored by default.
+- [x] Ignore generated datasets under `data/attack_profiles/` by default.
+- [x] Ignore old one-off root-level plot artifacts.
 
 ## Delete Or Archive Candidates
 
