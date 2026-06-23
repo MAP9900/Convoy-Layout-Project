@@ -65,12 +65,17 @@ data/
 
 ## Notebook Standardization
 
-- [ ] Standardize notebook names, ordering, and purpose.
-- [ ] Add a short top cell to each kept notebook with purpose, inputs, outputs, and expected runtime.
-- [ ] Standardize output paths to `results/notebook-results/<notebook-name>/`.
+- [x] Standardize notebook names, opening order, and purpose headers.
+- [x] Add a short top cell to each kept notebook with purpose, inputs, outputs, and expected runtime.
+- [x] Standardize output paths to `results/notebook-results/<notebook-name>/`.
+- [x] Standardize notebook repo-root bootstrap/import setup.
+- [x] Standardize configuration section labels and `NOTEBOOK_NAME` variables.
 - [ ] Clear or minimize bulky notebook outputs if they make diffs noisy.
 - [ ] Keep only notebooks that support the final story or reproducibility.
 - [ ] Archive/remove superseded exploratory notebooks after final decisions are made.
+
+Decision needed:
+- [ ] Decide whether final notebooks should keep representative executed outputs or be cleared before commit. Current cleanup has standardized live code paths, but old saved outputs may still contain historical absolute paths and stale run results.
 
 Candidate final notebook categories:
 - [ ] Profile/data generation QA.
