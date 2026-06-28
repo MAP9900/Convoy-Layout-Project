@@ -1,0 +1,52 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "convoy-layout-project"
+version = "0.1.0"
+description = "Convoy-defense simulation and optimization experiments for torpedo-attack layout analysis."
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "numpy>=1.26,<3",
+    "matplotlib>=3.8,<4",
+    "pandas>=2.2,<3",
+]
+
+[project.optional-dependencies]
+ml = [
+    "scikit-learn>=1.4,<2",
+    "joblib>=1.3,<2",
+]
+dev = [
+    "pytest>=8,<10",
+    "ruff>=0.6,<1",
+]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["convoy_sim*", "experiments*", "scenarios*"]
+namespaces = true
+
+[tool.pytest.ini_options]
+addopts = "-ra"
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+pythonpath = ["."]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+extend-exclude = [
+    "Archive-June-23",
+    "data/attack_profiles/synthetic",
+    "data/attack_profiles/vae_candidates",
+    "results",
+    "tests/*.ipynb",
+]
+
+[tool.ruff.lint]
+# Keep the default lint gate intentionally light for now: catch syntax errors,
+# invalid control flow, and undefined names without forcing a broad style cleanup.
+select = ["E9", "F63", "F7", "F82"]
