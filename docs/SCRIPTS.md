@@ -1,227 +1,86 @@
-# Script And File Index
+# Script Entrypoints
 
-Current complete index of files in the repository, grouped by purpose.
+This file indexes runnable script entrypoints. Use `docs/REPRODUCING.md` for top-to-bottom rerun commands and `docs/PROJECT_MAP.md` for the broader codebase map.
 
-Primary simulation feature reference:
-- `docs/SIM_FEATURES.md`
-- `docs/VAE.md`
-- `docs/POMDP.md`
+Most commands support `--help`:
+
+```bash
+python -m experiments.run_baseline_suite --help
+```
 
 ## Canonical Workflows
 
-- Baseline: `python -m experiments.run_baseline_suite --config configs/baseline/default.toml`
-- RL: `python -m experiments.run_rl_train --config configs/rl/default.toml`
+| Purpose | Entrypoint | Notes |
+|---|---|---|
+| Baseline suite | `python -m experiments.run_baseline_suite --config configs/baseline/default.toml` | Main baseline evaluation runner. |
+| RL training/eval | `python -m experiments.run_rl_train --config configs/rl/default.toml` | Main RL layout runner. |
+| Config generation | `python -m experiments.generate_run_config --template ... --output ...` | Creates reproducible TOML configs with split metadata. |
+| RL action audit | `python -m experiments.audit_rl_actions --config configs/rl/default.toml` | Diagnostic audit for configured RL actions/layouts. |
 
-## Script Metadata Matrix
+## Attack-Profile Data
 
-| Script | Entrypoint | Inputs | Outputs | Depends On | Runtime Estimate | Used By |
-|---|---|---|---|---|---|---|
-| `experiments/run_baseline_suite.py` | `python -m experiments.run_baseline_suite --config ...` | Baseline TOML config, scenario/profile refs | Baseline metrics/artifacts under `results/` | `convoy_sim.workflows`, scenarios, core sim modules | Medium | Baseline |
-| `experiments/run_rl_train.py` | `python -m experiments.run_rl_train --config ...` | RL TOML config | RL training/eval artifacts and checkpoints under `results/` | `convoy_sim.rl_env`, `convoy_sim.rl_wrapper`, `convoy_sim.rl_layout_builder`, workflows | Long | RL |
-| `experiments/audit_rl_actions.py` | `python -m experiments.audit_rl_actions --config ...` | RL TOML config | Per-action train/eval audit metrics, plots, and manifest under `results/` | `convoy_sim.workflows`, `convoy_sim.rl_layout_builder`, RL action/builder config, core sim modules | Medium-Long | RL diagnostic |
-| `experiments/generate_run_config.py` | `python -m experiments.generate_run_config --template ... --output ...` | Template TOML, split seed, split sizes, optional seed/run-name overrides | Full generated TOML with reproducible splits and `split_meta` | Python `tomllib`, local config templates | Short | Baseline + RL config generation |
-| `experiments/generate_attack_profile_scaffold.py` | `python -m experiments.generate_attack_profile_scaffold --count ...` | Mode, starting id, profile count, seed, convoy profile, output format/path | Curated scaffold payloads or JSONL dataset records with generation-time feasibility/audit filtering | `convoy_sim.attack_profiles`, `convoy_sim.profile_audit`, `convoy_sim.target_zones`, bounded realistic preset catalog | Short | Attack-profile authoring + dataset generation |
-| `experiments/audit_attack_profile_dataset.py` | `python -m experiments.audit_attack_profile_dataset --input ...` | Dataset JSONL path, output dir | Flattened CSV plus distribution summaries for synthetic attack-profile datasets, including v3 target-zone fields when present | JSONL dataset records from `generate_attack_profile_scaffold --mode dataset/random_zones` | Short | Dataset audit / notebook prep |
-| `experiments/build_mixed_attack_profile_dataset.py` | `python -m experiments.build_mixed_attack_profile_dataset --overwrite` | Curated v4 and random v1 train/valid JSONL datasets | Mixed curated/random train/valid JSONL plus summary JSON | Existing curated and random VAE datasets | Short | Mixed VAE source comparison |
-| `experiments/generate_vae_candidate_pool.py` | `python -m experiments.generate_vae_candidate_pool --run-dir ... --train-path ... --output ...` | Trained VAE run/checkpoint, VAE train JSONL, sample/filter settings | VAE-derived JSONL candidate pool plus summary JSON | `convoy_sim.vae`, `convoy_sim.vae_diagnostics`, moving zig-zag outcome audit | Short-Medium | GenAI candidate source for adversarial/POMDP attacker |
-| `experiments/evaluate_attack_candidate_pool.py` | `python -m experiments.evaluate_attack_candidate_pool --candidate-path ...` | Candidate-pool JSONL, convoy profile, simulation budget, objective preset | Ranked candidate CSV, top-candidate JSON, metrics summary, run manifest | Candidate JSONL records, `convoy_sim.workflows.evaluate_layout_over_profiles`, objectives, core sim | Medium-Long | Full-state adversarial selector baseline |
-| `experiments/run_pomdp_candidate_selector.py` | `python -m experiments.run_pomdp_candidate_selector --candidate-path ... --observation-preset good_contact` | Candidate-pool JSONL, convoy profile, observation preset / noisy observation settings | Belief-ranked candidate CSV/JSON, selected top-k JSONL pool, metrics and manifest | `convoy_sim.pomdp_candidate_selector`, `convoy_sim.realism`, candidate JSONL records | Short | POMDP bridge / belief-limited selector baseline |
-| `experiments/audit_attack_profiles.py` | `python -m experiments.audit_attack_profiles ...` | Convoy profile id(s), audit parameters | Audit CSV/JSON diagnostics | `convoy_sim.profile_audit`, `convoy_sim.attack_profiles` | Short-Medium | Diagnostic |
-| `experiments/render_attack_profile_previews.py` | `python -m experiments.render_attack_profile_previews ...` | Convoy profile id(s), run mode, rendering flags | Preview frames + geometry/hit diagnostics in `results/diag` and frame dirs | `convoy_sim.viz_attack`, profile audit helpers | Medium-Long | Manual verification |
-| `experiments/render_attack_animation.py` | `python -m experiments.render_attack_animation ...` | Scenario/profile and render args | Animation frames/video outputs in `results/` | `convoy_sim.viz_attack`, simulation modules | Medium | Manual verification |
-| `experiments/plot_attack_once.py` | `python -m experiments.plot_attack_once` | `small_demo` convoy profile + fixed fan spread | One static plot + debug JSON | `convoy_sim.viz_attack`, `scenarios.convoy_profiles` | Short | Diagnostic |
-| `experiments/plot_layout.py` | `python -m experiments.plot_layout ...` | Layout/scenario args | Static layout figures | `convoy_sim.layouts`, `convoy_sim.viz` | Short | Diagnostic |
+| Purpose | Entrypoint | Typical Outputs |
+|---|---|---|
+| Curated/random profile generation | `python -m experiments.generate_attack_profile_scaffold ...` | JSONL profile datasets or scaffold snippets. |
+| Random baseline profile generation | `python -m experiments.generate_random_attack_profile_dataset ...` | Random-profile JSONL datasets for VAE comparison. |
+| Mixed VAE dataset build | `python -m experiments.build_mixed_attack_profile_dataset --overwrite` | Mixed curated/random train-valid JSONL datasets. |
+| Dataset audit | `python -m experiments.audit_attack_profile_dataset --input ...` | Flattened CSVs and distribution summaries. |
+| Profile geometry audit | `python -m experiments.audit_attack_profiles ...` | Geometry/audit CSV and JSON diagnostics. |
 
-## Root Files
+Primary supporting modules:
+- `convoy_sim/profile_audit.py`
+- `convoy_sim/profile_outcome_audit.py`
+- `convoy_sim/target_zones.py`
+- `convoy_sim/attack_profiles.py`
 
-- `README.md` (`canonical`)
-- `requirements.txt` (`canonical`)
-- `requirements-dev.txt` (`canonical`)
-- `requirements-ml.txt` (`canonical`)
+## VAE And Candidate Pools
 
-## Configs (All)
+| Purpose | Entrypoint | Typical Outputs |
+|---|---|---|
+| VAE candidate-pool generation | `python -m experiments.generate_vae_candidate_pool --run-dir ... --train-path ... --output ...` | Filtered candidate-pool JSONL plus summary JSON. |
+| Full-state candidate evaluation | `python -m experiments.evaluate_attack_candidate_pool --candidate-path ...` | Ranked candidate CSV, top candidate JSON, metrics, manifest. |
 
-- `configs/templates/baseline.template.toml` (`canonical`)
-- `configs/templates/rl.template.toml` (`canonical`)
-- `configs/baseline/default.toml` (`canonical`)
-- `configs/rl/default.toml` (`canonical`)
+Primary supporting modules:
+- `convoy_sim/vae.py`
+- `convoy_sim/vae_diagnostics.py`
+- `convoy_sim/workflows.py`
 
-## Experiment Scripts (All)
+## POMDP / Adversarial Selection
 
-- `experiments/run_baseline_suite.py`: Canonical baseline runner (config-first, artifact schema output). (`canonical`)
-- `experiments/run_rl_train.py`: Canonical RL runner (config-first train/eval + checkpoint output; supports flat action menu or builder mode). (`canonical`)
-- `experiments/audit_rl_actions.py`: Direct audit of configured RL actions or builder-materialized layouts on train/eval splits. By default this now uses a staged screen-plus-promote funnel controlled by the RL `[runtime]` block. (`diagnostic`)
-- `experiments/generate_run_config.py`: Reproducible full TOML generator for baseline/RL run configs and profile splits. (`canonical`)
-- `experiments/generate_attack_profile_scaffold.py`: Shared attack-profile generator with legacy centroid modes, v3 target-zone modes, and v4 spawn-first tactical mode. `curated` preserves the current helper-style library workflow and can emit `_scaffolded_fan_profile(...)` calls for `attack_profiles.py`. `dataset` emits legacy centroid JSONL records for larger synthetic corpora and currently targets a `75% credible_hit_threat / 25% credible_near_miss` mix. `curated_zones` emits deterministic target-zone profiles for debugging. `random_zones` emits structured-random v3 JSONL records with explicit `intent` metadata for VAE training. `random_tactical_v4` samples U-boat spawn regions first, including perimeter, beam/ahead/astern, and inside-column positions, then selects an accessible target and a standard zig-zag lead/intercept aim point. v4 also adds deliberate meter-based aim offsets for `credible_near_miss` and `intentional_miss`, targets a `65/25/10` label mix, and rejects candidates that fail the moving zig-zag dynamic outcome gate. All modes sample `u_boat_initial_speed_mps` from `1.0` to `2.0` m/s in `0.1` steps, reject spawns that start within `250 m` of any convoy ship, and reject profiles that fail the selected geometry plausibility audit. (`canonical`)
-- `experiments/generate_random_attack_profile_dataset.py`: Profile-first random baseline generator for VAE comparison. It samples U-boat spawn, reference point, bearing error, spread, timing, and speed directly; enforces the same minimum spawn clearance, moving U-boat, `uniform_divergent`, and moving zig-zag outcome audit; then labels accepted records from actual sim outcomes into the same `65/25/10` hit/near/intentional-miss quota. (`canonical`)
-- `experiments/build_mixed_attack_profile_dataset.py`: Reproducible mixed VAE dataset builder. The default mix samples `70%` curated v4 records and `30%` random v1 records into `45k / 5k` train-valid JSONL files, rewrites profile IDs for the mixed corpus, and preserves original record provenance in `mixture_meta`. (`canonical`)
-- `experiments/generate_vae_candidate_pool.py`: GenAI candidate-pool generator for adversarial/POMDP work. It loads a trained attack-profile VAE checkpoint, samples decoded profiles with either the Gaussian prior or empirical latent-bank sampler, runs minimum-clearance and moving zig-zag dynamic outcome diagnostics, filters to selected actual outcomes by default `credible_hit_threat`, derives candidate metadata such as spawn region and closest/hit ships, and writes JSONL records shaped like the existing profile datasets. (`canonical`)
-- `experiments/evaluate_attack_candidate_pool.py`: Full-state adversarial candidate selector baseline. It loads JSONL candidate pools such as VAE-derived candidates, evaluates each profile against a chosen convoy layout using the existing Monte Carlo scored simulation and objective plumbing, then ranks candidates from the attacker perspective by highest defender loss or expected hits. Outputs ranked CSV plus top-candidate and metrics artifacts under `results/runs/candidate_pool_eval/`. (`canonical`)
-- `experiments/run_pomdp_candidate_selector.py`: First POMDP bridge. It loads a VAE candidate pool, builds noisy attacker-facing observations for each candidate, ranks candidates with the belief-limited heuristic selector, and writes ranked CSV/JSON artifacts plus a selected top-k candidate-pool JSONL under `results/runs/pomdp_candidate_selector/`. Observation presets are `good_contact`, `baseline_night`, and `poor_contact`, with `good_contact` as the default. Poorer presets reduce contact-detection fraction and increase range/bearing/formation/class uncertainty. This is a baseline selector, not a learned policy. (`canonical`)
-- `convoy_sim/pomdp_fire_control.py`: POMDP v2 helper module. It takes selected VAE candidate locations, builds noisy attacker observations, rebuilds firing parameters with `fire_control_lite`, and writes rebuilt JSONL candidate pools for normal Monte Carlo evaluation. (`canonical`)
-- `experiments/audit_attack_profile_dataset.py`: Audits JSONL synthetic attack-profile corpora, writes a flattened `profiles_flat.csv`, per-dimension count CSVs, and a summary JSON. v3 target-zone records add counts by `target_zone_kind`, `approach_side`, and `approach_lane`; v4 tactical records also add `spawn_region`, `inside_convoy_envelope`, target-aspect, target-score, nearest-ship clearance, lead-solution fields, and aim-offset fields. The module functions can also be imported directly into a notebook for ad hoc inspection. (`diagnostic`)
-- `convoy_sim/profile_outcome_audit.py`: Reusable dynamic outcome audit for generated profile datasets. It converts records back into `AttackProfile`s, builds sim-native torpedoes, evaluates them against moving zig-zag convoy kinematics, and reports intended-target hits, other-ship hits, closest passes, and outcome-vs-intent agreement. It can also attach those outcome labels back onto JSONL-style records, filter records by the outcome gate, and support future adversarial candidate-selection work. Used by `random_tactical_v4` generation and `notebooks/profile_generation_tests.ipynb`. (`diagnostic`)
-- `experiments/audit_attack_profiles.py`: Attack-profile geometry plausibility audit. (`diagnostic`)
-- `experiments/render_attack_profile_previews.py`: Profile frame rendering + audit/hit CSV outputs. (`diagnostic`)
-- `experiments/render_attack_animation.py`: Dynamic attack animation/frame generation demo. (`diagnostic`)
-- `experiments/plot_attack_once.py`: Single static attack plot + debug JSON. (`diagnostic`)
-- `experiments/plot_layout.py`: Static layout figure generator. (`diagnostic`)
+| Purpose | Entrypoint | Typical Outputs |
+|---|---|---|
+| Belief-limited candidate selector | `python -m experiments.run_pomdp_candidate_selector --candidate-path ... --observation-preset good_contact` | Belief-ranked CSV/JSON and selected top-k JSONL pool. |
+| POMDP fire-control rebuilds | `convoy_sim.pomdp_fire_control` module functions | Rebuilt candidate pools for notebook-driven evaluation. |
 
-## Scenarios (All)
+Primary supporting modules:
+- `convoy_sim/pomdp_candidate_selector.py`
+- `convoy_sim/pomdp_fire_control.py`
+- `convoy_sim/fire_control.py`
+- `convoy_sim/realism.py`
 
-- `scenarios/convoy_profiles.py` (`canonical`)
-- `scenarios/scenario_base.py` (`supporting`)
+## Visualization And Manual QA
 
-## Core Python Modules (All)
+`notebooks/visuals.ipynb` is the notebook home for one-off visual checks. It calls these script entrypoints rather than duplicating plotting logic.
 
-- `convoy_sim/__init__.py` (`canonical`)
-- `convoy_sim/attack_profiles.py` (`canonical`)
-- `convoy_sim/attack_proposals.py` (`supporting`)
-- `convoy_sim/attacker_opt.py` (`supporting`)
-- `convoy_sim/attackers.py` (`supporting`)
-- `convoy_sim/defender_opt.py` (`supporting`)
-- `convoy_sim/defender_policy.py` (`canonical`)
-- `convoy_sim/diagnostics.py` (`diagnostic`)
-- `convoy_sim/dynamics.py` (`canonical`)
-- `convoy_sim/entities.py` (`canonical`)
-- `convoy_sim/fire_control.py` (`canonical`)
-- `convoy_sim/feasibility.py` (`canonical`)
-- `convoy_sim/game.py` (`supporting`)
-- `convoy_sim/geometry.py` (`canonical`)
-- `convoy_sim/layout_roles.py` (`canonical`)
-- `convoy_sim/layouts.py` (`canonical`)
-- `convoy_sim/noise.py` (`supporting`)
-- `convoy_sim/objectives.py` (`canonical`)
-- `convoy_sim/profile_audit.py` (`diagnostic`)
-- `convoy_sim/pomdp_candidate_selector.py` (`canonical`)
-- `convoy_sim/pomdp_fire_control.py` (`canonical`)
-- `convoy_sim/profile_generation_viz.py` (`diagnostic`)
-- `convoy_sim/realism.py` (`canonical`)
-- `convoy_sim/risk.py` (`canonical`)
-- `convoy_sim/rl_env.py` (`canonical`)
-- `convoy_sim/rl_layout_builder.py` (`canonical`)
-- `convoy_sim/rl_wrapper.py` (`canonical`)
-- `convoy_sim/ship_catalog.py` (`canonical`)
-- `convoy_sim/simulation.py` (`canonical`)
-- `convoy_sim/target_zones.py` (`canonical`)
-- `convoy_sim/trial_records.py` (`supporting`)
-- `convoy_sim/viz.py` (`diagnostic`)
-- `convoy_sim/viz_attack.py` (`diagnostic`)
-- `convoy_sim/workflows.py` (`canonical`)
+| Visual Check | Entrypoint | Default Outputs |
+|---|---|---|
+| Plan-view layouts | `python -m experiments.plot_layout` | `results/figures/rect_class.png`, `rect_value.png`, `staggered_class.png`, `staggered_value.png` |
+| Static attack overlay | `python -m experiments.plot_attack_once` | `results/figures/attack_once.png`, `results/debug/attack_once.json` |
+| Temporal attack frames | `python -m experiments.render_attack_animation` | `results/frames/demo_attack/frame_*.png`, optional MP4 |
+| Attack-profile previews | `python -m experiments.render_attack_profile_previews ...` | `results/frames/attack_profile_previews/`, `results/diag/attack_profile_*` |
 
-## Tests (All Files)
+Plotting commands require Matplotlib. MP4 export requires animation/video support. If Matplotlib cache warnings appear, set `MPLCONFIGDIR` to a writable cache directory.
 
-- `tests/conftest.py` (`canonical`)
-- `tests/test_attack_frame_math.py` (`canonical`)
-- `tests/test_attack_profiles.py` (`canonical`)
-- `tests/test_attack_windows.py` (`canonical`)
-- `tests/test_attacker_opt_smoke.py` (`supporting`)
-- `tests/test_canonical_entrypoints.py` (`canonical`)
-- `tests/test_defender_opt_smoke.py` (`supporting`)
-- `tests/test_defender_policy.py` (`canonical`)
-- `tests/test_detection_risk.py` (`canonical`)
-- `tests/test_diagnostics_core.py` (`diagnostic`)
-- `tests/test_dynamic_hit_events.py` (`canonical`)
-- `tests/test_dynamics_models.py` (`canonical`)
-- `tests/test_entities.py` (`canonical`)
-- `tests/test_generate_run_config.py` (`canonical`)
-- `tests/test_feasibility_checks.py` (`canonical`)
-- `tests/test_feasibility_models.py` (`canonical`)
-- `tests/test_formation_motion.py` (`canonical`)
-- `tests/test_game_matrix_and_exploitability.py` (`supporting`)
-- `tests/test_geometry.py` (`canonical`)
-- `tests/test_layouts.py` (`canonical`)
-- `tests/test_layouts_heterogeneous.py` (`canonical`)
-- `tests/test_noise_regression.py` (`supporting`)
-- `tests/test_objectives.py` (`canonical`)
-- `tests/test_profile_audit.py` (`diagnostic`)
-- `tests/test_realism_v2.py` (`canonical`)
-- `tests/test_risk.py` (`canonical`)
-- `tests/test_rl_layout_builder.py` (`canonical`)
-- `tests/test_rl_wrapper.py` (`canonical`)
-- `tests/test_sampler_with_constraints.py` (`canonical`)
-- `tests/test_scenarios_smoke.py` (`canonical`)
-- `tests/test_serialization_roundtrip.py` (`canonical`)
-- `tests/test_ship_heterogeneity_models.py` (`canonical`)
-- `tests/test_simulation.py` (`canonical`)
-- `tests/test_simulation_semantics.py` (`canonical`)
-- `tests/test_target_zones.py` (`canonical`)
-- `tests/test_time_dependent_feasibility.py` (`canonical`)
-- `tests/test_value_aimpoint.py` (`canonical`)
-- `tests/test_value_scoring.py` (`canonical`)
-- `tests/test_viz_attack_helpers.py` (`diagnostic`)
-- `tests/test_viz_helpers.py` (`diagnostic`)
-- `tests/test_viz_no_matplotlib_import.py` (`diagnostic`)
-- `tests/tests2.ipynb` (`supporting`)
-- `tests/tests_1.ipynb` (`supporting`)
+## Common Output Areas
 
-## Notebooks (All)
+Generated outputs are intentionally excluded from the clean repo presentation.
 
-- `notebooks/attack_profile_tests.ipynb` (`diagnostic`)
-- `notebooks/attack_manual_verification.ipynb` (`diagnostic`)
-- `notebooks/torpedo_firing_doctrine_comparison.ipynb` (`diagnostic`; saves PNGs to `results/notebook-results/torpedo_firing_doctrine_comparison/` by default)
-- `notebooks/profile_generation_tests.ipynb` (`canonical`; notebook-first QA for curated/random profile generation, spawn geometry, outcome labels, and training-data checks)
-- `notebooks/vae_train.ipynb` (`canonical`; active curated v4 VAE training workflow)
-- `notebooks/random_vae_train.ipynb` (`canonical`; random-baseline VAE training workflow)
-- `notebooks/mixed_vae_train.ipynb` (`canonical`; mixed `70%` curated v4 / `30%` random v1 VAE training workflow)
-- `notebooks/vae_candidate_pool.ipynb` (`canonical`; generates and audits filtered VAE candidate-pool JSONL files from trained checkpoints)
-- `notebooks/vae_source_comparison.ipynb` (`canonical`; matched curated/random/mixed VAE candidate-pool generation, summary comparison, and optional matched Monte Carlo source evaluation)
-- `notebooks/vae_final_baseline_comparison.ipynb` (`canonical`; final paper-facing comparison of original P01-P60 profiles, direct curated v4 synthetic candidates, and mixed 70/30 VAE-generated candidates through shared source summaries and optional matched Monte Carlo evaluation)
-- `notebooks/attack_candidate_pool_eval.ipynb` (`canonical`; evaluates and ranks existing candidate pools with the scored Monte Carlo simulator)
-- `notebooks/pomdp_candidate_selector.ipynb` (`canonical`; inspects noisy-observation candidate features, belief-limited ranking, and rank gap versus full-state selection)
-- `notebooks/pomdp_candidate_eval.ipynb` (`canonical`; evaluates belief-selected top-k candidates from the mixed 70/30 VAE pool under good/baseline/poor observation presets across multiple observation seeds, reports mean/std, compares against the full-state oracle run when available, and writes compact reporting artifacts under `results/notebook-results/pomdp_candidate_eval/`)
-- `notebooks/pomdp_fire_control_eval.ipynb` (`canonical`; POMDP v2 notebook that selects VAE attack locations, rebuilds firing solutions with noisy observations and `fire_control_lite`, evaluates the rebuilt candidate pools, runs a fixed-location diagnostic that rebuilds all presets from the same source locations, and writes compact artifacts under `results/notebook-results/pomdp_fire_control_eval/`)
+| Area | Use |
+|---|---|
+| `results/runs/` | Script-run metrics, manifests, and larger evaluation outputs. |
+| `results/notebook-results/<notebook-name>/` | Notebook-owned summaries, figures, and compact artifacts. |
+| `results/figures/` | Small script-generated figures. |
+| `results/frames/` | Animation frames and videos. |
+| `results/diag/` | Audit and diagnostic files. |
 
-## Archived
-
-- `vae_exploration.ipynb`: Older exploratory VAE notebook, archived outside the active workspace after the focused notebook workflow replaced it. (`archived-external-reference`)
-- `archive/vae/train_vae.py`: Archived terminal-first VAE runner kept for reference after moving the active VAE workflow into the notebook. (`archived-reference`)
-- `archive/vae/test_train_vae.py`: Archived smoke test for the old terminal-first VAE runner. (`archived-reference`)
-
-## Results Files (Tracked)
-
-- `results/debug/attack_once.json` (`diagnostic`)
-- `results/diag/attack_profile_geometry_audit.csv` (`diagnostic`)
-- `results/diag/attack_profile_geometry_audit.json` (`diagnostic`)
-- `results/figures/attack_once.png` (`diagnostic`)
-- `results/figures/rect_class.png` (`diagnostic`)
-- `results/figures/rect_value.png` (`diagnostic`)
-- `results/figures/staggered_class.png` (`diagnostic`)
-- `results/figures/staggered_value.png` (`diagnostic`)
-
-## Reference Docs
-
-- `docs/TODO.md` (`canonical`)
-- `docs/SIM_FEATURES.md` (`canonical`)
-- `docs/VAE.md` (`canonical`)
-- `docs/POMDP.md` (`canonical`)
-- `docs/PROTOCOL_V2_REALISM.md` (`canonical`)
-- `docs/NOTES.md` (`supporting`)
-- `docs/RL_PLAN.md` (`canonical`)
-- `docs/Visuals.md` (`supporting`)
-- `docs/RESULTS_LOG.md` (`canonical`)
-- `docs/OPTIMIZATION_LOG.md` (`canonical`)
-- `docs/SCRIPTS.md` (`canonical`)
-
-## Runtime Budget Notes
-
-- Final benchmark eval still uses full `simulation.n_trials_per_seed`.
-- Baseline heuristic train-search can use a cheaper budget with:
-  - `runtime.baseline_search_n_trials_per_seed`
-- RL train-time action ranking can use a cheaper budget with:
-  - `runtime.rl_ranking_n_trials_per_seed`
-- RL action audit now defaults to a staged funnel:
-  - screen all actions with `runtime.audit_screen_n_trials_per_seed`
-  - rerun only top-K train/eval candidates at full budget with `runtime.audit_top_k_full_eval`
-
-To force the old full-fidelity audit behavior:
-- set `runtime.audit_screen_n_trials_per_seed = simulation.n_trials_per_seed`
-- set `runtime.audit_top_k_full_eval` to the full action count
-  - current canonical builder count: `144`
-
-## Lifecycle Tag Legend
-
-- `canonical`: Primary paths and files to maintain and evolve.
-- `supporting`: Auxiliary components that support canonical flows.
-- `diagnostic`: Debug, plotting, or audit-only utilities and artifacts.
-- `legacy-candidate`: Present but likely removable after replacement/confirmation.
+Archived pre-cleanup outputs live locally under `Archive-June-23/`.

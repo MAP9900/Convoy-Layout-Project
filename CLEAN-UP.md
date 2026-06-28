@@ -52,7 +52,8 @@ results/
 - [ ] Decide which data artifacts are source data versus generated data.
 - [ ] Keep small, canonical seed/source data in Git if needed for reproducibility.
 - [ ] Regenerate large or derived datasets during the final top-to-bottom rerun instead of keeping stale generated data in Git.
-- [ ] Document how to regenerate final datasets from scripts/configs.
+- [x] Create draft `docs/REPRODUCING.md` with validation, regeneration, and final rerun commands.
+- [ ] Finalize dataset regeneration commands after the weekend rerun proves the exact paths/seeds.
 - [ ] Consider this structure:
 
 ```text
@@ -92,36 +93,38 @@ Candidate final notebook categories:
 - [ ] Archive or clean markdown files that are mostly old logs or working notes.
 - [ ] Convert final public docs into a small, coherent set.
 - [ ] Keep process-heavy docs out of the main reader path.
-- [ ] Update README after cleanup so it points to the final workflow only.
+- [x] Update README after cleanup so it points to the final workflow only.
 
 Candidate final docs:
-- [ ] `README.md`
+- [x] `README.md`
+- [x] `docs/SIMULATION_PHYSICS.md`
 - [ ] `docs/ARCHITECTURE.md`
 - [ ] `docs/METHODS.md`
 - [ ] `docs/EXPERIMENTS.md`
 - [ ] `docs/RESULTS.md`
-- [ ] `docs/REPRODUCING.md`
+- [x] `docs/REPRODUCING.md` draft created for validation, regeneration, and final rerun commands.
 
 Docs likely to archive, rewrite, or consolidate:
-- [ ] `NOTES.md`
-- [ ] `docs/NOTES.md`
-- [ ] `docs/TODO.md`
-- [ ] `docs/RESULTS_LOG.md`
-- [ ] `docs/OPTIMIZATION_LOG.md`
-- [ ] `docs/Visuals.md`
-- [ ] `docs/ADVERSARIAL_POMDP_OUTLINE.md`
-- [ ] `docs/RL_PLAN.md`
-- [ ] `docs/POMDP.md`
-- [ ] `docs/VAE.md`
-- [ ] `docs/SIM_FEATURES.md`
-- [ ] `docs/SCRIPTS.md`
-- [ ] `docs/PROTOCOL_V2_REALISM.md`
+- [x] `NOTES.md` removed after duplicate/archive preservation.
+- [x] `docs/NOTES.md` removed after duplicate/archive preservation.
+- [x] `docs/TODO.md` reduced to a short two-workstream roadmap; historical detail moved out of active docs.
+- [x] `docs/RESULTS_LOG.md` removed from the active docs after duplicate/archive preservation; final results should be regenerated into a new compact final summary.
+- [x] `docs/OPTIMIZATION_LOG.md` removed from the active docs after duplicate/archive preservation; final optimization conclusions should come from regenerated results.
+- [x] `docs/Visuals.md` archived after moving one-off visual checks into `notebooks/visuals.ipynb` and script reference notes into `docs/SCRIPTS.md`.
+- [x] `docs/ADVERSARIAL_POMDP_OUTLINE.md` removed after consolidating active POMDP design into `docs/POMDP.md`.
+- [x] `docs/REINFORCEMENT_LEARNING.md` created as the method-style replacement for `docs/RL_PLAN.md`; duplicate/archive copy preserved separately.
+- [x] `docs/POMDP.md` cleaned as a method/design doc; legacy result tables and old run paths removed from active narrative.
+- [x] `docs/VAE.md` cleaned as a design/reference doc; old result tables and run-specific notes moved to `Archive-Results.md`.
+- [x] `docs/SIM_FEATURES.md` renamed/reduced to `docs/SIMULATION_PHYSICS.md`; old full version preserved in `Archive-June-23/docs/SIM_FEATURES.md`.
+- [x] `docs/SCRIPTS.md` reduced to runnable entrypoints only; old full index preserved in `Archive-June-23/docs/SCRIPTS.md`.
+- [x] `docs/PROJECT_MAP.md` created as the compact codebase map for future development.
+- [x] `docs/PROTOCOL_V2_REALISM.md` removed after consolidating current simulator assumptions into `docs/SIMULATION_PHYSICS.md`.
 
 ## Codebase Polish
 
 - [ ] Keep simulator code stable unless there is a clear cleanup win.
-- [ ] Add lightweight project tooling if useful: `pyproject.toml`, formatter/linter config, pytest config.
-- [ ] Remove local junk files from the workspace and ignore them going forward.
+- [x] Add lightweight project tooling if useful: `pyproject.toml`, formatter/linter config, pytest config.
+- [x] Remove local junk files from the workspace and ignore them going forward.
 - [ ] Consider adding simple command wrappers or a final workflow script only after the final rerun protocol is clear.
 - [ ] Avoid splitting large modules just for aesthetics before final experiments are complete.
 
@@ -137,14 +140,26 @@ Docs likely to archive, rewrite, or consolidate:
 - [ ] Update final results documentation from the rerun.
 - [ ] Confirm all README commands work from a fresh environment.
 
+### Pre-Rerun Validation
+
+- [x] Run the full test suite with the project data-science environment.
+  - Result: `/opt/homebrew/Caskroom/miniforge/base/envs/Python-DS/bin/python -m pytest -q` passed with 207 tests and 1 Torch checkpoint warning.
+- [x] Run the lightweight Ruff correctness check from `pyproject.toml`.
+  - Result: `ruff check convoy_sim experiments scenarios tests --config pyproject.toml` passed.
+- [x] Smoke-check experiment entrypoints with `--help` before starting expensive reruns.
+  - Result: all current `experiments/*.py` entrypoints accepted `--help`.
+- [x] Confirm validation commands do not leave tracked or untracked junk behind.
+  - Result: removed regenerated `.pytest_cache/`, `.ruff_cache/`, `__pycache__/`, and `.DS_Store` files after validation.
+
 ### Draft Regeneration Protocol
 
 Goal: after cleanup, rerun the project from source code/configs and keep only the results that support the final project story. Treat this as the working protocol until the exact final commands are validated.
 
 Environment notes:
-- [ ] Use the project conda environment consistently. Likely commands should run with `/opt/homebrew/Caskroom/miniforge/base/envs/Python-DS/bin/python` for data/analysis work and `Python-ML` only where model training needs it.
+- [x] Use the project conda environment consistently. `docs/REPRODUCING.md` now assumes commands are run from an already active `Python-DS` shell, with explicit notes to switch to `Python-ML` for model-heavy VAE work.
 - [ ] Record the exact environment used for the final rerun in `docs/REPRODUCING.md` or the final README.
 - [ ] Before rerunning, confirm ignored/generated folders are empty or intentionally absent: `results/runs/`, `results/diag/`, `results/figures/`, `results/frames/`, `results/notebook-results/`, `data/attack_profiles/synthetic/`, and `data/attack_profiles/vae_candidates/`.
+- [ ] For plotting-heavy commands, set `MPLCONFIGDIR` to a writable cache directory if Matplotlib emits cache warnings.
 
 Recommended order:
 - [ ] Run lightweight tests/import checks first so failures are caught before expensive notebook/model work.
@@ -215,8 +230,8 @@ Do not delete until the archive branch and/or local external archive is confirme
 - [x] `results/frames/` moved to `Archive-June-23/results/frames/`
 - [x] `results/notebook-results/` moved to `Archive-June-23/results/notebook-results/`
 - [x] `notebooks/results/` after migrating paths to `results/notebook-results/`
-- [ ] `.pytest_cache/`
-- [ ] `.vscode/` unless intentionally keeping shared editor settings
+- [x] `.pytest_cache/`
+- [x] `.vscode/` unless intentionally keeping shared editor settings
 
 ### Data Folders To Review Before Removing
 
@@ -227,44 +242,44 @@ Decision needed: keep small canonical data, regenerate derived data, or move old
 
 ### Root-Level Files Likely To Move Or Remove
 
-- [ ] `Mixed_Loss_Plot.png`
-- [ ] `VAE_Curated.png`
-- [ ] `VAE_Mixed.png`
-- [ ] `VAE_Random.png`
-- [ ] `final_comparison.png`
-- [ ] `final_comparison_by_region.png`
-- [ ] `NOTES.md`
+- [x] `Mixed_Loss_Plot.png`
+- [x] `VAE_Curated.png`
+- [x] `VAE_Mixed.png`
+- [x] `VAE_Random.png`
+- [x] `final_comparison.png`
+- [x] `final_comparison_by_region.png`
+- [x] `NOTES.md`
 
 Selected final plots should move to `results/final/figures/`; stale or intermediate plots should be removed from the main branch.
 
 ### Local Junk Files To Delete And Ignore
 
-- [ ] `.DS_Store`
-- [ ] `docs/.DS_Store`
-- [ ] `configs/.DS_Store`
-- [ ] `configs/archive/.DS_Store`
-- [ ] `scenarios/.DS_Store`
-- [ ] `data/.DS_Store`
-- [ ] `data/attack_profiles/.DS_Store`
-- [ ] `data/attack_profiles/synthetic/.DS_Store`
-- [ ] `notebooks/.DS_Store`
-- [ ] `notebooks/results/.DS_Store`
-- [ ] `results/.DS_Store`
-- [ ] any nested `.DS_Store` under generated results folders
+- [x] `.DS_Store`
+- [x] `docs/.DS_Store`
+- [x] `configs/.DS_Store`
+- [x] `configs/archive/.DS_Store`
+- [x] `scenarios/.DS_Store`
+- [x] `data/.DS_Store`
+- [x] `data/attack_profiles/.DS_Store`
+- [x] `data/attack_profiles/synthetic/.DS_Store`
+- [x] `notebooks/.DS_Store`
+- [x] `notebooks/results/.DS_Store`
+- [x] `results/.DS_Store`
+- [x] any nested `.DS_Store` under generated results folders
 
 ### Markdown Files To Archive Or Rewrite
 
-- [ ] `docs/TODO.md`
-- [ ] `docs/RESULTS_LOG.md`
-- [ ] `docs/OPTIMIZATION_LOG.md`
-- [ ] `docs/NOTES.md`
-- [ ] `docs/Visuals.md`
-- [ ] `docs/ADVERSARIAL_POMDP_OUTLINE.md`
-- [ ] `docs/RL_PLAN.md`
-- [ ] `docs/POMDP.md`
-- [ ] `docs/VAE.md`
-- [ ] `docs/SIM_FEATURES.md`
-- [ ] `docs/SCRIPTS.md`
-- [ ] `docs/PROTOCOL_V2_REALISM.md`
+- [x] `docs/TODO.md`
+- [x] `docs/RESULTS_LOG.md`
+- [x] `docs/OPTIMIZATION_LOG.md`
+- [x] `docs/NOTES.md`
+- [x] `docs/Visuals.md`
+- [x] `docs/ADVERSARIAL_POMDP_OUTLINE.md`
+- [x] `docs/REINFORCEMENT_LEARNING.md`
+- [x] `docs/POMDP.md`
+- [x] `docs/VAE.md`
+- [x] `docs/SIM_FEATURES.md`
+- [x] `docs/SCRIPTS.md`
+- [x] `docs/PROTOCOL_V2_REALISM.md`
 
 These may not all be deleted. Some should be consolidated into final docs after the final rerun is defined.

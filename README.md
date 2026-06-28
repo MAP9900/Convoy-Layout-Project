@@ -1,114 +1,90 @@
 # Convoy Layout Project
 
-Convoy-defense simulation and optimization platform for studying WWII-style torpedo attacks against merchant convoys.
+Convoy-defense simulation and optimization project for studying WWII-style torpedo attacks against merchant convoys.
 
-The repository provides:
-- deterministic geometry and kinematic simulation primitives
-- canonical baseline and RL workflows with shared artifact contracts
-- realism layers (moving U-boat, partial observability, torpedo imperfections, ship station-keeping overlays)
-- diagnostics and visualization tooling for manual verification
+The project combines:
 
-Current scope note:
-- the core simulator is responsible for plausible torpedo/submarine execution geometry
-- richer historical fire-control / TDC procedure is treated as a future attacker-side GenAI decision layer, not as a requirement for the base execution engine
+- a deterministic 2D convoy/torpedo simulation
+- synthetic U-boat attack-profile generation
+- VAE-based attack-candidate generation
+- POMDP-style partial-observation attacker modeling
+- reinforcement-learning layout optimization
+- notebook and script workflows for reproducible experiment reruns
 
-## Current Protocol
+Current results are being regenerated after repository cleanup. Generated data, old runs, and intermediate notebook outputs are intentionally excluded from the clean repo presentation unless promoted as final artifacts.
 
-- Active simulation track: `Protocol V2-Realism`
-- Primary technical reference: `docs/SIM_FEATURES.md`
+## Project Map
 
-If you are new to the repo, start here:
-1. `docs/SIM_FEATURES.md`
-2. `docs/PROTOCOL_V2_REALISM.md`
-3. this README quick-start section
+Start here:
 
-## Canonical Workflows
+1. `docs/SIMULATION_PHYSICS.md` - simulator behavior, assumptions, and current modeling limits
+2. `docs/VAE.md` - attack-profile VAE design and candidate-pool workflow
+3. `docs/POMDP.md` - partial-observation attacker selection and fire-control rebuilds
+4. `docs/REINFORCEMENT_LEARNING.md` - RL layout-optimization design and validation plan
+5. `docs/REPRODUCING.md` - commands and rerun order
+6. `docs/PROJECT_MAP.md` - codebase map for future development
+7. `docs/SCRIPTS.md` - runnable script entrypoints
 
-Generate configs (optional, if you want to re-split profiles/seeds):
+## Repository Layout
 
-```bash
-python -m experiments.generate_run_config \
-  --template configs/templates/baseline.template.toml \
-  --output configs/baseline/default.toml \
-  --convoy-profile convoy_layout_1 \
-  --split-seed 1945 \
-  --n-total 30 \
-  --n-train 20
+- `convoy_sim/`: core simulation, realism, scoring, VAE, RL, and POMDP support code
+- `experiments/`: command-line entrypoints for generation, audits, training, evaluation, and visuals
+- `notebooks/`: notebook-first analysis and final rerun workflows
+- `scenarios/`: convoy profile definitions
+- `configs/`: baseline/RL config templates and defaults
+- `tests/`: regression and smoke tests
+- `docs/`: method docs, runbook, and codebase map
 
-python -m experiments.generate_run_config \
-  --template configs/templates/rl.template.toml \
-  --output configs/rl/default.toml \
-  --convoy-profile convoy_layout_1 \
-  --split-seed 1945 \
-  --n-total 30 \
-  --n-train 20
+## Quick Start
+
+Most commands assume the local `Python-DS` conda environment is already active:
+
+```text
+(Python-DS) ... Convoy Layout Project %
 ```
 
-Run canonical experiments:
+Install/update dependencies as needed:
+
+```bash
+pip install -r requirements-dev.txt
+```
+
+Run validation:
+
+```bash
+python -m pytest -q
+python -m ruff check convoy_sim experiments scenarios tests --config pyproject.toml
+```
+
+Run the canonical baseline/RL entrypoints:
 
 ```bash
 python -m experiments.run_baseline_suite --config configs/baseline/default.toml
 python -m experiments.run_rl_train --config configs/rl/default.toml
 ```
 
-## Run Artifacts
+For full data regeneration, VAE candidate pools, notebook order, and `Python-ML` notes, use `docs/REPRODUCING.md`.
 
-Both baseline and RL runs emit:
-- `config_resolved.yaml`
-- `metrics_summary.json`
-- `per_profile_metrics.csv`
-- `run_manifest.json`
+## Outputs
 
-RL runs also emit:
-- `checkpoints/policy_latest.json`
+Generated outputs are generally ignored:
 
-Default output roots:
-- `results/runs/baseline/<timestamp>_*`
-- `results/runs/rl/<timestamp>_*`
+- `results/runs/`
+- `results/diag/`
+- `results/figures/`
+- `results/frames/`
+- `results/notebook-results/`
+- generated attack-profile datasets
 
-## Manual Verification Paths
+Final rerun artifacts should be promoted deliberately into a small curated area such as:
 
-Notebook-first verification:
-- `notebooks/attack_manual_verification.ipynb` (historical realism checks, MP4/frames, hit summaries)
-- `notebooks/attack_profile_tests.ipynb` (profile-oriented geometry checks)
-- `notebooks/torpedo_firing_doctrine_comparison.ipynb` (large, submarine-centric doctrine comparison plots for static vs moving U-boat cases; saves PNGs by default to `results/notebook-results/torpedo_firing_doctrine_comparison/`)
-
-Script-based diagnostics:
-- `python -m experiments.render_attack_profile_previews --help`
-- `python -m experiments.audit_attack_profiles --help`
-- `python -m experiments.render_attack_animation --help`
-
-Supporting visual reference:
-- `docs/Visuals.md`
-
-## Repository Layout
-
-- `convoy_sim/`: core simulation, realism, scoring, and wrappers
-- `experiments/`: canonical run entrypoints and diagnostics scripts
-- `scenarios/`: convoy layout profile registry
-- `configs/`: canonical and template TOML configs
-- `tests/`: regression and smoke test coverage
-- `docs/`: protocol, feature reference, logs, and planning docs
-- `notebooks/`: manual verification notebooks
-
-## Setup
-
-```bash
-python -m venv .venv
-source .venv/bin/activate
-pip install -r requirements-dev.txt
+```text
+results/final/
+  figures/
+  metrics/
+  manifests/
 ```
 
-## Recommended Validation
+## Development Note
 
-Fast targeted checks:
-
-```bash
-pytest -q tests/test_realism_v2.py tests/test_attack_profiles.py tests/test_canonical_entrypoints.py
-```
-
-Full suite:
-
-```bash
-pytest -q
-```
+This is a personal research and portfolio project. AI (Codex GPT 5.4 & 5.5) were used to assist with code developement. Project direction, experiment framing, validation, and final interpretations were maintained by me, the author.

@@ -1,265 +1,83 @@
 # TODO
 
-Last updated: 2026-06-08
+Last updated: 2026-06-28
 
-## Current Workflow (Canonical)
+Operational commands live in `docs/REPRODUCING.md`. Completed historical planning notes were moved out of the active docs during cleanup.
 
-- Generate baseline config:
-  - `python -m experiments.generate_run_config --template configs/templates/baseline.template.toml --output configs/baseline/default.toml --convoy-profile convoy_layout_1 --split-seed 1945 --n-total 30 --n-train 20 --train-seeds 1939,1940,1941 --eval-seeds 1942,1943,1944`
-- Generate RL config:
-  - `python -m experiments.generate_run_config --template configs/templates/rl.template.toml --output configs/rl/default.toml --convoy-profile convoy_layout_1 --split-seed 1945 --n-total 30 --n-train 20`
-- Run baseline:
-  - `python -m experiments.run_baseline_suite --config configs/baseline/default.toml`
-- Run RL:
-  - `python -m experiments.run_rl_train --config configs/rl/default.toml`
+Current project focus: finish the POMDP story, then expand RL layout freedom and final testing.
 
-## Now
+## Workstream 1: POMDP Finalization
 
-- [x] Protocol v2 foundation: freeze current stack as V1 baseline/RL reference and start V2 realism track.
-- [x] Add moving U-boat support (deterministic motion first) with config toggle:
-  - `u_boat_mode = static | moving`
-  - maintain backward compatibility for static profiles.
-- [x] Define U-boat motion schema in attack profiles:
-  - initial position/heading/speed
-  - leg/waypoint plan
-  - launch timing/window fields
-  - optional turn-rate / kinematic bounds
-- [x] Integrate U-boat motion into attack proposal + simulation paths (not just plotting).
-- [x] Add diagnostics/visuals for U-boat launch context in canonical run manifests.
-- [x] Add tests for motion realism:
-  - deterministic replay under fixed seeds
-  - kinematic-feasibility checks
-  - regression vs static mode when `u_boat_mode=static`
-- [x] Re-lock benchmark protocol for V2 after movement integration (new seed/split stamp).
-- [x] Align eval seeds between baseline and RL for strict apples-to-apples comparison.
-- [x] Run baseline + RL pair with matched eval seeds.
-- [x] Record V2-Realism Test 1 in `docs/RESULTS_LOG.md` and `docs/OPTIMIZATION_LOG.md`.
-- [ ] Define RL promotion threshold (`expected_hits` primary, `CVaR_90` guardrail).
-- [x] Add seeded fleet-profile support for heterogeneous convoy realization:
-  - config-friendly `fleet_profile` / `fleet_seed` layout kwargs
-  - deterministic within-class hull-size variation
-  - canonical mixed-class convoy profile for value-focused benchmarks
-- [x] Add deterministic `fire_control_lite` baseline:
-  - attacker-side firing solution from noisy convoy observation
-  - deterministic centerline / spread / salvo size / G7a speed-setting selection
-- [ ] Connect `fire_control_lite` baseline into attacker-profile generation and diagnostic workflows more broadly.
-- [ ] Add G7a-only torpedo speed-setting doctrine refinement:
-  - `fast`
-  - `medium`
-  - `long_range`
-- [ ] Define GenAI attack-profile dataset schema (context + attack vector + outcomes).
-  - include enough attacker-side context to support future historical fire-control/TDC-style reasoning rather than only raw geometry labels
-- [ ] Add reproducible synthetic attack-dataset generation config/script (fixed seeds + manifest metadata).
-- [ ] Generate first dataset snapshot for GenAI model training.
+- [ ] Rerun POMDP v1/v2 notebooks from clean regenerated inputs.
+- [ ] Preserve the fixed-location diagnostic when comparing observation presets.
+- [ ] Define POMDP success metrics:
+  - gap/regret versus full-state oracle
+  - expected loss
+  - expected hits
+  - robustness across `good_contact`, `baseline_night`, and `poor_contact`
+- [ ] Add a short POMDP interpretation checklist:
+  - describe `expected_hits` as a comparative simulator metric
+  - do not frame simulator hit counts as historical sinking rates
+  - separate location-selection quality from fire-control reconstruction quality
+- [ ] Decide whether POMDP v2 fire-control is final-scope or documented as near-final/future work.
+- [ ] Update `docs/POMDP.md` after final POMDP reruns.
 
-## Next
+## Workstream 2: RL Layout Freedom
 
-- [x] Phase 1 RL overhaul: fix degenerate canonical RL action set in `configs/rl/default.toml`:
-  - make actions genuinely different geometrically
-  - include rectangular vs staggered alternatives
-  - include compact / standard / loose spacing variants
-  - rerun baseline vs RL after the action-space fix
-- [x] Run direct RL action audit after Phase 1:
-  - `python -m experiments.audit_rl_actions --config configs/rl/default.toml`
-  - result: action menu is now meaningful, but learner selected the wrong action (`staggered_loose`) while `rect_standard` was best on eval
-- [x] Phase 1.5 RL overhaul: improve train-time action selection / reward alignment before learner replacement:
-  - reduce train/eval mismatch exposed by the action audit
-  - incorporate risk-aware selection logic rather than relying on final tabular Q-values alone
-  - rerun RL and compare against direct action-audit best eval action
-- [x] Phase 2 RL overhaul, minimal slice: add constrained RL layout-builder action space:
-  - multi-step decisions for layout family, along-spacing bucket, and across-spacing bucket
-  - keep backward-compatible flat-action mode as a fallback
-  - enable builder mode in `configs/rl/default.toml`
-- [x] Run direct builder audit after the Phase 2 minimal slice:
-  - `python -m experiments.audit_rl_actions --config configs/rl/default.toml`
-  - result: builder space is not the bottleneck; `rect_compact_loose` was best on both train and eval and matches heuristic-baseline-level performance
-- [x] Phase 2.1 RL overhaul: fix builder-mode final selection / tie-break behavior:
-  - current selector switched from `rect_compact_loose` to `rect_compact_standard` because of the complexity tolerance tie-break
-  - tighten or redesign tie-break logic so a clearly better train objective is not discarded in builder mode
-  - rerun RL and confirm builder mode can recover the audited best layout
-- [x] Expand Phase 2 RL layout-builder controls beyond the minimal slice:
-  - add bounded row pattern templates
-  - add bounded row offset policies
-  - add bounded ship-class placement policies
-  - keep speed and zig-zag deferred for now
-- [ ] Define and enforce hard layout boundaries in config (separation, footprint, class counts, feasibility).
-- [ ] Add action masking / feasibility-first handling for invalid RL layouts.
-- [ ] Phase 3 RL overhaul: redesign reward:
-  - [x] add objective plumbing for `unique_ships_hit`, `repeat_hits`, and weighted value
-  - [x] pass one `ObjectiveSpec` through baseline/RL workflows and summaries
-  - [x] add named doctrine/objective presets with explicit weight overrides
-  - [x] rerun matched mixed-convoy baseline + builder-mode RL benchmark with the new objective
-  - [ ] tune weights after the first objective-aligned benchmark
-- [x] Run direct builder action audit under the new mixed-convoy objective:
-  - confirmed `staggered_loose_loose` is best on both train and eval under the current weights
-  - selector/learner are no longer the immediate blocker for this benchmark
-- [ ] Decide and tune mixed-convoy objective weights:
-  - [x] run `accept_concentration` preset sweep
-  - [x] run `protect_hulls` preset sweep
-  - [x] run `protect_value` preset sweep
-  - review whether the current `repeat_hits` penalty is too weak
-  - decide whether protecting more unique hulls should matter more than minimizing weighted value loss
-  - rerun baseline + RL + action audit after each weight revision, not just RL
-- [ ] Switch canonical reward-focused benchmarks to heterogeneous convoys:
-  - use `convoy_layout_mixed_1` or a successor mixed profile
-  - keep seeded fleet realization matched across baseline and RL
-  - treat within-class hull heterogeneity as part of benchmark realism, not RL control
-- [x] Fix canonical RL mixed-convoy config generation:
-  - preserve builder mode when generating RL configs from template
-  - avoid flattening all RL actions to one identical geometry when injecting a convoy profile
-  - mixed-convoy benchmark can now be rerun with meaningful RL layout freedom
-- [ ] Expand attack-profile diversity and harder eval gates after the selector fix:
-  - add more attacker geometry/doctrine/range variety
-  - add repeated eval seed sets or held-out harder-case pack
-  - use the expanded profile library to test whether builder-mode RL still matches or exceeds heuristic baseline
-- [x] Rerun mixed-convoy baseline + builder-mode RL + action audit after the builder expansion slice:
-  - row pattern / row offset / class placement control did change the winning RL layout
-  - RL now selects `staggered_center_heavy_6_none_mixed_balanced_loose_loose`
-  - direct audit no longer agrees on train and eval winner, so the next bottleneck is generalization rather than missing builder freedom
-- [ ] Add stronger validation/eval gating for RL builder runs:
-  - [x] add a held-out validation split for final action selection
-  - [x] rerun with held-out validation selection and confirm it improves eval result
-  - add repeated eval seed sets or a harder held-out profile pack
-  - use this to measure residual train/eval mismatch after builder-space changes
-- [x] Add Phase 0 runtime instrumentation to canonical baseline / RL / audit entrypoints:
-  - write timing summaries into `metrics_summary.json` and `run_manifest.json`
-  - capture baseline search time, RL training time, RL train-ranking time, RL eval time, and audit per-action timings
-- [x] Rerun baseline + RL + audit once with timing instrumentation and review the largest runtime buckets before optimizing behavior:
-  - baseline total: about `185s`
-  - baseline bottleneck: heuristic train-search (`~165s` of `~185s`)
-  - RL total: about `2747s`
-  - RL bottleneck: train-time action ranking over 144 builder actions (`~2735s`), not the tabular episode loop (`~2.5s`)
-  - audit total: about `4019s`
-  - audit bottleneck: full cross-product evaluation of 144 actions (`~27.9s` per action on average)
-- [x] Phase 1 runtime optimization:
-  - reduce train-time ranking cost before touching RL episode logic
-  - add cheaper training-time evaluation budget for RL action ranking
-  - add staged/top-K audit funnel before evaluating all candidates at full cost
-- [x] Phase 2 runtime optimization:
-  - add stronger validation-based final action selection
-  - use a held-out validation slice before full eval
-  - attack the current train/eval mismatch in the richer builder space without changing final eval fidelity
-- [ ] Next methodology hardening step:
-  - expand attack-profile diversity first
-  - then add repeated or harder held-out eval packs
-  - only revisit selector mechanics afterward if the audit mismatch remains
-- [ ] Phase 4 RL overhaul: replace tabular RL selector with stronger learner while preserving artifact schema.
-- [ ] Expand RL training threat diversity beyond the current narrow setup.
-- [ ] Add compact RL observation/state vector for geometry/composition/threat context.
-- [ ] Expand baseline search space beyond spacing-only (bounded, interpretable knobs).
-- [ ] Add confidence intervals or repeated-seed summaries to run metrics.
-- [ ] Add run-to-run comparator script for baseline vs RL outputs.
-- [ ] Add CI smoke checks for canonical config generation + baseline + RL entrypoints.
-- [ ] Revisit conditional VAE only if future POMDP/cross-layout tests need explicit tactical conditioning; current VAE path uses latent-bank sampling and dynamic filtering.
-- [x] Add generation-time feasibility filtering and duplicate controls for sampled attack profiles.
-- [x] Integrate generated attack profiles into canonical defender evaluation flow.
-- [x] Add generated-vs-scripted comparison outputs for `expected_hits`, `CVaR_90`, and `p_hit_ge_1`.
-- [ ] Run `notebooks/pomdp_candidate_eval.ipynb` and compare `good_contact`, `baseline_night`, and `poor_contact` selection quality before starting attacker RL.
+- [ ] Define the RL promotion threshold:
+  - primary metric
+  - risk/variance guardrail
+  - minimum improvement needed over baseline
+- [ ] Add final RL validation protocol:
+  - repeated eval seeds
+  - harder held-out attack-profile pack
+  - confidence intervals or repeated-seed summaries
+- [ ] Define and enforce layout feasibility boundaries:
+  - minimum ship separation
+  - maximum convoy footprint
+  - class counts preserved
+  - optional route/sea-room bounds
+- [ ] Add action masking, rejection, or repair for invalid RL layouts.
+- [ ] Design a freer RL layout generator:
+  - allow per-ship placement within convoy-frame bounds
+  - prevent overlapping ships
+  - preserve valid ship classes and fleet counts
+  - start with bounded continuous or grid-like movement before fully arbitrary placement
+- [ ] Add a simple random/evolutionary feasible-layout baseline.
+- [ ] Add layout novelty/diversity reporting:
+  - footprint size
+  - spacing distribution
+  - class placement
+  - visual comparison against baseline and current builder layouts
+- [ ] Rerun RL after the freer layout generator exists and compare against:
+  - static baseline
+  - current builder-mode RL
+  - random/evolutionary feasible search
 
-## Later
+## Final Testing And Results
 
-- [ ] Attacker RL and alternating training protocol.
-- [ ] Add limited per-ship override controls for high-value/escort ships (bounded offsets/swap rules only).
-- [ ] Multi-agent robustness and domain-randomization matrix.
-- [ ] Add latent-space diagnostics/visualization for generated attack-profile families and failure regions.
-- [ ] Add diffusion-model variant as optional stretch after VAE baseline is stable.
+- [ ] Regenerate archived datasets and run outputs from `docs/REPRODUCING.md`.
+- [ ] Run full tests before final experiments.
+- [ ] Run final baseline, VAE, POMDP, and RL workflows.
+- [ ] Promote only curated final artifacts to `results/final/`.
+- [ ] Create a compact final method/result summary:
+  - method
+  - assumptions
+  - observation level
+  - action space
+  - metric
+  - result
+  - caveat
+- [ ] Create final visual comparison artifacts:
+  - baseline layout
+  - current builder RL layout
+  - freer RL layout
+  - random/evolutionary best layout, if used
 
-## RL Design Docs
+## Later / Stretch
 
-- [ ] Keep `docs/RL_PLAN.md` updated whenever RL state/action/reward/constraint design changes.
-
-## Performance Plan
-
-- [x] Phase 0: measure first
-  - add runtime instrumentation to baseline / RL / audit entrypoints
-  - write timing summaries into run artifacts before changing behavior
-- [x] Phase 1: cheap training, expensive final eval
-  - add reduced-budget baseline train-search evaluation
-  - add reduced-budget RL train-time action ranking
-  - keep final eval at full `n_trials_per_seed`
-- [x] Phase 2: validation funnel
-  - add cheap-first audit screening
-  - promote only top-K train/eval candidates to full-budget audit
-- [ ] Phase 3: early stopping / elimination
-  - stop evaluating clearly dominated candidates early during search/audit
-- [ ] Phase 4: caching
-  - cache deterministic builder materialization and seeded fleet realization
-- [ ] Phase 5: parallelize expensive independent work
-  - audit per-action evaluation
-  - heuristic baseline candidate evaluation
-- [ ] Phase 6: smarter validation-based final selection
-  - add held-out validation split for final RL action choice
-  - keep full eval only for shortlisted candidates
-
-## Historical Realism Backlog
-
-- [x] Add bounded station-keeping randomness:
-  - per-ship positional jitter
-  - heading jitter
-  - class-dependent cohesion (escort tighter than freighter)
-- [x] Add torpedo imperfection model:
-  - heading error / drift over time (bend-like behavior via controlled error, not arbitrary curves)
-  - speed variance
-  - dud probability
-  - depth/fuze error proxy (deferred)
-- [x] Add ship-movement realism progression:
-  - formation-level motion as primary control
-  - limited per-ship deviation overlays (bounded offsets/swap rules)
-  - avoid unconstrained fully independent ship control by default
-- [x] Add command/response latency:
-  - delayed execution of heading/zig-zag orders
-  - class-dependent response lag (future refinement)
-- [x] Add environment-driven observability:
-  - visibility, sea state, time-of-day effects on detection and attack setup quality
-- [x] Add U-boat firing discipline realism:
-  - default salvo rejection while the boat is materially turning
-  - explicit override available for controlled counterfactual scenarios
-- [x] Add gyro-angle torpedo spread model:
-  - torpedo exits on bow heading
-  - short straight run before gyro deflection
-  - fan spread preserved as per-torpedo final-course setting
-- [ ] Add hard realism envelopes:
-  - separation floors
-  - turn-rate limits
-  - class-based speed bounds
-  - convoy footprint caps
-- [ ] Add attack timing doctrine:
-  - night surface approach vs day submerged approach modes
-  - mode-specific speed/detection constraints
-- [ ] Add approach-geometry doctrine:
-  - abeam/intercept preference
-  - stern-chase effectiveness penalties where historically appropriate
-- [ ] Add attacker-side fire-control realism:
-  - coarse firing-solution derivation from noisy observation
-  - target aspect / range / speed estimation effects folded into centerline + spread + speed setting
-  - maintain deterministic baseline before any learned attack generator
-- [ ] Define GenAI-layer historical fire-control/TDC scope:
-  - exact/near-exact historical firing procedure belongs in the attacker decision/generation layer, not the core torpedo/submarine geometry engine
-  - use the current realism stack as the execution layer underneath a future GenAI fire-control agent
-  - document what the GenAI layer is expected to choose: target selection, centerline, doctrine, spread, speed setting, and confidence under noisy observation
-- [ ] Add escort behavior model:
-  - sector screen assignment
-  - sweep/search behavior
-  - reaction delay after contact
-  - disruption windows after counterattack
-- [ ] Add detection stack model:
-  - visual / radar / sonar / HF-DF probability components
-  - range/weather/light conditioning
-- [ ] Add convoy discipline factors:
-  - blackout/radio-silence effects
-  - zig-zag compliance variability
-  - signaling delays
-- [ ] Add straggler dynamics:
-  - damage/slowdown induced formation dropouts
-  - elevated vulnerability for stragglers
-- [ ] Add sea-room and routing constraints:
-  - lane width / route corridor limits
-  - hazard/chokepoint effects
-- [ ] Add proficiency variability:
-  - attacker and escort skill distributions
-  - aiming/detection/coordination variance
-- [ ] Add persistence/fatigue limits:
-  - battery/fuel/attack-window constraints over long engagements
-- [x] Add intelligence uncertainty model:
-  - attacker decisions based on partial/noisy belief state
-  - no direct use of full true convoy state for attacker/generative conditioning
+- [ ] Conditional VAE if tactical conditioning becomes necessary.
+- [ ] Learned attacker policy after POMDP baselines are stable.
+- [ ] Multi-layout domain randomization.
+- [ ] More detailed escort/search/reaction behavior.
+- [ ] Diffusion or other generative attack-profile variants.
