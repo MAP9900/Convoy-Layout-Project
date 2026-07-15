@@ -23,7 +23,7 @@ python -m experiments.run_baseline_suite --help
 |---|---|---|
 | Curated/random profile generation | `python -m experiments.generate_attack_profile_scaffold ...` | JSONL profile datasets or scaffold snippets. |
 | Random baseline profile generation | `python -m experiments.generate_random_attack_profile_dataset ...` | Random-profile JSONL datasets for VAE comparison. |
-| Mixed VAE dataset build | `python -m experiments.build_mixed_attack_profile_dataset --overwrite` | Mixed curated/random train-valid JSONL datasets. |
+| Mixed VAE dataset build | `python -m experiments.build_mixed_attack_profile_dataset --overwrite` | Mixed curated/random train-valid-test JSONL datasets. |
 | Dataset audit | `python -m experiments.audit_attack_profile_dataset --input ...` | Flattened CSVs and distribution summaries. |
 | Profile geometry audit | `python -m experiments.audit_attack_profiles ...` | Geometry/audit CSV and JSON diagnostics. |
 

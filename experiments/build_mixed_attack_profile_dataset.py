@@ -46,6 +46,18 @@ def parse_args() -> argparse.Namespace:
         help="Random-baseline validation JSONL.",
     )
     parser.add_argument(
+        "--curated-test",
+        type=Path,
+        default=Path("data/attack_profiles/synthetic/test_random_tactical_v4_5k.jsonl"),
+        help="Curated v4 test JSONL.",
+    )
+    parser.add_argument(
+        "--random-test",
+        type=Path,
+        default=Path("data/attack_profiles/synthetic/test_random_profile_v1_5k.jsonl"),
+        help="Random-baseline test JSONL.",
+    )
+    parser.add_argument(
         "--train-output",
         type=Path,
         default=Path("data/attack_profiles/synthetic/train_mixed_curated70_random30_45k.jsonl"),
@@ -57,8 +69,15 @@ def parse_args() -> argparse.Namespace:
         default=Path("data/attack_profiles/synthetic/valid_mixed_curated70_random30_5k.jsonl"),
         help="Output mixed validation JSONL.",
     )
+    parser.add_argument(
+        "--test-output",
+        type=Path,
+        default=Path("data/attack_profiles/synthetic/test_mixed_curated70_random30_5k.jsonl"),
+        help="Output mixed test JSONL.",
+    )
     parser.add_argument("--train-count", type=int, default=45_000, help="Mixed training record count.")
     parser.add_argument("--valid-count", type=int, default=5_000, help="Mixed validation record count.")
+    parser.add_argument("--test-count", type=int, default=5_000, help="Mixed test record count.")
     parser.add_argument(
         "--curated-fraction",
         type=float,
@@ -201,7 +220,12 @@ def build_mixed_split(
     )
     rng.shuffle(selected)
 
-    prefix = "MIXTRN" if split == "train" else "MIXVAL"
+    prefixes = {
+        "train": "MIXTRN",
+        "valid": "MIXVAL",
+        "test": "MIXTST",
+    }
+    prefix = prefixes.get(str(split), "MIX")
     rewritten = [
         _rewrite_record(
             record,
@@ -231,6 +255,8 @@ def main() -> int:
     random_train = load_attack_profile_dataset_jsonl(args.random_train)
     curated_valid = load_attack_profile_dataset_jsonl(args.curated_valid)
     random_valid = load_attack_profile_dataset_jsonl(args.random_valid)
+    curated_test = load_attack_profile_dataset_jsonl(args.curated_test)
+    random_test = load_attack_profile_dataset_jsonl(args.random_test)
 
     train_records, train_summary = build_mixed_split(
         curated_records=curated_train,
@@ -248,6 +274,14 @@ def main() -> int:
         split="valid",
         seed=int(args.seed) + 1,
     )
+    test_records, test_summary = build_mixed_split(
+        curated_records=curated_test,
+        random_records=random_test,
+        total_count=int(args.test_count),
+        curated_fraction=float(args.curated_fraction),
+        split="test",
+        seed=int(args.seed) + 2,
+    )
 
     summary = {
         "workflow": MIXED_DATASET_SOURCE,
@@ -261,20 +295,26 @@ def main() -> int:
             "random_train": str(args.random_train),
             "curated_valid": str(args.curated_valid),
             "random_valid": str(args.random_valid),
+            "curated_test": str(args.curated_test),
+            "random_test": str(args.random_test),
         },
         "outputs": {
             "train": str(args.train_output),
             "valid": str(args.valid_output),
+            "test": str(args.test_output),
         },
         "splits": {
             "train": train_summary,
             "valid": valid_summary,
+            "test": test_summary,
         },
     }
     _write_jsonl(args.train_output, train_records, overwrite=bool(args.overwrite))
     _write_jsonl(args.valid_output, valid_records, overwrite=bool(args.overwrite))
+    _write_jsonl(args.test_output, test_records, overwrite=bool(args.overwrite))
     _write_summary(args.train_output.with_suffix(args.train_output.suffix + ".summary.json"), summary, overwrite=True)
     _write_summary(args.valid_output.with_suffix(args.valid_output.suffix + ".summary.json"), summary, overwrite=True)
+    _write_summary(args.test_output.with_suffix(args.test_output.suffix + ".summary.json"), summary, overwrite=True)
     print(json.dumps(summary, indent=2, sort_keys=True))
     return 0
 

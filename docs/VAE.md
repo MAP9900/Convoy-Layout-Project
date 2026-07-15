@@ -97,7 +97,7 @@ Several doctrine fields are fixed during decoding so generated profiles remain c
 - bow launch origin
 - standard submarine dimensions
 
-The VAE does not reconstruct rich tactical metadata such as `spawn_region`, `target_zone_kind`, `target_ship_ids`, `aim_point`, or intended outcome label. Some metadata is recovered later through dynamic audit and candidate-pool generation. Fire control solutions are handeled by POMDP via `fire_control_lite`. 
+The VAE does not reconstruct rich tactical metadata such as `spawn_region`, `target_zone_kind`, `target_ship_ids`, `aim_point`, or intended outcome label. Some metadata is recovered later through dynamic audit and candidate-pool generation. In POMDP v2, final firing solutions are rebuilt downstream from noisy convoy/formation-level observations with `fire_control_lite`.
 
 ## Model Configuration
 
@@ -125,7 +125,7 @@ The latent-bank path:
 3. samples near encoded training examples
 4. decodes with a small noise scale
 
-This keeps decoded profiles near the learned tactical manifold instead of asking a small unconditional VAE prior to cover the full multimodal distribution. Done so as generated attack profiles come from different tactical regions (ex: inside, ahead, stern, etc)
+This keeps decoded profiles near the learned tactical manifold instead of asking a small unconditional VAE prior to cover the full multimodal distribution. This matters because generated attack profiles come from different tactical regions, such as inside, ahead, astern, port, and starboard.
 
 NOTE:  
 - prior: sample random latent vectors from N(0, I), then decode.
@@ -179,7 +179,7 @@ The light weight Monte Carlo setup keeps each candidate profile fixed, then reru
 - `CVaR_90`
 - `CVaR_90_loss`
 
-Run variation comes from stochastic convoy realism such as position jitter, heading jitter, speed jitter, and evasive zig-zag behavior. Torpedo noise can also contribute when enabled. A candidate's `expected_hits` is therefore a very light Monte Carlo estimate under simulator stochasticity, not a deterministic property of the profile. It is not expected that the number of hits changes much between runs, rather this evaluation is done as a light robustness check. 
+Run variation comes from light position/heading jitter plus optional torpedo noise. A candidate's `expected_hits` is therefore a very light robustness estimate under simulator stochasticity, not a full tactical uncertainty model. It is not expected that the number of hits changes much between runs.
 
 
 The notebook wrapper is `notebooks/attack_candidate_pool_eval.ipynb`.
@@ -202,7 +202,7 @@ GenAI Workflow: VAE proposes plausible attack candidates, while the POMDP layer 
 
 Current active notebooks:
 
-- `notebooks/profile_generation_tests.ipynb`: inspect and validate curated/random synthetic training-data generation.
+- `notebooks/profile_generation_tests.ipynb`: generate and compare curated, random, and mixed train/valid/test datasets for VAE training. Current final-run convention is `45k` train, `5k` validation, and `5k` test per source.
 - `notebooks/vae_train.ipynb`: train and sample the curated, random, or mixed VAE selected in the configuration cell.
 - `notebooks/vae_candidate_pool.ipynb`: turn a trained VAE into a filtered candidate-pool JSONL.
 - `notebooks/vae_source_comparison.ipynb`: generate matched source candidate pools, compare candidate-source summaries, and optionally run matched Monte Carlo evaluation.
@@ -216,4 +216,3 @@ Current active notebooks:
 - Raw Gaussian-prior sampling is weak for this multimodal tactical manifold.
 - Latent-bank sampling is more reliable but stays close to the training distribution by design.
 - Accepted adversarial candidate pools are intentionally hit heavy and should not be described as the full distribution of historical U-boat attacks. Overall goal of the project remains optimizing the convoy layout for defense, thus why hit heavy profiles were prioritized. Defense can now be trained on worst case scenario attacks 
-

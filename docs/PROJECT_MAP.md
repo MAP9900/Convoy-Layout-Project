@@ -1,7 +1,5 @@
 # Project Map
 
-This file is the compact codebase map for future development. Use it to decide where a change belongs before adding new modules, scripts, notebooks, or docs.
-
 ## Top-Level Layout
 
 | Path | Role |
@@ -94,12 +92,6 @@ See `docs/SCRIPTS.md` for the runnable script index. The main groups are:
 - visualization/manual QA
 
 ## Notebooks
-
-Notebook outputs should go under:
-
-```text
-results/notebook-results/<notebook-name>/
-```
 
 Current notebook groups:
 

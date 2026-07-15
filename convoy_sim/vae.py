@@ -1,17 +1,14 @@
 """Small VAE and preprocessing helpers for synthetic attack profiles."""
 
 from __future__ import annotations
-
 from dataclasses import dataclass
 import json
 from math import atan2
 from pathlib import Path
 from typing import Any
-
 import numpy as np
 import torch
 import torch.nn as nn
-
 from convoy_sim.attack_profiles import AttackProfile
 
 
@@ -64,7 +61,7 @@ def load_attack_profile_dataset_jsonl(path: str | Path) -> list[dict[str, Any]]:
 
 
 def _profile_to_feature_vector(profile: dict[str, Any]) -> np.ndarray:
-    """Convert one explicit profile payload into the agreed v1 feature vector."""
+    """Convert one explicit profile payload into the feature vector."""
 
     bearing = float(profile["base_bearing_rad"])
     vector = np.array(
