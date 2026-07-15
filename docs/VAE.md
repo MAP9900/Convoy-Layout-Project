@@ -36,12 +36,12 @@ VAE candidate generation and evaluation:
 Notebook workflows:
 - `notebooks/profile_generation_tests.ipynb`
 - `notebooks/vae_train.ipynb`
-- `notebooks/random_vae_train.ipynb`
-- `notebooks/mixed_vae_train.ipynb`
 - `notebooks/vae_candidate_pool.ipynb`
 - `notebooks/vae_source_comparison.ipynb`
 - `notebooks/vae_final_baseline_comparison.ipynb`
 - `notebooks/attack_candidate_pool_eval.ipynb`
+
+`notebooks/vae_train.ipynb` contains the short training loop. Set `DATASET_SOURCE` to `curated`, `random`, or `mixed` in its configuration cell.
 
 Related docs:
 - `docs/SIMULATION_PHYSICS.md`
@@ -203,9 +203,7 @@ This keeps the GenAI piece meaningful: the VAE proposes plausible attack candida
 Current active notebooks:
 
 - `notebooks/profile_generation_tests.ipynb`: inspect and validate curated/random synthetic training-data generation.
-- `notebooks/vae_train.ipynb`: train the curated v4 VAE and sample from the trained model.
-- `notebooks/random_vae_train.ipynb`: train the random-baseline VAE for comparison.
-- `notebooks/mixed_vae_train.ipynb`: train the mixed curated/random VAE.
+- `notebooks/vae_train.ipynb`: train and sample the curated, random, or mixed VAE selected in the configuration cell.
 - `notebooks/vae_candidate_pool.ipynb`: turn a trained VAE into a filtered candidate-pool JSONL.
 - `notebooks/vae_source_comparison.ipynb`: generate matched source candidate pools, compare candidate-source summaries, and optionally run matched Monte Carlo evaluation.
 - `notebooks/vae_final_baseline_comparison.ipynb`: compare the original fixed profile library, direct synthetic hit-threat records, and VAE-generated hit-threat pools.

@@ -123,18 +123,33 @@ Curated tactical v4 dataset examples:
 ```bash
 python -m experiments.generate_attack_profile_scaffold \
   --mode random_tactical_v4 \
-  --count 45000 \
+  --count 100000 \
+  --chunk-size 1000 \
   --seed 1945 \
+  --start-index 1 \
   --convoy-profile convoy_layout_1 \
-  --output data/attack_profiles/synthetic/train_random_tactical_v4_45k.jsonl
+  --output data/attack_profiles/synthetic/train_random_tactical_v4_100k.jsonl
 
 python -m experiments.generate_attack_profile_scaffold \
   --mode random_tactical_v4 \
   --count 5000 \
-  --seed 1946 \
+  --chunk-size 1000 \
+  --seed 2945 \
+  --start-index 100001 \
   --convoy-profile convoy_layout_1 \
   --output data/attack_profiles/synthetic/valid_random_tactical_v4_5k.jsonl
+
+python -m experiments.generate_attack_profile_scaffold \
+  --mode random_tactical_v4 \
+  --count 25000 \
+  --chunk-size 1000 \
+  --seed 3945 \
+  --start-index 105001 \
+  --convoy-profile convoy_layout_1 \
+  --output data/attack_profiles/synthetic/test_random_tactical_v4_25k.jsonl
 ```
+
+The 5k validation split is evaluated each epoch. The 25k test split remains held out until the best validation checkpoint has been selected. VAE training reads only the eight model features from JSONL and does not retain the full audit records in memory.
 
 Random baseline dataset examples:
 
@@ -143,13 +158,13 @@ python -m experiments.generate_random_attack_profile_dataset \
   --count 45000 \
   --seed 1945 \
   --convoy-profile convoy_layout_1 \
-  --output data/attack_profiles/synthetic/train_random_v1_45k.jsonl
+  --output data/attack_profiles/synthetic/train_random_profile_v1_45k.jsonl
 
 python -m experiments.generate_random_attack_profile_dataset \
   --count 5000 \
   --seed 1946 \
   --convoy-profile convoy_layout_1 \
-  --output data/attack_profiles/synthetic/valid_random_v1_5k.jsonl
+  --output data/attack_profiles/synthetic/valid_random_profile_v1_5k.jsonl
 ```
 
 Mixed curated/random dataset example:
@@ -158,8 +173,8 @@ Mixed curated/random dataset example:
 python -m experiments.build_mixed_attack_profile_dataset \
   --curated-train data/attack_profiles/synthetic/train_random_tactical_v4_45k.jsonl \
   --curated-valid data/attack_profiles/synthetic/valid_random_tactical_v4_5k.jsonl \
-  --random-train data/attack_profiles/synthetic/train_random_v1_45k.jsonl \
-  --random-valid data/attack_profiles/synthetic/valid_random_v1_5k.jsonl \
+  --random-train data/attack_profiles/synthetic/train_random_profile_v1_45k.jsonl \
+  --random-valid data/attack_profiles/synthetic/valid_random_profile_v1_5k.jsonl \
   --train-output data/attack_profiles/synthetic/train_mixed_curated70_random30_45k.jsonl \
   --valid-output data/attack_profiles/synthetic/valid_mixed_curated70_random30_5k.jsonl \
   --train-count 45000 \
@@ -173,8 +188,8 @@ Dataset audit example:
 
 ```bash
 python -m experiments.audit_attack_profile_dataset \
-  --input data/attack_profiles/synthetic/train_random_tactical_v4_45k.jsonl \
-  --output-dir results/diag/attack_profile_dataset_audit/train_random_tactical_v4_45k
+  --input data/attack_profiles/synthetic/train_random_tactical_v4_100k.jsonl \
+  --output-dir results/diag/attack_profile_dataset_audit/train_random_tactical_v4_100k
 ```
 
 ## Notebook Rerun Order
@@ -183,21 +198,21 @@ Run notebooks top-to-bottom after the generated datasets exist.
 
 Use `Python-DS` for analysis/diagnostic notebooks and `Python-ML` for VAE training notebooks if the ML dependencies or model training stack are only installed there.
 
+For VAE training, set `DATASET_SOURCE` in `notebooks/vae_train.ipynb` to `curated`, `random`, or `mixed`. The curated configuration uses 100,000 training, 5,000 validation, and 25,000 test records.
+
 Recommended order:
 
 1. `notebooks/profile_generation_tests.ipynb`
 2. `notebooks/attack_profile_tests.ipynb`
 3. `notebooks/visuals.ipynb`
 4. `notebooks/vae_train.ipynb`
-5. `notebooks/random_vae_train.ipynb`
-6. `notebooks/mixed_vae_train.ipynb`
-7. `notebooks/vae_candidate_pool.ipynb`
-8. `notebooks/vae_source_comparison.ipynb`
-9. `notebooks/vae_final_baseline_comparison.ipynb`
-10. `notebooks/attack_candidate_pool_eval.ipynb`
-11. `notebooks/pomdp_candidate_selector.ipynb`
-12. `notebooks/pomdp_candidate_eval.ipynb`
-13. `notebooks/pomdp_fire_control_eval.ipynb`
+5. `notebooks/vae_candidate_pool.ipynb`
+6. `notebooks/vae_source_comparison.ipynb`
+7. `notebooks/vae_final_baseline_comparison.ipynb`
+8. `notebooks/attack_candidate_pool_eval.ipynb`
+9. `notebooks/pomdp_candidate_selector.ipynb`
+10. `notebooks/pomdp_candidate_eval.ipynb`
+11. `notebooks/pomdp_fire_control_eval.ipynb`
 
 ## VAE Candidate Pools
 

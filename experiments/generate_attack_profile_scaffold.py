@@ -948,6 +948,12 @@ def _parse_args() -> argparse.Namespace:
     )
     parser.add_argument("--start-index", type=int, default=31, help="Starting numeric profile id (default: 31).")
     parser.add_argument("--count", type=int, default=30, help="Number of profiles to generate (default: 30).")
+    parser.add_argument(
+        "--chunk-size",
+        type=int,
+        default=None,
+        help="Generate and write JSONL in bounded chunks instead of retaining the full corpus in memory.",
+    )
     parser.add_argument("--seed", type=int, default=1945, help="RNG seed used to shuffle preset combinations.")
     parser.add_argument("--weight", type=float, default=DEFAULT_WEIGHT, help="Profile sampling weight (default: 1.0).")
     parser.add_argument(
@@ -990,6 +996,54 @@ def _parse_args() -> argparse.Namespace:
 def main() -> None:
     args = _parse_args()
     accepted_labels = tuple(item.strip() for item in str(args.accepted_labels).split(",") if item.strip())
+    default_json_modes = {"curated", "curated_zones"}
+    output_format = (
+        str(args.format)
+        if args.format is not None
+        else ("json" if args.mode in default_json_modes else "jsonl")
+    )
+    if args.mode in {"dataset", "random_zones", "random_tactical_v4"} and output_format == "python":
+        raise ValueError(f"{args.mode} mode does not support --format python; use jsonl or json")
+
+    if args.chunk_size is not None:
+        if int(args.chunk_size) <= 0:
+            raise ValueError("--chunk-size must be positive")
+        if output_format != "jsonl" or args.output is None:
+            raise ValueError("--chunk-size requires JSONL output and --output")
+
+        args.output.parent.mkdir(parents=True, exist_ok=True)
+        written = 0
+        chunk_id = 0
+        next_index = int(args.start_index)
+        with args.output.open("w", encoding="utf-8") as handle:
+            while written < int(args.count):
+                chunk_count = min(int(args.chunk_size), int(args.count) - written)
+                chunk_seed = int(args.seed) + chunk_id
+                profiles, audit_rows = generate_attack_profile_scaffolds(
+                    start_index=next_index,
+                    count=chunk_count,
+                    seed=chunk_seed,
+                    weight=float(args.weight),
+                    convoy_profile=str(args.convoy_profile),
+                    accepted_labels=accepted_labels,
+                    mode=str(args.mode),
+                )
+                handle.write(
+                    render_profiles_as_jsonl(
+                        profiles,
+                        audit_rows=audit_rows,
+                        seed=chunk_seed,
+                        convoy_profile=str(args.convoy_profile),
+                        accepted_labels=accepted_labels,
+                        mode=str(args.mode),
+                    )
+                )
+                written += len(profiles)
+                next_index += len(profiles)
+                chunk_id += 1
+                print(f"{args.output.name}: wrote {written:,}/{int(args.count):,} profiles")
+        return
+
     profiles, audit_rows = generate_attack_profile_scaffolds(
         start_index=int(args.start_index),
         count=int(args.count),
@@ -999,10 +1053,6 @@ def main() -> None:
         accepted_labels=accepted_labels,
         mode=str(args.mode),
     )
-    default_json_modes = {"curated", "curated_zones"}
-    output_format = str(args.format) if args.format is not None else ("json" if args.mode in default_json_modes else "jsonl")
-    if args.mode in {"dataset", "random_zones", "random_tactical_v4"} and output_format == "python":
-        raise ValueError(f"{args.mode} mode does not support --format python; use jsonl or json")
     if output_format == "json":
         rendered = render_profiles_as_json(
             profiles,

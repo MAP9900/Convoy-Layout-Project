@@ -6,7 +6,7 @@ import pytest
 
 torch = pytest.importorskip("torch")
 
-from convoy_sim.vae import AttackProfileVAE, AttackProfileVAEPreprocessor
+from convoy_sim.vae import AttackProfileVAE, load_vae_dataset
 from experiments.generate_vae_candidate_pool import build_vae_candidate_records, render_vae_candidate_jsonl
 
 
@@ -46,7 +46,9 @@ def test_build_vae_candidate_records_writes_dataset_shaped_candidates(tmp_path) 
         _record("D000001", -1800.0, 800.0, 0.0),
         _record("D000002", 1800.0, -800.0, 3.14),
     ]
-    preprocessor = AttackProfileVAEPreprocessor.fit(records)
+    train_path = tmp_path / "train.jsonl"
+    train_path.write_text("\n".join(json.dumps(record) for record in records) + "\n", encoding="utf-8")
+    _, preprocessor = load_vae_dataset(train_path)
     model = AttackProfileVAE(latent_dim=2, hidden_dim=8)
 
     run_dir = tmp_path / "run"
@@ -65,9 +67,6 @@ def test_build_vae_candidate_records_writes_dataset_shaped_candidates(tmp_path) 
         },
         checkpoint_dir / "model_best.pt",
     )
-    train_path = tmp_path / "train.jsonl"
-    train_path.write_text("\n".join(json.dumps(record) for record in records) + "\n", encoding="utf-8")
-
     candidates, summary = build_vae_candidate_records(
         run_dir=run_dir,
         train_path=train_path,

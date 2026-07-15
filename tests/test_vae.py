@@ -1,15 +1,18 @@
 from __future__ import annotations
 
+import json
+from pathlib import Path
+
 import pytest
 
 torch = pytest.importorskip("torch")
 
 from convoy_sim.vae import (
     AttackProfileVAE,
-    AttackProfileVAEDataset,
-    AttackProfileVAEPreprocessor,
     FEATURE_NAMES,
     build_latent_bank,
+    load_attack_profile_features_jsonl,
+    load_vae_dataset,
     vae_loss,
 )
 
@@ -54,15 +57,17 @@ def _record(profile_id: str, speed: float, spread_rad: float) -> dict:
     }
 
 
-def test_vae_preprocessor_dataset_and_model_roundtrip() -> None:
+def test_vae_preprocessor_dataset_and_model_roundtrip(tmp_path: Path) -> None:
     records = [
         _record("D000001", speed=1.4, spread_rad=0.09),
         _record("D000002", speed=1.8, spread_rad=0.11),
     ]
-    preprocessor = AttackProfileVAEPreprocessor.fit(records)
+    dataset_path = tmp_path / "profiles.jsonl"
+    dataset_path.write_text(
+        "".join(json.dumps(row) + "\n" for row in records), encoding="utf-8"
+    )
+    dataset, preprocessor = load_vae_dataset(dataset_path)
     assert preprocessor.feature_names == FEATURE_NAMES
-
-    dataset = AttackProfileVAEDataset(records, preprocessor=preprocessor)
     assert len(dataset) == 2
     assert dataset[0].shape == (len(FEATURE_NAMES),)
 
@@ -85,8 +90,33 @@ def test_vae_preprocessor_dataset_and_model_roundtrip() -> None:
     assert decoded["spread_doctrine"] == "uniform_divergent"
     assert 1.0 <= decoded["u_boat_initial_speed_mps"] <= 2.0
 
-    latent_bank = build_latent_bank(model, dataset.features, batch_size=1)
+    latent_bank = build_latent_bank(model, dataset, batch_size=1)
     assert latent_bank.shape == (2, 4)
 
     bank_decoded = model.sample_from_latent_bank(latent_bank, 3, noise_scale=0.0)
     assert bank_decoded.shape == (3, len(FEATURE_NAMES))
+
+
+def test_vae_feature_loading_and_dataset_build(tmp_path: Path) -> None:
+    train_path = tmp_path / "train.jsonl"
+    valid_path = tmp_path / "valid.jsonl"
+    train_records = [
+        _record("D000001", speed=1.4, spread_rad=0.09),
+        _record("D000002", speed=1.8, spread_rad=0.11),
+    ]
+    valid_records = [_record("D000003", speed=1.6, spread_rad=0.10)]
+    train_path.write_text(
+        "".join(json.dumps(row) + "\n" for row in train_records), encoding="utf-8"
+    )
+    valid_path.write_text(
+        "".join(json.dumps(row) + "\n" for row in valid_records), encoding="utf-8"
+    )
+
+    features = load_attack_profile_features_jsonl(train_path)
+    assert features.shape == (2, len(FEATURE_NAMES))
+
+    train_ds, preprocessor = load_vae_dataset(train_path)
+    valid_ds, _ = load_vae_dataset(valid_path, preprocessor)
+    assert len(train_ds) == 2
+    assert len(valid_ds) == 1
+    assert preprocessor.feature_names == FEATURE_NAMES

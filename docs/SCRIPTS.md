@@ -37,6 +37,7 @@ Primary supporting modules:
 
 | Purpose | Entrypoint | Typical Outputs |
 |---|---|---|
+| VAE training | Run `notebooks/vae_train.ipynb` after selecting `DATASET_SOURCE`. | Checkpoint, training history, metrics, and manifest. |
 | VAE candidate-pool generation | `python -m experiments.generate_vae_candidate_pool --run-dir ... --train-path ... --output ...` | Filtered candidate-pool JSONL plus summary JSON. |
 | Full-state candidate evaluation | `python -m experiments.evaluate_attack_candidate_pool --candidate-path ...` | Ranked candidate CSV, top candidate JSON, metrics, manifest. |
 

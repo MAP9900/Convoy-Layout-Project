@@ -222,6 +222,34 @@ def test_generate_attack_profile_scaffold_random_tactical_v4_jsonl_output(tmp_pa
     assert rows[0]["audit"]["target_zone_id"] == rows[0]["intent"]["target_zone_id"]
 
 
+def test_generate_attack_profile_scaffold_chunked_jsonl_output(tmp_path: Path) -> None:
+    output = tmp_path / "profiles_chunked.jsonl"
+    subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "experiments.generate_attack_profile_scaffold",
+            "--mode",
+            "random_tactical_v4",
+            "--start-index",
+            "1",
+            "--count",
+            "3",
+            "--chunk-size",
+            "2",
+            "--seed",
+            "1945",
+            "--output",
+            str(output),
+        ],
+        check=True,
+    )
+
+    rows = [json.loads(line) for line in output.read_text(encoding="utf-8").splitlines() if line.strip()]
+    assert len(rows) == 3
+    assert [row["profile"]["profile_id"] for row in rows] == ["T000001", "T000002", "T000003"]
+
+
 def test_generate_attack_profile_scaffold_random_tactical_v4_targets_65_25_10_mix() -> None:
     profiles, audit_rows = generate_attack_profile_scaffolds(
         start_index=1,

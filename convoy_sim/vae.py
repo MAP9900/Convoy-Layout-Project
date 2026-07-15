@@ -1,87 +1,4 @@
-"""VAE utilities for synthetic U-boat attack-profile generation.
-
-Overview
-========
-This module provides the core components for the first-pass VAE over synthetic
-attack-profile data. It is intentionally limited to the geometry/timing manifold
- represented by the dataset-mode JSONL corpora.
-
-Current Goals:
-
-1. learn a compact latent distribution over *plausible* attack geometries
-2. keep doctrine and realism assumptions fixed during initial training
-3. preserve a reversible preprocessing layer so decoded vectors can be turned
-   back into explicit :class:`convoy_sim.attack_profiles.AttackProfile` payloads
-4. keep the model small and debuggable before adding conditioning or more
-   complex generative structure
-
-What the model learns
----------------------
-The current feature space is an 8D continuous vector:
-
-- ``u_pos_x``
-- ``u_pos_y``
-- ``sin(base_bearing_rad)``
-- ``cos(base_bearing_rad)``
-- ``spread_rad``
-- ``launch_delay_s``
-- ``salvo_interval_s``
-- ``u_boat_initial_speed_mps``
-
-Angles are encoded as sine/cosine pairs so the model does not have to learn the
-wraparound discontinuity at ``-pi`` / ``pi``.
-
-----------------------
-These fields are held constant and reattached after decode:
-
-- ``mode = "fan"``
-- ``n = 4``
-- ``speed = 15.4333``
-- ``max_run_time = 486.0``
-- ``spread_doctrine = "uniform_divergent"``
-- ``per_torpedo_heading_offsets_rad = ()``
-- ``u_boat_mode = "moving"``
-- ``sub_length_m = 67.0``
-- ``sub_beam_m = 6.5``
-- ``launch_from = "bow"``
-- ``max_bow_offset_deg = 15.0``
-- ``gyro_straight_run_m = 10.0``
-
-Why this scope
---------------
-The current project needs a stable learned distribution over plausible attacks,
-not a full doctrine generator. By keeping discrete doctrine choices fixed in v1,
-we reduce training variance and make reconstruction/sampling behavior easier to
-interpret.
-
-What this module does not do yet
---------------------------------
-- no optimizer or training loop
-- no checkpoint management
-- no conditional label modeling
-- no post-sampling feasibility/audit filtering
-- no notebook/reporting helpers
-
-Those belong in the forthcoming training / generation entrypoints.
-
-Architecture summary
---------------------
-Current defaults:
-
-- input dimension: ``8`` (driven by ``FEATURE_NAMES``)
-- latent dimension: ``4``
-- hidden dimension: ``32``
-- encoder: ``Linear -> ReLU -> Linear -> ReLU``
-- latent heads: separate ``mu`` and ``logvar`` projections
-- decoder: ``Linear -> ReLU -> Linear -> ReLU -> Linear``
-- loss: ``MSE + beta * KL``
-- default ``beta``: ``0.05``
-
-Adjustable:
-
-- change ``AttackProfileVAE.__init__`` defaults to adjust latent or hidden size
-- change ``vae_loss(beta=...)`` to tune KL regularization strength
-"""
+"""Small VAE and preprocessing helpers for synthetic attack profiles."""
 
 from __future__ import annotations
 
@@ -89,12 +6,11 @@ from dataclasses import dataclass
 import json
 from math import atan2
 from pathlib import Path
-from typing import Any, Sequence
+from typing import Any
 
 import numpy as np
 import torch
 import torch.nn as nn
-from torch.utils.data import Dataset
 
 from convoy_sim.attack_profiles import AttackProfile
 
@@ -128,17 +44,7 @@ FIXED_PROFILE_FIELDS: dict[str, Any] = {
 
 
 def load_attack_profile_dataset_jsonl(path: str | Path) -> list[dict[str, Any]]:
-    """Load dataset-mode JSONL records produced by the shared attack generator.
-
-    Each non-empty line must contain one JSON object with:
-
-    - ``profile``: explicit AttackProfile-style payload
-    - ``audit``: geometry plausibility summary
-    - ``generator_meta``: dataset provenance and generation metadata
-
-    The loader performs only lightweight structural validation and leaves deeper
-    semantic validation to downstream preprocessing and model code.
-    """
+    """Load and lightly validate attack-profile JSONL records."""
 
     dataset_path = Path(path)
     records: list[dict[str, Any]] = []
@@ -179,51 +85,57 @@ def _profile_to_feature_vector(profile: dict[str, Any]) -> np.ndarray:
     return vector
 
 
+def load_attack_profile_features_jsonl(path: str | Path) -> np.ndarray:
+    """Read the eight VAE features without retaining full JSONL records."""
+
+    feature_rows: list[np.ndarray] = []
+    with Path(path).open("r", encoding="utf-8") as handle:
+        for line_number, line in enumerate(handle, start=1):
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                row = json.loads(line)
+            except json.JSONDecodeError as exc:  # pragma: no cover - defensive
+                raise ValueError(f"Invalid JSON on line {line_number} of {path}") from exc
+            if "profile" not in row:
+                raise ValueError(f"Line {line_number} of {path} is missing profile")
+            feature_rows.append(_profile_to_feature_vector(dict(row["profile"])))
+
+    if not feature_rows:
+        raise ValueError(f"Dataset must be non-empty: {path}")
+    return np.vstack(feature_rows).astype(np.float32)
+
+
 @dataclass
 class AttackProfileVAEPreprocessor:
-    """Feature extractor, normalizer, and decode helper for v1 VAE training.
-
-    Responsibilities:
-
-    - fit mean/std statistics on the training corpus
-    - normalize explicit profile payloads into dense float vectors
-    - invert normalized vectors back into raw physical-scale values
-    - rebuild fixed-field AttackProfile payloads after decode
-
-    Keeping this logic outside the neural model makes preprocessing explicit and
-    serializable, which is important for reproducible training and sampling.
-    """
+    """Normalize VAE features and decode them back into attack profiles."""
 
     feature_names: tuple[str, ...]
     mean: np.ndarray
     std: np.ndarray
 
     @classmethod
-    def fit(cls, records: Sequence[dict[str, Any]]) -> "AttackProfileVAEPreprocessor":
-        """Fit normalization statistics from training records only."""
+    def fit_features(cls, features: np.ndarray) -> "AttackProfileVAEPreprocessor":
+        """Fit normalization statistics from an unnormalized feature matrix."""
 
-        if not records:
-            raise ValueError("records must be non-empty")
-        features = np.vstack([_profile_to_feature_vector(dict(record["profile"])) for record in records]).astype(
-            np.float32
-        )
+        features = np.asarray(features, dtype=np.float32)
+        if features.ndim != 2 or features.shape[1] != len(FEATURE_NAMES):
+            raise ValueError(f"features must have shape (n, {len(FEATURE_NAMES)})")
+        if features.shape[0] == 0:
+            raise ValueError("features must be non-empty")
         mean = features.mean(axis=0)
         std = features.std(axis=0)
         std = np.where(std < 1e-6, 1.0, std).astype(np.float32)
         return cls(feature_names=FEATURE_NAMES, mean=mean.astype(np.float32), std=std)
 
-    def transform_profile_dict(self, profile: dict[str, Any]) -> np.ndarray:
-        """Normalize one explicit profile payload into feature space."""
+    def transform_features(self, features: np.ndarray) -> np.ndarray:
+        """Normalize an existing raw feature matrix."""
 
-        raw = _profile_to_feature_vector(profile)
-        return ((raw - self.mean) / self.std).astype(np.float32)
-
-    def transform_records(self, records: Sequence[dict[str, Any]]) -> np.ndarray:
-        """Normalize many JSONL dataset records into one feature matrix."""
-
-        return np.vstack([self.transform_profile_dict(dict(record["profile"])) for record in records]).astype(
-            np.float32
-        )
+        values = np.asarray(features, dtype=np.float32)
+        if values.ndim != 2 or values.shape[1] != len(self.feature_names):
+            raise ValueError(f"features must have shape (n, {len(self.feature_names)})")
+        return ((values - self.mean) / self.std).astype(np.float32)
 
     def inverse_transform(self, normalized: np.ndarray | torch.Tensor) -> np.ndarray:
         """Map normalized vectors back into the raw physical feature space."""
@@ -242,18 +154,7 @@ class AttackProfileVAEPreprocessor:
         name: str,
         weight: float = 1.0,
     ) -> dict[str, Any]:
-        """Decode one normalized vector back into an explicit profile payload.
-
-        The returned payload is numerically clamped into a minimally valid range:
-
-        - ``spread_rad >= 0``
-        - ``launch_delay_s >= 0``
-        - ``salvo_interval_s >= 0``
-        - ``u_boat_initial_speed_mps`` clipped to ``[1.0, 2.0]``
-
-        This does **not** guarantee tactical plausibility. Generated samples
-        should still be rechecked by the existing feasibility/audit pipeline.
-        """
+        """Decode one vector and clamp fields to physically valid ranges."""
 
         raw = self.inverse_transform(normalized)
         if raw.shape != (len(self.feature_names),):
@@ -312,78 +213,15 @@ class AttackProfileVAEPreprocessor:
         )
 
 
-class AttackProfileVAEDataset(Dataset[torch.Tensor]):
-    """Torch dataset wrapper over normalized attack-profile feature vectors.
-
-    The original JSONL records are retained for traceability, but the model path
-    is just a dense tensor matrix suitable for a small MLP VAE.
-    """
-
-    def __init__(
-        self,
-        records: Sequence[dict[str, Any]],
-        *,
-        preprocessor: AttackProfileVAEPreprocessor,
-    ) -> None:
-        if not records:
-            raise ValueError("records must be non-empty")
-        self._records = list(records)
-        self._preprocessor = preprocessor
-        self._features = torch.as_tensor(preprocessor.transform_records(self._records), dtype=torch.float32)
-
-    def __len__(self) -> int:
-        return int(self._features.shape[0])
-
-    def __getitem__(self, index: int) -> torch.Tensor:
-        return self._features[index]
-
-    @property
-    def features(self) -> torch.Tensor:
-        """Return the full normalized feature matrix."""
-
-        return self._features
-
-    @property
-    def preprocessor(self) -> AttackProfileVAEPreprocessor:
-        """Return the fitted preprocessor used to build this dataset."""
-
-        return self._preprocessor
-
-
 class AttackProfileVAE(nn.Module):
-    """Small MLP beta-VAE for the continuous attack-profile feature space.
-
-    Architecture:
-
-    - encoder: ``input_dim -> hidden_dim -> hidden_dim``
-    - latent heads: ``mu`` and ``logvar``
-    - decoder: ``latent_dim -> hidden_dim -> hidden_dim -> input_dim``
-
-    Default dimensions:
-
-    - ``input_dim = 8``
-    - ``latent_dim = 4``
-    - ``hidden_dim = 32``
-
-    The model is intentionally simple so latent behavior can be inspected before
-    introducing conditioning or more expressive decoders.
-
-    Tuning notes:
-
-    - change ``latent_dim`` first if the latent space feels too compressed or too
-      loose
-    - change ``hidden_dim`` next if reconstruction quality is poor
-    - keep the feature schema stable while tuning architecture; otherwise model
-      changes and data changes become confounded
-    - if training later shows posterior collapse or overly noisy samples, adjust
-      ``beta`` in :func:`vae_loss` before making the network deeper
-    """
+    """Two-layer MLP beta-VAE for the eight continuous profile features."""
 
     def __init__(
         self,
         input_dim: int = len(FEATURE_NAMES),
         latent_dim: int = 4,
-        hidden_dim: int = 32) -> None:
+        hidden_dim: int = 32,
+    ) -> None:
         super().__init__()
         if input_dim <= 0:
             raise ValueError("input_dim must be positive")
@@ -460,13 +298,7 @@ class AttackProfileVAE(nn.Module):
         device: torch.device | None = None,
         generator: torch.Generator | None = None,
     ) -> torch.Tensor:
-        """Decode samples drawn near encoded training-set latent vectors.
-
-        This is an empirical sampler for diagnosing regular VAE behavior. It is
-        not a replacement for the standard normal prior, but it helps separate
-        "bad prior coverage" from "bad reconstruction manifold" when evaluating
-        decoded profiles.
-        """
+        """Decode samples drawn near encoded training-set latent vectors."""
 
         if n_samples <= 0:
             raise ValueError("n_samples must be positive")
@@ -508,11 +340,7 @@ def build_latent_bank(
     device: torch.device | str | None = None,
     use_mu: bool = True,
 ) -> torch.Tensor:
-    """Encode normalized feature vectors into a reusable latent bank.
-
-    By default the bank stores posterior means. Set ``use_mu=False`` to sample
-    once from each posterior distribution instead.
-    """
+    """Encode normalized features into a bank of latent vectors."""
 
     if batch_size <= 0:
         raise ValueError("batch_size must be positive")
@@ -546,20 +374,9 @@ def vae_loss(
     mu: torch.Tensor,
     logvar: torch.Tensor,
     *,
-    beta: float = 0.05,) -> tuple[torch.Tensor, dict[str, float]]:
-    """Compute beta-VAE loss and a compact scalar diagnostics dictionary.
-
-    Loss definition:
-
-    ``loss = mse(recon_x, x) + beta * KL(mu, logvar)``
-
-    where:
-
-    - the reconstruction term uses MSE on normalized features
-    - the KL term is averaged across the batch
-    - ``beta`` defaults to ``0.05`` to avoid over-regularizing this small
-      structured feature space in the first pass
-    """
+    beta: float = 0.05,
+) -> tuple[torch.Tensor, dict[str, float]]:
+    """Return MSE plus beta-weighted KL loss and scalar diagnostics."""
 
     if recon_x.shape != x.shape:
         raise ValueError("recon_x and x must have matching shape")
@@ -576,25 +393,13 @@ def vae_loss(
     return total_loss, stats
 
 
-def build_vae_datasets(
-    *,
-    train_path: str | Path,
-    valid_path: str | Path,) -> tuple[AttackProfileVAEDataset, AttackProfileVAEDataset, AttackProfileVAEPreprocessor]:
-    """Build normalized train/valid datasets from JSONL corpora.
+def load_vae_dataset(
+    path: str | Path,
+    preprocessor: AttackProfileVAEPreprocessor | None = None,
+) -> tuple[torch.Tensor, AttackProfileVAEPreprocessor]:
+    """Load one JSONL corpus as a normalized feature tensor."""
 
-    Intended training flow:
-
-    1. load train and validation corpora
-    2. fit preprocessing statistics on the training split only
-    3. build normalized Torch datasets for both splits
-
-    The returned preprocessor should be saved alongside model checkpoints so
-    decoded latent samples remain interpretable and reproducible.
-    """
-
-    train_records = load_attack_profile_dataset_jsonl(train_path)
-    valid_records = load_attack_profile_dataset_jsonl(valid_path)
-    preprocessor = AttackProfileVAEPreprocessor.fit(train_records)
-    train_ds = AttackProfileVAEDataset(train_records, preprocessor=preprocessor)
-    valid_ds = AttackProfileVAEDataset(valid_records, preprocessor=preprocessor)
-    return train_ds, valid_ds, preprocessor
+    features = load_attack_profile_features_jsonl(path)
+    preprocessor = preprocessor or AttackProfileVAEPreprocessor.fit_features(features)
+    tensor = torch.as_tensor(preprocessor.transform_features(features), dtype=torch.float32)
+    return tensor, preprocessor

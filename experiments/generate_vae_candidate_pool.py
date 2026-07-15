@@ -18,7 +18,7 @@ from convoy_sim.vae import (
     AttackProfileVAE,
     AttackProfileVAEPreprocessor,
     build_latent_bank,
-    load_attack_profile_dataset_jsonl,
+    load_attack_profile_features_jsonl,
 )
 from convoy_sim.vae_diagnostics import audit_decoded_vae_payloads, summarize_decoded_vae_audit
 from convoy_sim.workflows import git_sha, write_json
@@ -88,16 +88,20 @@ def _load_model_from_run(
     device: str,
 ) -> tuple[AttackProfileVAE, AttackProfileVAEPreprocessor, dict[str, Any]]:
     manifest = json.loads((run_dir / "run_manifest.json").read_text(encoding="utf-8"))
-    checkpoint = torch.load(run_dir / "checkpoints" / checkpoint_name, map_location=device)
-    preprocessor_payload = checkpoint.get("preprocessor", manifest["preprocessor"])
-    preprocessor = AttackProfileVAEPreprocessor.from_dict(preprocessor_payload)
-    hyper = checkpoint.get("hyperparameters", manifest.get("hyperparameters", {}))
-    model = AttackProfileVAE(
-        latent_dim=int(hyper["latent_dim"]),
-        hidden_dim=int(hyper["hidden_dim"]),
+    checkpoint = torch.load(
+        run_dir / "checkpoints" / checkpoint_name,
+        map_location=device,
+        weights_only=True,
     )
+    preprocessor = AttackProfileVAEPreprocessor.from_dict(
+        checkpoint.get("preprocessor", manifest["preprocessor"])
+    )
+    hyperparameters = checkpoint.get("hyperparameters", manifest["hyperparameters"])
+    model = AttackProfileVAE(
+        latent_dim=int(hyperparameters["latent_dim"]),
+        hidden_dim=int(hyperparameters["hidden_dim"]),
+    ).to(device)
     model.load_state_dict(checkpoint["model_state_dict"])
-    model.to(device)
     model.eval()
     return model, preprocessor, manifest
 
@@ -111,7 +115,7 @@ def sample_vae_payloads(
     sampling_method: str,
     device: str,
     seed: int,
-    train_records: Sequence[Mapping[str, Any]] | None = None,
+    train_features: np.ndarray | None = None,
     latent_noise_scale: float = 0.10,
     start_index: int = 1,
 ) -> list[dict[str, Any]]:
@@ -128,10 +132,10 @@ def sample_vae_payloads(
     if str(sampling_method) == "prior":
         decoded = model.sample(int(sample_count), device=sample_device).cpu().numpy()
     elif str(sampling_method) == "latent_bank":
-        if train_records is None:
-            raise ValueError("train_records is required for latent_bank sampling")
-        train_features = preprocessor.transform_records(train_records)
-        latent_bank = build_latent_bank(model, train_features, device=sample_device)
+        if train_features is None:
+            raise ValueError("train_features is required for latent_bank sampling")
+        normalized_features = preprocessor.transform_features(train_features)
+        latent_bank = build_latent_bank(model, normalized_features, device=sample_device)
         decoded = model.sample_from_latent_bank(
             latent_bank,
             int(sample_count),
@@ -284,7 +288,11 @@ def build_vae_candidate_records(
         checkpoint_name=str(checkpoint_name),
         device=str(device),
     )
-    train_records = load_attack_profile_dataset_jsonl(train_path) if str(sampling_method) == "latent_bank" else None
+    train_features = (
+        load_attack_profile_features_jsonl(train_path)
+        if str(sampling_method) == "latent_bank"
+        else None
+    )
     payloads = sample_vae_payloads(
         model=model,
         preprocessor=preprocessor,
@@ -292,7 +300,7 @@ def build_vae_candidate_records(
         sampling_method=str(sampling_method),
         device=str(device),
         seed=int(seed),
-        train_records=train_records,
+        train_features=train_features,
         latent_noise_scale=float(latent_noise_scale),
         start_index=int(start_index),
     )

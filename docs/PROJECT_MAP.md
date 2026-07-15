@@ -106,7 +106,7 @@ Current notebook groups:
 | Group | Notebooks |
 |---|---|
 | Profile generation and manual checks | `attack_profile_tests.ipynb`, `attack_manual_verification.ipynb`, `profile_generation_tests.ipynb`, `visuals.ipynb` |
-| VAE workflows | `vae_train.ipynb`, `random_vae_train.ipynb`, `mixed_vae_train.ipynb`, `vae_candidate_pool.ipynb`, `vae_source_comparison.ipynb`, `vae_final_baseline_comparison.ipynb` |
+| VAE workflows | `vae_train.ipynb`, `vae_candidate_pool.ipynb`, `vae_source_comparison.ipynb`, `vae_final_baseline_comparison.ipynb` |
 | Candidate/POMDP evaluation | `attack_candidate_pool_eval.ipynb`, `pomdp_candidate_selector.ipynb`, `pomdp_candidate_eval.ipynb`, `pomdp_fire_control_eval.ipynb` |
 | Doctrine comparison | `torpedo_firing_doctrine_comparison.ipynb` |
 
