@@ -2,7 +2,6 @@
 
 This document describes the VAE design for synthetic U-boat attack-profile generation, candidate-pool construction, and downstream adversarial/POMDP evaluation.
 
-Run-specific results, loss values, timing notes, and old comparison tables live in `Archive-Results.md` under `# VAE.md ARCHIVED RESULTS SECTION`. This file should stay focused on architecture, logic, and workflow design.
 
 ## Current Role
 
@@ -74,7 +73,7 @@ The project keeps three VAE-related source distributions conceptually separate:
 - Random v1: a broader profile-first baseline from `experiments/generate_random_attack_profile_dataset.py`.
 - Mixed curated/random: a comparison source from `experiments/build_mixed_attack_profile_dataset.py`.
 
-The mixed source is intended to preserve the curated realism anchor while broadening support with random profile-first examples. It is a comparison point, not an assumed improvement. If a mixed model blurs tactical modes or increases decoded safety failures, the curated v4 source remains the preferred realism baseline.
+The mixed source is intended to preserve the curated realism anchor while broadening support with random profile-first examples. 
 
 ## Feature Set
 
@@ -98,7 +97,7 @@ Several doctrine fields are fixed during decoding so generated profiles remain c
 - bow launch origin
 - standard submarine dimensions
 
-The VAE does not currently reconstruct rich tactical metadata such as `spawn_region`, `target_zone_kind`, `target_ship_ids`, `aim_point`, or intended outcome label. Some metadata is recovered later through dynamic audit and candidate-pool generation.
+The VAE does not reconstruct rich tactical metadata such as `spawn_region`, `target_zone_kind`, `target_ship_ids`, `aim_point`, or intended outcome label. Some metadata is recovered later through dynamic audit and candidate-pool generation. Fire control solutions are handeled by POMDP via `fire_control_lite`. 
 
 ## Model Configuration
 
@@ -113,8 +112,6 @@ Default design parameters:
 - optimizer: Adam
 - common batch size: `512`
 
-These values are model-design defaults, not final results. Final loss values and timing should be regenerated and reported from the current rerun, not preserved here.
-
 ## Prior Sampling And Latent-Bank Sampling
 
 Early raw Gaussian-prior sampling did not preserve the curated multimodal tactical manifold well enough. The main design issue is that an unconditional Gaussian prior can average across distinct tactical modes and create hybrid decoded profiles.
@@ -128,7 +125,11 @@ The latent-bank path:
 3. samples near encoded training examples
 4. decodes with a small noise scale
 
-This keeps decoded profiles near the learned tactical manifold instead of asking a small unconditional VAE prior to cover the full multimodal distribution. A conditional VAE may still be useful later, especially if direct control over outcome label, spawn region, or target context becomes important.
+This keeps decoded profiles near the learned tactical manifold instead of asking a small unconditional VAE prior to cover the full multimodal distribution. Done so as generated attack profiles come from different tactical regions (ex: inside, ahead, stern, etc)
+
+NOTE:  
+- prior: sample random latent vectors from N(0, I), then decode.
+- latent_bank: load the VAE training features, encode them into latent vectors, sample near those encoded training examples, then decode. (As seen above)
 
 ## Diagnostics
 
@@ -149,16 +150,16 @@ For decoded VAE profiles, the dynamic moving-convoy audit is more important than
 
 `experiments/generate_vae_candidate_pool.py` turns a trained VAE run into a JSONL candidate pool for adversarial work.
 
-Typical workflow:
+Workflow:
 
-1. Load a trained VAE checkpoint and preprocessor.
-2. Sample decoded profiles using `latent_bank` or `prior`.
-3. Rebuild profiles into simulator-native `AttackProfile` objects.
-4. Enforce minimum spawn clearance.
-5. Run moving zig-zag outcome diagnostics.
-6. Filter to selected actual outcomes, usually credible hit threats for adversarial candidate pools.
-7. Attach derived metadata such as spawn region, closest ship, hit ships, and source diagnostics.
-8. Write a JSONL candidate pool plus summary JSON.
+- Generate synthetic training dataset
+- Train VAE
+- Sample trained VAE
+- Decode profiles
+- Run decoded profiles through dynamic outcome audit / sim
+- Keep accepted outcomes
+- Write candidate pool JSONL
+- Accepted candidates passed to candidate evaluation
 
 The adversarial candidate-pool use case intentionally favors credible attack threats. That differs from preserving the original training mix: training benefits from a broader outcome distribution, while red-team candidate selection benefits from a diverse pool of plausible dangerous attacks.
 
@@ -168,7 +169,7 @@ The notebook wrapper is `notebooks/vae_candidate_pool.ipynb`.
 
 `experiments/evaluate_attack_candidate_pool.py` evaluates candidate profiles through the scored simulation pipeline and ranks them from the attacker perspective.
 
-The Monte Carlo setup keeps each candidate profile fixed, then reruns the simulator across multiple seeds and trials. The average over those trials estimates:
+The light weight Monte Carlo setup keeps each candidate profile fixed, then reruns the simulator across multiple seeds and trials. The average over those trials estimates:
 
 - `expected_hits`
 - `expected_unique_ships_hit`
@@ -178,9 +179,8 @@ The Monte Carlo setup keeps each candidate profile fixed, then reruns the simula
 - `CVaR_90`
 - `CVaR_90_loss`
 
-Run-to-run variation comes from stochastic convoy realism such as position jitter, heading jitter, speed jitter, and evasive zig-zag behavior. Torpedo noise can also contribute when enabled. A candidate's `expected_hits` is therefore a Monte Carlo estimate under simulator stochasticity, not a deterministic property of the profile.
+Run variation comes from stochastic convoy realism such as position jitter, heading jitter, speed jitter, and evasive zig-zag behavior. Torpedo noise can also contribute when enabled. A candidate's `expected_hits` is therefore a very light Monte Carlo estimate under simulator stochasticity, not a deterministic property of the profile. It is not expected that the number of hits changes much between runs, rather this evaluation is done as a light robustness check. 
 
-The evaluator uses the same scored simulation and objective plumbing as the rest of the project. It should be used after candidate-pool generation when the question is: "Which attacks are most dangerous to this convoy layout under the simulator?"
 
 The notebook wrapper is `notebooks/attack_candidate_pool_eval.ipynb`.
 
@@ -196,7 +196,7 @@ The intended POMDP progression is:
 4. Evaluate a belief-limited attacker that selects among feasible VAE candidates.
 5. Rebuild firing solutions from noisy observations for the more realistic fire-control bridge.
 
-This keeps the GenAI piece meaningful: the VAE proposes plausible attack candidates, while the adversarial/POMDP layer decides which candidate a limited-information attacker would choose.
+GenAI Workflow: VAE proposes plausible attack candidates, while the POMDP layer decides which candidate a limited information attacker would choose and its firing solution.
 
 ## Notebook Purpose Split
 
@@ -209,15 +209,11 @@ Current active notebooks:
 - `notebooks/vae_final_baseline_comparison.ipynb`: compare the original fixed profile library, direct synthetic hit-threat records, and VAE-generated hit-threat pools.
 - `notebooks/attack_candidate_pool_eval.ipynb`: evaluate and rank an existing candidate pool with the Monte Carlo simulator.
 
-Legacy notebook:
 
-- `vae_exploration.ipynb`: older exploratory notebook, now superseded by the focused notebooks above and archived outside the active workspace.
-
-## Known Limitations
+## Limitations
 
 - The VAE only decodes 8 continuous fields, so tactical metadata must be derived after sampling.
 - Raw Gaussian-prior sampling is weak for this multimodal tactical manifold.
 - Latent-bank sampling is more reliable but stays close to the training distribution by design.
-- Accepted adversarial candidate pools are intentionally hit-heavy and should not be described as the full distribution of historical U-boat attacks.
-- Full-state candidate ranking should not be described as POMDP behavior.
-- Generalization across convoy layouts should be validated during final reruns.
+- Accepted adversarial candidate pools are intentionally hit heavy and should not be described as the full distribution of historical U-boat attacks. Overall goal of the project remains optimizing the convoy layout for defense, thus why hit heavy profiles were prioritized. Defense can now be trained on worst case scenario attacks 
+
