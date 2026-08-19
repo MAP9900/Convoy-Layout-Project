@@ -1,5 +1,11 @@
 # Project generated artifacts
 
+# Local Web UI credentials.
+/.webui_secret_key
+
+# Generated Graphify graph, reports, visualizations, and caches.
+/graphify-out/
+
 # Frames and visual previews.
 frames/
 .frame*
